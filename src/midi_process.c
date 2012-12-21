@@ -208,6 +208,7 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 		/* assign midi note */
 		voice->midi_key   = part->midi_key;
 		voice->keypressed = part->midi_key;
+		voice->age        = 0;
 
 		/* keep velocity for this note event */
 		voice->velocity               = event->velocity;

@@ -112,6 +112,7 @@ init_patch_bank(void)
 				patch->param[PARAM_MIDI_CHANNEL].info->cc_offset;
 		}
 		patch = set_active_patch(0, (unsigned int) part_num, 0);
+		read_patch(sys_default_patch, patch);
 	}
 
 	/* load the bank for all parts */
@@ -134,7 +135,7 @@ load_patch_bank(void)
 	int             part_num    = 0;
 	int             prog        = 0;
 	unsigned int    line        = 0;
-	int             once        = 1;
+	static int      once        = 1;
 	int             result;
 
 	/* open the bank file */
@@ -231,6 +232,9 @@ load_patch_bank(void)
 				snprintf(buffer, sizeof(buffer), "%s/%s.phx", PATCH_DIR, filename);
 				result = read_patch(buffer, patch);
 			}
+			if (result != 0) {
+				PHASEX_WARN("Failed to load patch '%s''\n", buffer);
+			}
 		}
 
 		/* handle fully qualified filenames */
@@ -241,7 +245,9 @@ load_patch_bank(void)
 		/* initialize on failure and set name based on program number */
 		if (result != 0) {
 			if (read_patch(user_default_patch, patch) != 0) {
-				read_patch(sys_default_patch, patch);
+				if (read_patch(sys_default_patch, patch) != 0) {
+					PHASEX_WARN("Unable to load system default patch '%s'\n", sys_default_patch);
+				}
 			}
 			snprintf(buffer, sizeof(buffer), "Untitled-%04d", (prog + 1));
 			tmpname = patch->name;

@@ -1,5 +1,5 @@
 
-PHASEX-0.14.94:
+PHASEX-0.14.95:
 
 -------------------------------------------------------------------------------
 [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
@@ -320,7 +320,7 @@ COMPILING AND INSTALLING PHASEX:
 
 For most installations, all that should be needed is the following:
 
-	cd phasex-0.14.94
+	cd phasex-0.14.95
 	./configure --enable-arch=native
 	make
 	make install

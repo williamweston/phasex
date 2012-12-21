@@ -18,7 +18,7 @@ dnl #
 dnl # You should have received a copy of the GNU General Public License
 dnl # along with PHASEX.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT(PHASEX, 0.14.94)
+AC_INIT(PHASEX, 0.14.95)
 
 AC_CONFIG_AUX_DIR(scripts)
 AM_INIT_AUTOMAKE(0.10.0)

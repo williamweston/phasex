@@ -39,7 +39,7 @@
 #define ENABLE_DEBUG
 
 /* Set default cpu power level.  For most builds, this should be set with
-   '../configure --enable-cpu-power=X' where X is:
+     '../configure --enable-cpu-power=X' where X is:
    1 for the oldest, painfully slow dinosaurs.
    2 for older hardware still capable of running current linux distros.
    3 for the newer multi-core and other incredibly fast chips.
@@ -212,7 +212,7 @@ typedef float sample_t;
 #define USER_MIDIMAP_DUMP_FILE          "midimapdump"
 #define USER_SESSION_DUMP_DIR           "_current_"
 #define USER_CONFIG_FILE                "phasex.cfg"
-#define SYS_DEFAULT_PATCH               "default.phx"
+#define SYS_DEFAULT_PATCH               "phasex-default.phx"
 
 /* Default knob image directories. */
 #define DEFAULT_LIGHT_KNOB_DIR          "Light"

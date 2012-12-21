@@ -2,6 +2,13 @@
 
 Changelog:
 
+2012-12-20 William Weston <whw@linuxmail.org> - 0.14.95
+	* Fixed initial patch / default patch issues.
+	* Updated GPL msg on exit to reference GPLv3 instead of v2.
+	* Added 16 new patches.
+	* Applied Anton's steal-oldest-note fix.
+
+
 2012-12-20 William Weston <whw@linuxmail.org> - 0.14.94
 	* Major code overhaul since 0.12.
 	*   Renamed variables and functions to improve readability.
@@ -51,7 +58,6 @@ Changelog:
 	*   Added clock support to ALSA Seq and ALSA Raw MIDI drivers.
 	*   Added clock support to ALSA PCM and JACK audio drivers.
 	*   Added audio MIDI phase lock setting for fine tuning.
-	*   Added commercial exception for licensing of timekeeping.[ch]
 	* GUI overhaul (work in progress).
 	*   Separated and cleaned up Synth and GUI callbacks.
 	*   Mostly separated GUI code from the rest (work in progress).

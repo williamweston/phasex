@@ -24,7 +24,7 @@ COMPILING AND INSTALLING PHASEX:
 PHASEX uses the autoconf/automake build system, so all that is needed
 is the usual:
 
-	cd phasex-0.14.94
+	cd phasex-0.14.95
 	./configure		(or ./configure --enable-arch=my-cpu)
 	make
 	make install

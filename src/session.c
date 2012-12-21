@@ -372,7 +372,9 @@ load_session_bank(void)
 			patch = get_patch_from_session_bank(sess_num, part_num);
 			if (loaded[sess_num] == 0) {
 				if (read_patch(user_default_patch, patch) != 0) {
-					read_patch(sys_default_patch, patch);
+					if (read_patch(sys_default_patch, patch) != 0) {
+						PHASEX_WARN("Unable to load system default patch '%s'\n", sys_default_patch);
+					}
 				}
 				snprintf(buffer, sizeof(buffer), "Untitled-%04d", (sess_num + 1));
 				patch->name = strdup(buffer);
