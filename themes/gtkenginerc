@@ -1,0 +1,24 @@
+# Theme engine definition for PHASEX
+
+# If libnodoka.so is not found, this file will be skipped over
+# so that GTK doesn't complain.
+
+style "phasex-engine-default"
+{
+	engine "nodoka"
+	{
+		bullet_color	= "#00f000"
+	}
+}
+
+style "phasex-off-button"
+{
+	engine "nodoka"
+	{
+		bullet_color	= "#d00000"
+	}
+}
+
+class "GtkWidget" style "phasex-engine-default"
+
+widget "*OffButton*" style "phasex-off-button"

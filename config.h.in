@@ -1,0 +1,218 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* GPLv3 License Text (alternative location) */
+#undef ALT_GPLv3_FILE
+
+/* PHASEX License Text (alternative location) */
+#undef ALT_LICENSE_FILE
+
+/* Default installation prefix */
+#undef CONFIG_PREFIX
+
+/* GPLv3 License Text */
+#undef GPLv3_LICENSE_FILE
+
+/* PHASEX Dark GTK Theme */
+#undef GTKRC_DARK
+
+/* PHASEX Light GTK Theme */
+#undef GTKRC_LIGHT
+
+/* GTK engine directory */
+#undef GTK_ENGINE_DIR
+
+/* Define to 1 if you have the `atof' function. */
+#undef HAVE_ATOF
+
+/* Define to 1 if you have the `atoi' function. */
+#undef HAVE_ATOI
+
+/* Have clock gettime */
+#undef HAVE_CLOCK_GETTIME
+
+/* Have clock gettime */
+#undef HAVE_CLOCK_NANOSLEEP
+
+/* Define to 1 if you have the `fclose' function. */
+#undef HAVE_FCLOSE
+
+/* Define to 1 if you have the `fgets' function. */
+#undef HAVE_FGETS
+
+/* Define to 1 if you have the `fopen' function. */
+#undef HAVE_FOPEN
+
+/* Define to 1 if you have the `fprintf' function. */
+#undef HAVE_FPRINTF
+
+/* Define to 1 if you have the `fread' function. */
+#undef HAVE_FREAD
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `isdigit' function. */
+#undef HAVE_ISDIGIT
+
+/* Define to 1 if you have the `isupper' function. */
+#undef HAVE_ISUPPER
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Have librt */
+#undef HAVE_LIBRT
+
+/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
+   to 0 otherwise. */
+#undef HAVE_MALLOC
+
+/* Define to 1 if you have the `memcpy' function. */
+#undef HAVE_MEMCPY
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the `mlockall' function. */
+#undef HAVE_MLOCKALL
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* libpthread has pthread_mutexattr_setprotocol */
+#undef HAVE_PTHREAD_MUTEXATTR_SETPROTOCOL
+
+/* Define to 1 if you have the `sleep' function. */
+#undef HAVE_SLEEP
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strcmp' function. */
+#undef HAVE_STRCMP
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the `strerror_r' function. */
+#undef HAVE_STRERROR_R
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strncmp' function. */
+#undef HAVE_STRNCMP
+
+/* Define to 1 if you have the `strstr' function. */
+#undef HAVE_STRSTR
+
+/* Define to 1 if you have the `strtok_r' function. */
+#undef HAVE_STRTOK_R
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
+
+/* System MidiMap Directory */
+#undef MIDIMAP_DIR
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
+/* Name of package */
+#undef PACKAGE
+
+/* Address where bug reports should be sent */
+#undef PACKAGE_BUGREPORT
+
+/* Default installation data prefix */
+#undef PACKAGE_DATA_DIR
+
+/* Default installation locale prefix */
+#undef PACKAGE_LOCALE_DIR
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Parameter Help File */
+#undef PARAM_HELPFILE
+
+/* System Patch Directory */
+#undef PATCH_DIR
+
+/* PHASEX Data Directory */
+#undef PHASEX_DIR
+
+/* Built with gcc major version */
+#undef PHASEX_GCC_MAJOR
+
+/* Built with gcc minor version */
+#undef PHASEX_GCC_MINOR
+
+/* Built with gcc-$gccver */
+#undef PHASEX_GCC_VERSION
+
+/* GTKRC stub for theme engine */
+#undef PHASEX_GTK_ENGINE_RC
+
+/* PHASEX License Text */
+#undef PHASEX_LICENSE_FILE
+
+/* Pixmap Directory */
+#undef PIXMAP_DIR
+
+/* System Sample Directory */
+#undef SAMPLE_DIR
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Version number of package */
+#undef VERSION
+
+/* Build without LASH support */
+#undef WITHOUT_LASH
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to rpl_malloc if the replacement function should be used. */
+#undef malloc

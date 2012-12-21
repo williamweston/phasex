@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=PHASEX
+Comment=Phase Harmonic Advanced Synthesis EXperiment
+Icon=@ac_datadir@/phasex/pixmaps/phasex-icon.png
+Exec=phasex
+Terminal=false
+Type=Application
+
+Version=1.0
+
+X-Desktop-File-Install-Version=0.10
+
+Categories=AudioVideo;Audio;X-MIDI;X-Synthesis;X-JACK;X-Digital_Processing;

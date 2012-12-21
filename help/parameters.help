@@ -1,0 +1,965 @@
+[General]
+
+:bpm:BPM:
+Beats Per Minute.  The BPM serves as a basis for all tempo based LFO
+and oscillator rates, as well as Delay Time.
+.
+
+:patch_tune:Patch Tune:
+The master tuning parameter for patches.  Tuning step size is 1/120th
+of a halfstep, or e^(ln(2)/1440).  PHASEX is tuned to A4 at 440 Hz by
+default.  For 432 Hz tuning, use a value of -38, or change the global
+A4 tuning frequency setting in the preferences.
+.
+
+:keymode:KeyMode:
+KeyMode determines the behavior of voice allocation, envelope
+triggering, oscillator phase triggering, lfo phase triggering, and
+oscillator and lfo frequency assignments.  There are four KeyModes:
+Mono Smooth, Mono ReTrig, Mono MultiKey, and Poly.
+
+Mono Smooth: One active voice, always assigned to the newest MIDI note
+currently in play.  Envelopes are not retriggered when playing legato.
+
+Mono ReTrig: One active voice, always assigned to the newest MIDI note
+currently in play.  Envelopes are retriggered for every new note.
+
+Mono MultiKey: One active voice.  MIDI keys in play are dynamically
+assigned to the MIDI Key based oscillators and LFOs in a round-robin
+fashion.  Portamento, if set, operates on a per oscillator basis.
+Envelopes and Tempo+Trig oscillators and LFOs are not retriggered when
+playing legato.
+
+Poly: Pure polyphonic mode.  Polyphony (max number of voices per part)
+can be set in the preferences.  If the number of MIDI notes held in play
+exceeds the number of available voices, the corresponding to the oldest
+(earliest played) note will be stolen and reassigned to the newest key.
+Tempo based oscillators are retriggered for the first note put into play
+due to the voices not being free running.  LFOs are free running,
+causing Tempo based LFOs to not be retriggered for every new note.  (If
+you want this, use Tempo+Trig instead.)  .
+
+:keyfollow_vol:Volume Key Follow:
+The key relative volume curve.  At 0, relative volumes of keys are
+equal.  Negative values progressively add volume to the lower keys,
+while positive values progressively add volume to the higher keys.
+.
+
+:transpose:Master Transpose:
+Transposes all MIDI key based oscillator frequencies and filter
+keyfollow frequency by the specified number of half steps.
+.
+
+:portamento:Portamento:
+Portamento sets the duration of a portamento slide while playing
+legato in Mono Smooth or Mono MultiKey mode.  The duration curve is
+the same duration curve used by the envelopes.
+.
+
+
+[Input]
+
+:input_follow:Input Envelope Follower:
+Generates an envelope based on input levels and applies it to the
+signal chain between voice mixing and effects.
+.
+
+:input_boost:Input Boost:
+The amount of above unity gain to apply to inputs.
+.
+
+
+[Amplifier]
+
+:volume:Patch Volume:
+Volume in 1/2 dB [e^(ln(10)/40)] increments with 0dB at 120.
+.
+
+:pan:Pan:
+Stereo panning control, mixed on a parabolic curve.
+.
+
+:stereo_width:Stereo Width:
+Width of the stereo field of voice outputs prior to effects, ranging
+from pure mono at 0 to pure stereo at 127.
+.
+
+:amp_velocity:Amplifier Velocity Sensitivity:
+Amplifier sensitivity to velocity and aftertouch changes.  Velocity
+is centered at 100 (ie, a note-on velocity of 100 produces no change
+in amplitude).  Amp Velocity follows both channel aftertouch and key
+aftertouch.
+.
+
+:amp_attack:Amplifier Attack:
+Duration of the attack portion of the amplifier envelope.
+.
+
+:amp_decay:Amplifier Decay:
+Duration of the decay portion of the amplifier envelope.
+.
+
+:amp_sustain:Amplifier Sustain:
+Volume of the sustain portion of the amplifier envelope.  The
+amp envelope follows a logarithmic curve and provides a dynamic
+range of over 120dB.
+.
+
+:amp_release:Amplifier Release:
+Duration of the release portion of the amplifier envelope.
+.
+
+
+[Chorus]
+
+:chorus_mix:Chorus Mix:
+The dry/wet mix ratio, ranging from all dry at 0 to equal wet and dry
+at 64, and nearly all wet at 127.
+.
+
+:chorus_amount:Chorus Depth:
+The depth of LFO modulation when reading from the delay line.
+.
+
+:chorus_time:Chorus Delay Time:
+The length of the chorus delay line.
+.
+
+:chorus_feed:Chorus Feedback:
+The delay line input/output mix ratio used at delay line input,
+ranging from all input at 0 to equal input and output at 64, and
+nearly all output at 127.
+.
+
+:chorus_crossover:Chorus Crossover:
+Chorus Crossover.  Swaps the left and right outputs of the chorus
+delay line.
+.
+
+:chorus_lfo_wave:Chorus LFO Wave:
+Waveform to use for the dedicated Chorus LFO.
+.
+
+:chorus_lfo_rate:Chorus LFO Rate:
+Tempo based rate of the dedicated Chorus LFO.
+.
+
+
+[Chorus Phaser]
+
+:chorus_phase_rate:Chorus Phase Rate:
+Tempo based rate of the Chorus Phaser LFO.
+.
+
+:chorus_phase_amount:Chorus Phase Balance:
+The mix ratio of the two 180 degree split / 90 degree offset groups in
+the Chorus Phaser.
+.
+
+
+[Delay]
+
+:delay_mix:Delay Mix:
+The wet/dry mix ratio, ranging from all dry at 0 to equal wet and dry
+at 64, and nearly all wet at 127.
+.
+
+:delay_feed:Delay Feedback:
+The delay line input/output mix ratio used at delay line input,
+ranging from all input at 0 to equal input and output at 64, and
+nearly all output at 127.
+.
+
+:delay_time:Delay Time:
+Tempo based delay time, ranging from 1/128 of a bar (1/32 of a beat)
+to 1 bars (4 beats).
+.
+
+:delay_crossover:Delay Crossover:
+Swaps the delay line output for both main and feedback mixing.
+.
+
+:delay_lfo:Delay LFO:
+The LFO to use to modulate the Delay Time.
+.
+
+
+[Filter]
+
+:filter_cutoff:Filter Cutoff:
+Filter cutoff frequency corresponding to MIDI note number at current
+Master Tune.  In Filter KeyFollow modes, a value of 64 (center) sets
+the filter cutoff frequency to that of the followed key, with 76 an
+octave above and 52 an octave below, etc.
+.
+
+:filter_resonance:Filter Resonance:
+Amount of extra resonance around the filter cutoff frequency, ranging
+from zero resonance to just under self-oscillation.
+.
+
+:filter_smoothing:Filter Smoothing:
+Length of the decayed averager for filter cutoff controller movements,
+in 160 sample increments.
+.
+
+:filter_keyfollow:Filter Keyfollow:
+In Filter KeyFollow modes, a value of 64 (center) sets the filter
+cutoff frequency to that of the followed key, with 76 an octave above
+and 52 an octave below, etc.  In Newest, Highest, and Lowest modes,
+the followed key for all voices will be the newest, highest, or lowest
+key currently in play, respectively.  In KeyTrig mode, the followed
+key for each voice is the key mapped to that voice.
+.
+
+:filter_mode:Filter Mode:
+Tap or combination of taps to use from filter output.  All taps are
+from the same filter, and thus share the same cutoff frequency and
+resonance.
+
+LowPass:  Keep all frequencies below the cutoff frequency.
+
+HighPass:  Keep all frequencies above the cutoff frequency.
+
+BandPass:  Keep frequencies centered around the cutoff frequency.
+
+BandStop:  (Notch) Reject frequencies centered around the cutoff.
+
+LP+BP:  LowPass + BandPass
+
+HP+BP:  HighPass + BandPass
+
+LP+HP:  LowPass + BandPass
+
+BS+BP:  BandStop + BandPass
+.
+
+:filter_type:Filter Type:
+Filter algorithm type.  Choices are:
+
+Dist:  Oversampled Chamberlin filter with distortion applied to the
+lowpass tap to add saturation and control resonance.  This distortion
+softens the sound and keeps the filter from squelching and ringing at
+high resonance.
+
+Retro:  Oversampled Chamberlin filter with no distortion for the
+classic, cleaner filter sound complete with any ringing or squelching
+qualities produced at high resonance.
+
+Moog Dist:  Oversampled Stilson/Smith style 24dB/octave Moog filter with
+some slight distortion to smooth out the ringing/squelching in the
+filter resonance.  Saturation is applied at the filter input gain stage.
+For self oscillation at maximum resonance, a low gain and high patch
+volume may be needed.
+
+Moog Clean: Same as above without input gain saturation or harmonic
+series waveshaper.
+
+3Pole Dist: Experimental filter design consisting of the MoogDist
+filter with one of the poles chopped out.  In essence, this becomes an
+18dB/octave filter with a frequency offset between the poles, and works
+best as a sort of diffuser.
+
+3Pole Raw: Same as above without input gain saturation or harmonic
+series waveshaper.
+.
+
+:filter_lfo:Filter LFO:
+LFO to use for modulating filter cutoff frequency.  To follow key
+velocity and aftertouch, use the 'Velo' setting.  To turn off filter
+modulation completely, use the 'Velo' setting and set Filter LFO Cutoff
+and Filter LFO Resonance to zero.  Filter velocity also follows MIDI
+aftertouch (key pressure) messages.
+.
+
+:filter_lfo_cutoff:Filter LFO Cutoff:
+Depth of modulation, in halfsteps, of filter cutoff frequency.
+.
+
+:filter_lfo_resonance:Filter LFO Resonance:
+Depth of modulation of filter resonance.
+.
+
+:filter_gain:Filter Gain:
+Filter input gain in 1/2 dB [e^(ln(10)/40)] increments with 0dB at
+120.
+.
+
+
+[Filter Envelope]
+
+:filter_env_amount:Filter Envelope Amount:
+Range in halfsteps used by the filter envelope to modulate the filter
+cutoff frequency.
+.
+
+:filter_env_sign:Filter Envelope Sign:
+Direction in which the filter envelope modulates filter cutoff
+frequency.
+.
+
+:filter_attack:Filter Attack:
+Duration of the attack portion of the filter envelope.
+.
+
+:filter_decay:Filter Decay:
+Duration of the decay portion of the filter envelope.
+.
+
+:filter_sustain:Filter Sustain:
+Volume of the sustain portion of the filter envelope.  The filter
+envelope uses a linear curve, and is linear with respect to the
+musical scale.
+.
+
+:filter_release:Filter Release:
+Duration of the release portion of the filter envelope.
+.
+
+
+[Oscillator]
+
+:osc#_modulation:Oscillator Mix Modulation:
+Modulation to use when mixing this oscillator to produce the
+pre-filter voice output.  Choices are:
+
+Off:  Do not calculate this oscillator, and set its output to zero.
+
+Mix:  Add this oscillator to the signal path.
+
+AM:  Amplitude modulate the voice by this oscillator.
+
+Mod:  Calculate output of this oscillator, but do not mix.
+.
+
+:osc#_polarity:Oscillator Polarity:
+Peak to peak polarization of this oscillator.  Choices are bipolar
+(with range of [-1.0,1.0]) and Unipolar (with range of [0.0,1.0]).
+.
+
+:osc#_source:Oscillator Source:
+Signal source for this oscillator:
+
+MIDI Key:  Wavetable based with MIDI key based frequency.
+
+Input 1:  Input 1 is sent to both oscillator outputs.
+
+Input 2:  Input 2 is sent to both oscillator outputs.
+
+Input 1&2:  Inputs 1&2 are sent to oscillator outs as stereo pair.
+
+Amp Env:  Logarithmic amplifier envelope is sent to oscillator outs.
+
+Filter Env:  Linear filter envelope is sent to oscillator outs.
+
+Velocity:  Note on velocity and key/channel aftertouch set output in
+  the range of [0.0,1.0), useful for modulating other oscillators.
+
+Tempo:  Wavetable based with Tempo based frequency.
+
+Tempo+Trig:  Wavetable based with Tempo based frequency and KeyMode
+  dependent init phase triggering for note-on events.
+.
+
+:osc#_wave:Oscillator Wave:
+Waveform for wavetable based oscillator sources:
+
+Sine, Triangle, Saw, RevSaw, Square, and Stair are generated from the
+pure mathematical formulas with no bandlimiting or smoothing.
+
+BL Saw, BL RevSaw, BL Square, and BL Stair are bandlimited at 4
+octaves above the principal.
+
+Juno Osc, Juno Saw, Juno Square, and Juno Poly are sampled from a
+Juno-106 in unison mode (all 6 voices in a stacked mono mode).
+
+The Analog Square waveform comes from an analog square wave synth hand
+built by Jared "Flak" Scott.
+
+The Vox 1 and Vox 2 waveforms are sampled from the voice of the
+principal author of PHASEX.
+
+Identity and Null are utility oscillators and not audible.  Identity
+sets output to 1.0.  Null centers output to 0.0 when Oscillator
+Polarity is Bipolar, and to 0.5 when Oscillator Polarity is Unipolar.
+.
+
+:osc#_rate:Oscillator Rate:
+Tempo based rate, in bars, to use as oscillator frequency when
+Oscillator Source is Tempo or Tempo+Trig.
+.
+
+:osc#_init_phase:Oscillator Init Phase:
+Initial phase offset in 2.8125 degree (1/128 unit circle) increments
+used when Oscillator Source is MIDI Key or Tempo+Trig.
+.
+
+:osc#_transpose:Oscillator Transpose:
+Oscillator tuning in halfsteps.  Tempo based oscillators may be
+transposed as well as MIDI key based oscillators.
+.
+
+:osc#_fine_tune:Oscillator Fine Tune:
+Oscillator fine-tuning in 1/120th half-steps.
+.
+
+:osc#_pitchbend:Oscillator Pitchbend:
+Per-oscillator range of the MIDI pitchbender in halfsteps.  Negative
+values reverse the direction of pitchbending.
+.
+
+
+[Oscillator Modulators]
+
+:osc#_fm_mod:Oscillator FM Modulator:
+The oscillator or LFO to use as a modulator for frequency modulation.
+The current oscillator serves as the carrier.  Stereo modulators are
+mixed down to mono before modulation.  Only MIDI Key and Tempo sources
+(the sources which utilize the wavetable) may be frequency modulated.
+When modulators are selected in latch mode, this oscillator's phase is
+hard-latched to the Init Phase of the modulator. Note on velocity and
+key/channel aftertouch are mapped linearly to the range of [0,1] when
+used as FM modulators.
+.
+
+:osc#_fm_mod_amount:Oscillator FM Amount:
+Depth and direction of frequency modulation, in halfsteps.
+.
+
+:osc#_fm_mod_fine:Oscillator FM Fine Tune:
+Depth and direction of frequency modulation, in 1/120th halfsteps.
+.
+
+:osc#_am_mod:Oscillator AM Modulator:
+The oscillator or LFO to use as a modulator for amplitude modulation.
+For AM, the carrier (this oscillator) is multiplied by the modulator.
+Note on velocity and key/channel aftertouch are linear mapped to the
+range of [0,1] when used as AM modulators.
+.
+
+:osc#_am_mod_amount:Oscillator AM Amount:
+Depth of amplitude modulation.  Negative values reverse the phase.
+.
+
+:osc#_pm_mod:Oscillator PM Modulator:
+The oscillator or LFO to use to modulate phase separation between
+right and left channels for this oscillator.  Note on velocity and
+key/channel aftertouch are linear mapped to the range of [-192,189]
+degrees when used as PM modulators.
+.
+
+:osc#_pm_mod_amount:Oscillator PM Amount:
+Depth of modulation of phase offset between right and left channels
+for this oscillator, in 3 degree steps.
+.
+
+:osc#_wave_lfo:Oscillator Wave Select LFO:
+The LFO to use for wave select modulation.
+.
+
+:osc#_wave_lfo_amount:Oscillator Wave Select Modulation Amount:
+Range of waveforms to use in wave select modulation.  The wavetable
+becomes a circular list for wave select modulation to support ranges
+greater than the number of available waveforms.
+.
+
+
+[LFO]
+
+:lfo#_polarity:LFO Polarity:
+Peak to peak polarization of this LFO.  Choices are bipolar (with
+range of [-1.0,1.0]) and Unipolar (with range of [0.0,1.0]).
+.
+
+:lfo#_source:LFO Source:
+Signal source for this LFO:
+
+MIDI Key:  Wavetable based with MIDI key based frequency.
+
+Input 1:  Input 1 is sent to LFO output.
+
+Input 2:  Input 2 is sent to LFO output.
+
+Input 1&2:  Inputs 1&2 are mono mixed and sent to LFO output.
+
+Amp Env:  Logarithmic amplifier envelope is sent to LFO output.
+
+Filter Env:  Linear filter envelope is sent to LFO output.
+
+Velocity:  Key velocity and channel aftertouch set output in the
+  range of [0.0,1.0), useful for modulating other oscillators.
+
+Tempo:  Wavetable based with Tempo based frequency.
+
+Tempo+Trig:  Wavetable based with Tempo based frequency and KeyMode
+  dependent init phase triggering for note-on events.
+.
+
+:lfo#_wave:LFO Wave:
+Waveform for wavetable based LFO sources:
+
+Sine, Triangle, Saw, RevSaw, Square, and Stair are generated from the
+pure mathematical formulas with no bandlimiting or smoothing.
+
+BL Saw, BL RevSaw, BL Square, and BL Stair are bandlimited at 4
+octaves above the principal.
+
+Juno Osc, Juno Saw, Juno Square, and Juno Poly are sampled from a
+Juno-106 in unison mode (all 6 voices in a stacked mono mode).
+
+The Analog Square waveform comes from an analog square wave synth hand
+built by Jared "Flak" Scott.
+
+The Vox 1 and Vox 2 waveforms are sampled from the voice of the
+principal author of PHASEX.
+
+Identity and Null are utility oscillators and can be used to produce
+static offsets.  Identity sets output to 1.0.  Null centers output to
+0.0 when Oscillator Polarity is Bipolar, and to 0.5 when Oscillator
+Polarity is Unipolar.
+.
+
+:lfo#_rate:LFO Rate:
+Tempo based rate, in bars, to use as LFO frequency when LFO Source is
+Tempo or Tempo+Trig.
+.
+
+:lfo#_init_phase:LFO Init Phase:
+Initial phase offset in 2.8125 degree (1/128 unit circle) increments
+used when LFO Source is MIDI Key or Tempo+Trig.
+.
+
+:lfo#_transpose:LFO Transpose:
+LFO tuning in halfsteps.  Tempo based LFOs may be transposed as well
+as MIDI key based LFOs.
+.
+
+:lfo#_pitchbend:LFO Pitchbend:
+Per-LFO range of the MIDI pitchbender in halfsteps.  Negative
+values reverse the direction of pitchbending.
+.
+
+:lfo#_voice_am:LFO Voice AM:
+Depth of Amplitude Modulation of the voice using this LFO as the
+modulator.  Unlike AM within the oscillator modulations, this
+modulation is performed post-filter.
+.
+
+:lfo#_lfo1_fm:LFO-1 Rate:
+Depth of frequency modulation, with LFO-1 as carrier and this LFO as
+modulator.  Rate (frequency) change is measured in half-steps (for
+example, -12 is a halving of frequency, and +24 is a quadrupling).
+.
+
+:lfo#_cutoff:LFO Cutoff:
+Depth of modulation of filter cutoff frequency, in half-steps.
+.
+
+:lfo#_lfo3_fm:LFO-3 Rate:
+Depth of frequency modulation, with LFO-3 as carrier and this LFO as
+modulator.  Rate (frequency) change is measured in half-steps (for
+example, -12 is a halving of frequency, and +24 is a quadrupling).
+.
+
+
+[Patch]
+
+:session_number:Session Number:
+In addition to the per-part patch bank, PHASEX also utilizes a session
+bank for easily keeping track of sessions.  Session patches are always
+loaded into the first program slot for each respective part.
+.
+
+:session_name:Session Name:
+The name of the current session, which is also used as the session
+directory name.  Sessions are stored in the user session directory
+~/.phasex/sessions/ by default, but may be stored anywhere.  To load a
+session from the same containing directory as the current session or
+from the default session directory, enter the session name and click
+Load Session.  To save a session into the default session directory,
+enter the new session name and click Save Session.
+.
+
+:part_number:Part Number:
+Currently visible synth part (in the multitimbral sense).
+.
+
+:program_number:Program Number:
+Currently used slot in the patchbank, with a total of 1024 patches.
+The program number (and thus the current patch) can be changed via
+the GUI or via MIDI Program Change messages.
+.
+
+:patch_name:Patch Name:
+The name of the current patch.  Patches are saved by name, with a .phx
+file extension added automatically.  To load a patch from the same
+directory as the current patch, from the sys-patches directory, or
+from the user-patches directory, enter the patch name and click Load.
+To save a patch, enter the new name and click Save.  If for any reason
+the patch cannot be saved to the current directory, it will be saved
+to the user-patches directory.
+.
+
+:midi_channel:MIDI Channel:
+The MIDI channel that PHASEX listens to on all subscribed MIDI ports.
+In Omni mode, PHASEX listens for events on all MIDI channels.
+.
+
+
+[Main]
+
+:using_phasex:Using PHASEX:
+
+Welcome to the <b>P</b>hase <b>H</b>armonic <b>A</b>dvanced
+<b>S</b>ynthesis <b>EX</b>periment.  PHASEX is a low latency, realtime
+synthesis application with MIDI control for Linux systems equipped
+with a realtime kernel and ALSA and/or JACK.
+
+<b>Requirements:</b>
+
+* 1.6 GHz or better CPU.  Multi-core preferred.
+* 512 MB RAM (more for multi-timbral builds).
+* Relatively modern (within past ~4 years) Linux distribution.
+* ALSA and/or JACK.
+* Hardware and/or software MIDI controllers (sequencers, keyboards,
+  knob-boxes, arpeggiators, etc.)
+* Realtime Linux kernel (-rt patches).
+* Proper configuration of permissions and resource limits for
+  memory locking, rt scheduling, and audio device access.
+
+<b>Parameter Help System:</b>
+
+For detailed information about any parameter, middle-click on the
+parameter's name to open its help window (and to close any other
+currently visible help window).  Middle-clicking again on the name of
+a parameter whose help window is already visible will result in the
+help window being closed.
+
+<b>Parameter Control:</b>
+
+Control of every parameter is available through the main graphical
+interface and through MIDI.  All integer based parameters will display
+the MIDI controller value either directly or offset by 64 (for zero
+centered parameters).  All parameters use knobs along with an
+alternate input and visual feedback control.  Knobs offer three types
+of movement:
+
+<i>Absolute:</i>  Left-click-and-drag events respond to absolute
+movement, where the knob indicator always follows the movement of the
+pointer.
+
+<i>Linear:</i>  Right-click-and-drag events respond to linear movement,
+where values are incremented through movements to the right and up,
+and decremented through movements to the left and down.
+
+<i>Incremental:</i>  Right-click events will decrement a parameter
+value by its page increment size.  Left-click events will increment by
+the page size.  Middle-click events will center the knob.
+
+Of special note, scroll events on a parameter's knob or alternate
+control will increment and decrement its value by a single step at a
+time.  For the value labels connected to detent knobs, left-, middle-,
+and right-click events correspond to the value being decremented,
+centered, or incremented respectively.
+
+<b>MIDI Control:</b>
+
+Every parameter is mappable to a MIDI controller.  For instant
+mapping, right-click on the name of a parameter to open its update
+window (and to close any other currently visible update window).
+Select the desired MIDI controller number either through the
+spinbutton control or by sending a MIDI controller message.  Up to 15
+parameters may be mapped to a single MIDI controller.  Parameters may
+be locked as well, blocking all changes from patch loads and program
+changes.  Left-clicking on the name of a parameter whose update window
+is already visible will result in the update window being closed.
+MIDI controller maps may be opened and saved through the MIDI menu.
+The last opened or saved MIDI map becomes the default.
+
+<b>Preferences:</b>
+
+In the spirit of vintage hardware synth designs, all immediately
+applicable settings changes are effective immediately.  No waiting.
+No wondering about whether or not applying changes is required before
+selecting tabs.  Changes that affect the MIDI, audio, or synth engine
+are only saved after the necessary subsystems are restarted.  Changes
+for drivers not currently selected are applied immediately, but not
+effective until selecting the appropriate driver.  All other changes
+are effective immediately.
+
+In the event of catastrophic failure, and PHASEX fails to start, edit
+~/.phasex/phasex.cfg and look for the last settings change, or simply
+remove phasex.cfg (but not any directories) and PHASEX will start with
+the default config and auto-detect your setup all over again.
+
+<i>MIDI Driver:</i>  Switch between MIDI drivers instantly.  JACK
+MIDI is only supported in conjunction with JACK audio output since
+JACK MIDI is handled during the same process callback that handles
+JACK audio.
+
+<i>ALSA Sequencer MIDI Port:</i>  ALSA sequencer port designation for
+ALSA hardware or software MIDI devices.  The ALSA sequencer is the
+defacto standard for Linux MIDI apps.  Until JACK MIDI is supported by
+more projects, the ALSA sequencer will be needed to connect to PHASEX
+from most sequencers.  To connect from multiple ports, use a comma
+separated list of port designations.
+
+<i>ALSA Raw MIDI Device:</i>  ALSA hardware designation for reading
+raw MIDI from ALSA supported hardware.  Using ALSA Raw MIDI bypasses
+the ALSA sequencer interface and in theory will provide the best
+latency and timing performance.
+
+<i>Generic Raw MIDI Device:</i>  Path to generic raw MIDI device file,
+usually /dev/midiN or /dev/midiNN.  Generic Raw MIDI should only be
+needed for more obscure MIDI hardware with standalone (non-ALSA)
+drivers that provide a device file interface, though reading MIDI from
+named pipes, sockets, of FIFOs is alsa theoretically possible.
+
+<i>MIDI Clock - Audio Wakeup Phase Lock:</i>  Phase within the MIDI
+period of the expected wakeup time for audio buffer processing.  This
+setting affects the synchronization between the MIDI, audio, and synth
+engine threads.  Lower values yield lower MIDI latencies, and come 
+with the trade-off of allowing less time for the engine threads to
+complete their work.  For this reason, lower values may only work when
+Buffer Latency is set to 2 or 3 (allowing the engine threads an extra
+period or two to do their work).  Higher values yield higher latencies
+with the added benefit of giving the engine threads longer to run.
+The default phase lock is 0.9375, empirically tuned to allow a bit of
+jitter in audio processing wakeup timing without constantly relatching
+the clock, while giving the engine threads over 90% of the period time
+to do their work.  In many situations, this can allow Buffer Latency
+to be set to the minimum value of 1, giving a total MIDI latency of:
+(hw_latency + driver_latency + (1.9375 * period_size)).  
+
+<i>Ignore MIDI Program Change:</i>  Ignore all Program Change messages
+received via MIDI.  This is helpful when dealing with both hardware
+and software sequencers that insist on sending Program Change messages
+at sequence start.
+
+<i>Audio Driver:</i>  Switch between audio drivers instantly.
+Currently supported are ALSA (with write and poll, direct write, and
+mmap variants) and JACK (with multi- and stereo- output variants).
+
+<i>Buffer Latency:</i>  The number of periods of latency between when
+audio buffers are generated by the synth engine threads, and when they
+are used by the selected audio driver.  Please note that this setting
+is independent of the number of buffer periods used by the underlying
+audio driver.
+
+<i>Playback Sample Rate:</i>  Switch between sample rates for ALSA
+audio instantly.
+
+<i>Buffer Period Size:</i>  Switch between ALSA audio buffer period
+sizes instantly.  Please note that this is the size of a single audio
+buffer period, and that the total audio latency is determined by both
+the Buffer Period Size, and the Buffer Latency (under the Audio tab).
+
+<i>Force 16bit Audio Samples:</i>  Force ALSA to use 16bit signed
+integer PCM samples for the selected hardware, regardless of the
+card's native sample format or any 24 or 32 bit capabilities
+advertised by the driver.  This can be helpful with old hardware or
+drivers with broken 32bit sample implementations.
+
+<i>ALSA PCM Device:</i>  ALSA audio device designation for audio input
+and output.  Usually plughw:X,Y or simply hw:X,Y will be used here,
+but almost any audio device defined in the user or system asoundrc
+will work.
+
+<i>JACK Connect Mode:</i>  In Autoconnect mode, PHASEX will connect
+to the first pair of JACK hardware ports it finds, for both input and
+output.  In Manual mode, no JACK audio connections will be made unless
+specified on the command line with the -i or -o flags, or manually
+with a JACK aware patchbay or DAW.
+
+<i>JACK Transport Mode:</i>  Optionally enable JACK Transport sync,
+which syncs either the tempo, or both the tempo and LFO phase
+positions to the JACK transport timebase.
+
+<i>A4 Tuning Frequency:</i>  The base tuning frequency for A4, in Hz.
+The default is 440, and should work for most modern music.  Acceptable
+values cover the 2 octave range from 220Hz to 880Hz.
+
+<i>Polyphony:</i>  Maximum number of voices in play at once.  To reduce
+CPU usage, reduce polyphony.
+
+<i>Sample Rate Mode:</i>  In Normal mode, PHASEX uses an internal
+sample rate matching the current JACK sample rate.  In Undersample
+mode, the internal rate is half the JACK rate.  In Oversample mode,
+the internal rate is double the JACK rate.  Both Undersample and
+Oversample modes use linear interpolation to adjust from internal to
+output sample rates.
+
+<i>Bank Memory Mode:</i>  This option determines the behavior of how
+patches are loaded and stored in the patch bank:
+
+  <i>Autosave:</i>  Insane Mode.  The current patch is automatically
+  saved periodically (about every 2 to 20 seconds), and before loading
+  or selecting new patches.  Old files will be overwritten without
+  warning, so use carefully.  This option is intended for sound design
+  and patch bank maintenance sessions and probably isn't suitable for
+  daily usage.
+
+  <i>Warn:</i>  Super-safe mode.  Warnings will be issued on any
+  attempt to overwrite a patch file or any time a new patch is loaded
+  and current modifications to the patch will be lost.  Use this
+  option to ensure that neither existing patches nor their modified in
+  memory copies are accidentally lost.
+
+  <i>Protect:</i>  Sane mode.  Old patches will never be overwritten
+  without warning, thus providing complete safety for the save button.
+  When new patches are loaded, any existing modifications will be
+  quietly discarded.  Use this mode to keep popup dialogs to a minimum
+  while ensuring that existing patches are never overwritten.
+
+<i>MIDI Priority:</i>  Realtime priority for the MIDI thread.  This
+value should be above all JACK and audio processing (but not audio IRQ)
+priorities.
+
+<i>Engine Priority:</i>  Realtime priority for the synth engine thread.
+This value should be set to match Audio Priority (or slightly higher).
+
+<i>Audio Priority:</i>  Realtime priority for the audio thread.  For
+both ALSA and JACK, this setting should match the priority at which
+JACK runs all client threads.
+
+<i>Realtime Scheduling Policy:</i>  Scheduling policy to use for the
+realtime MIDI and synth engine threads.  On most systems, this can be
+left at SCHED_FIFO.  Change to SCHED_RR if your realtime audio system
+requires it.
+
+<i>Fullscreen:</i>  Use the entire display, removing window borders and
+decorations.  The behavior of Fullscreen mode is somewhat dependent on
+the window manager, and should work well on most systems.
+
+<i>Window Layout:</i>  In Notebook mode, the parameters are broken up
+into two notebook pages -- one for the oscillators, and one for
+everything else.  Notebook mode is the default, and should work quite
+well for small displays.  In One Page mode, all parameters fit
+inside the main window.  One Page mode requires a screen resolution
+of 1200x900 or larger with the default font.  To fit one of the layout
+modes into a smaller screen, use Fullscreen mode and/or select smaller
+fonts and button sizes.  Widescreen mode is mostly suited for
+widescreen displays.
+
+<i>Knob Size:</i>  Choose knob size to help fit phasex into any size
+desktop.  Choices range from 16x16 (probably only necessary on tiny
+netbook displays) to 52x52 (probably only useful in Widescreen mode).
+
+<i>Refresh Interval:</i>  Interval at which a timer wakes up to refresh
+the on-screen parameter values which have changed due to patch loads
+and MIDI events.
+
+<i>GTK Theme:</i>  Select between the included Light or Dark themes,
+use the System default GTK theme, or select a Custom theme below.
+
+<i>Custom GTK Theme:</i>  Select a custom gtkrc file for PHASEX to use
+as its theme.
+
+<i>Knob Directory:</i>  Directory in which to find rendered knob images
+for standard numeric parameters.  Files in this directory are expected
+to be named knob-WWxHH.png, where WWxHH is the resolution of the image.
+
+<i>Knob Directory:</i>  Directory in which to find rendered detent knob
+(aka chickenhead knob) images for parameters with non-integer values
+(like rates, oscillators, modulations, filter types, etc.).  Files are
+named detent-knob-WWxHH.png, where WWxHH is the resolution of the
+image.
+
+<i>Font:</i>  Select a font to use for the main GUI.  For extra small
+fonts, try these:  anorexia, aqui, cure, drift, edges, lime, gelly,
+glisp, gothic, goth_p, mintsmild, mintsstrong, nu, qub, snap, and sys.
+
+<i>Title Font:</i>  Select the font to use for frame labels, notebook
+tab labels, and menus.
+
+<i>Numeric Font:</i>  Select a font to use for spinbuttons and other
+parameter values, patch name display, and session name display.
+
+
+<b>Command Line Parameters:</b>
+
+<i>usage:</i>  phasex [options] [&lt;patch-name&gt;|&lt;program-number&gt;|&lt;patch-file&gt; &lt;...&gt;]
+<tt>
+
+
+PHASEX Options:
+
+ -c, --config-file=     Alternate config (takes precedence over default
+
+				default config file and command line options.
+
+ -A, --audio-driver=    Audio driver:  alsa or jack.
+
+ -a, --audio-device=    ALSA device name (hw:x,y format).
+
+ -r, --sample-rate=     Audio sample rate (ALSA only).
+
+ -p, --latency-periods= Number of buffer latency periods (ALSA only).
+
+ -s, --period-size=     Buffer period size (power of 2, ALSA only).
+
+ -M, --midi-driver=     MIDI driver:  jack, alsa-seq, alsa-raw, generic.
+
+ -m, --midi-port=       MIDI input port or device name	(driver specific).
+
+ -f, --fullscreen       Start in fullscreen mode.
+
+ -x, --maximize         Start with main window maximized.
+
+ -b, --bpm=             Override BPM in patch bank and lock BPM parameter.
+
+ -t, --tuning=          Base tuning frequency for A4 (default 440 Hz).
+
+ -i, --input=           Comma separated pair of JACK input port matches.
+
+ -o, --output=          Comma separated pair of JACK output port matches.
+
+ -O, --oversample       Use double the sample rate for internal math.
+
+ -U, --undersample      Use half the sample rate for internal math.
+
+ -G, --no-gui           Run PHASEX without starting the GUI.
+
+ -d, --debug=           Debug class (Can be repeated. See debug.c).
+
+ -l, --list             Scan and list audio and MIDI devices.
+
+ -v, --version          Display version and exit.
+
+ -h, --help             Display this help message and probe ALSA hardware.
+
+
+LASH Options:
+
+ -P, --lash-project=    LASH project name.
+
+ -S, --lash-server=     LASH server address.
+
+ -I, --lash-id=         LASH client ID.
+
+ -L, --disable-lash     Disable LASH completely for the current session.
+</tt>
+
+
+Please note that unless an alternate config file is used, all command
+line options take precedence over settings saved in the config file.
+
+If using phasex with JACK, make sure jackd is running (and configured
+for your system) before running phasex.  If jackd is not running,
+PHASEX will fall back to using the ALSA drivers.  If you use software
+like qjackctl to handle your audio and MIDI patchbay, then the command
+line port connection options aren't necessary.  The -i and -o options
+accept comma separated substring pairs to match on JACK audio port
+names.  The -m option takes a comma separated list of MIDI ports (X:Y
+for ALSA Seq, hw:X,Y for ALSA Raw, or device file for generic raw
+MIDI).  For example:
+
+    phasex -A jack -i _1,_2 -o _1,_2 -M alsa-seq -m 16:0,20:0
+
+will match JACK ports alsa_pcm:capture_1 and alsa_pcm:capture_2 for
+input, alsa_pcm:playback_1 and alsa_pcm:playback_2 for output, and the
+first two ALSA sequencer hardware MIDI input ports with relatively
+recent versions of JACK and ALSA.  (Jack2/jackdmp uses 'system' instead
+of 'alsa_pcm'.  ALSA port designations vary from system to system.)
+
+.

@@ -1,0 +1,254 @@
+==============================================================================
+[P]hase [H]armonic [A]dvanced [S]ynthesis [EX]permient
+
+TODO LIST:
+==============================================================================
+
+
+------------------------------------------------------------------------------
+Architectural changes:
+------------------------------------------------------------------------------
+
+* Eliminate memory leak in ALSA restart / shutdown.  Find and
+  eliminate remaining memory leaks.
+
+* Move GUI, phasex synth engine, audio and MIDI support, and
+  application framework into separate shared libraries.
+
+* Add thread-safe signal handlers for SIGQUIT and SIGTERM for saving
+  patches, SIGUSR1 for LADISH, and SIGSTOP and SIGCONT for suspending
+  workloads.
+
+* Handle misconfigured / missing audio or MIDI driver gracefully.
+
+* Use a table and loop to speed up init_params().
+
+* Add CPU affinity and cgroup configuration support.
+
+
+------------------------------------------------------------------------------
+Build system:
+------------------------------------------------------------------------------
+
+* Add build / packaging options to exclude MIDI clock code.
+
+* Add build rules to render knob and icon images from .svg files.
+
+* Use tagged version from git for version referenced from build system.
+
+* Create dev logo to use as main icon/logo in dev builds.
+
+* Add --disable-inputs as a build option to configure.ac.
+
+
+------------------------------------------------------------------------------
+API support:
+------------------------------------------------------------------------------
+
+* Support DSSI/OSC for DSSI plugin build.  (low priority)
+
+* Support LV2 for LV2 plugin build.  (low priority)
+
+* LV2 plugin support in input/output signal chain.
+
+* Support LV2 and DSSI instrument plugin hosting.
+
+* LADSPA plugin support in signal chain.
+
+* PortAudio / PortMIDI support.  (low priority)
+
+* Better integration between LASH and native session management.
+
+* Add LADISH support.
+
+* Add Non Session Manager (NSM) support.
+
+
+------------------------------------------------------------------------------
+GUI improvements:
+------------------------------------------------------------------------------
+
+* Enable re-routing of JACK/ALSA audio connections in GUI.
+
+* Create an improved ComboKnob widget that consists of a knob, an
+  editable MIDI cc value w/ up & down arrows, and a non-editable
+  display value in real units (like note value, freq in hz, dB, etc.)
+
+* Add standard menus and menuitems where applicable.
+
+* Add mouseover hints to show that param labels are clickable.
+
+* Add BPM controller offset to the preferences.
+
+* Add per-channel (per-part?) MIDI status indicators.
+
+* Implement knob color switching (or even alpha-channel glowing rings)
+  to indicate status (locked, mapped, etc.)
+
+* Add proper finalization for GtkKnob and GtkKnobAnim, possibly
+  turning GtkKnobAnim into a properl GTK class in the process.
+
+* Finish alternate color themes.
+
+* Add support for color coded knobs.
+
+* Standardize config options with generic config item data structure.
+
+* Add support and graphics to gtkknob for sliders.
+
+* New layouts with parameters in horizontally arranged groups.
+
+* New multi-tab layout (multiple pages of param groups).
+
+* Add sensitivity_parent, sensitivity_parent_value_min,
+  sensitivity_parent_value_max, visibility_parent,
+  visibility_parent_value_min, and visibility_parent_value_max to
+  PARAM struct for improved sensitivity tracking and added visibility
+  tracking for auto-show / auto-hide parameters.
+
+* Proper detection of desktop size for configuring theme on first launch.
+
+* Add fixed-layout and skin support.
+
+* New compact design for navigator bar.
+
+* Error / Warning dialog popups and message log.  Currently, there is
+  no mechanism in place to pass error, warning, or debug messages back
+  up to the GUI.  This is a key step in eliminating the dependency of
+  the command line.
+
+* Standardize naming and use of callback arguments.
+
+* Add user-verification for Reset Patch.
+
+* Add laptop mode to gtkknob button handling:  Click once to grab a
+  knob.  Once knob is grabbed, all touchpad L-R (or up-down) movements
+  are translated into relative knob movements.  Any button events
+  received while the knob is grabbed release the grab.
+
+
+------------------------------------------------------------------------------
+Synth improvements / new parameters:
+------------------------------------------------------------------------------
+
+* Mono multichannel mode.  Optionally map oscillators to different
+  MIDI channels.
+
+* Optimize DSP algorithms.  Use vectorization where possible.  Replace
+  conditionals with the use of function pointers in key places
+  (starting with run_lfo() and run_osc()).
+
+* Add fine tune and one-shot parameters for LFOs.
+
+* Add Filter Cutoff Mod Amount to oscillators.
+
+* Add modulations for Pan.
+
+* Add pan flipping option to alternate pan between new notes.
+
+* Implement generic parameter smoothing.
+
+* Find a faster way than lookup tables for wave generation, that still
+  works with current phase accumulator algorithms.
+
+* Fine tune input follower a little better.
+
+* Compressor section that integrates with input follower.
+
+* Add option to play filter cutoff frequencies as MIDI notes on
+  another MIDI channel.
+
+* Add support for user loaded oscillator samples.
+
+* Add support for full length sample playback.
+
+* White / Pink noise generator w/ ability to modulate filter.
+
+* Add a second filter with linking controls.
+
+* Implement Hermite interpolation for under/over-sampling.
+
+* Implement internal parameter smoothing for Chours Time.
+
+* Add support for alternate tuning systems.
+
+* More thorough support for velocity and aftertouch.
+
+* Add a somewhat flexible modulation matrix.
+
+* Implement an N-pole filter.
+
+
+------------------------------------------------------------------------------
+MIDI improvements:
+------------------------------------------------------------------------------
+
+* Add MIDI clock event handling and integrate with new MIDI clock.
+
+* Implement handling of MIDI song position pointer messages for LFO
+  resync.
+
+* Implement MMC and MTC.
+
+* Add support for modwheel and generic high-res controllers.
+
+* Save part --> MIDI channel mapping with session and/or midimap.
+
+* Add MIDI Program Change option to select sessions with values >= 64;
+
+
+------------------------------------------------------------------------------
+JACK improvements:
+------------------------------------------------------------------------------
+
+* Fix JACK Transport Tempo and LFO sync.
+
+* Add JACK Freewheel mode.
+
+* Add JACK audio connection tracking / routing.
+
+* Add JACK connection tracking to save session state.
+
+* Add JACK Session / server selection support.
+
+
+------------------------------------------------------------------------------
+ALSA improvements:
+------------------------------------------------------------------------------
+
+* Allow connection to multiple (>2) outputs.
+
+* Add ALSA persistent connection handling.
+
+* Fix crash on changing ALSA PCM device when device is not ready.
+
+* Implement retry on busy opening.
+
+* Implement buffer size detection for no-config startup.
+
+* Fix alsa_pcm_mix_parts() for 64-bit sample_t.
+
+
+------------------------------------------------------------------------------
+New major features:
+------------------------------------------------------------------------------
+
+* Create a programmable arpeggiator.
+
+* Command line / console interface.
+
+
+------------------------------------------------------------------------------
+New minor features:
+------------------------------------------------------------------------------
+
+* Add configuration state to saved sessions.
+
+* Print useful comments in patch output, like the real values that
+  correspond to the MIDI cc values.
+
+
+------------------------------------------------------------------------------
+Other:
+------------------------------------------------------------------------------
+

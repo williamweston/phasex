@@ -1,0 +1,218 @@
+%define		phasex_version	@PACKAGE_VERSION@
+##define		beta_version	pre1
+
+%ifarch %ix86 i386 i486 i586 i686 athlon geode ia32e atom
+ %define	build_32bit	1
+%endif
+%if 0%{!?build_32bit:1} && 0%{?__isa_bits} == 32
+ %define	build_32bit	1
+%endif
+
+%define atom_build %{?_with_atom:1} %{!?_with_atom:0}
+
+%if 0%{!?atom_build:1}
+ %if 0%{!?build_32bit:1}
+  %define enable_arch atom
+ %else
+  %define enable_arch atom64
+ %endif
+%else
+ %define enable_arch %{_target_cpu}
+%endif
+
+
+Name:		phasex
+Version:	%{phasex_version}
+Release:	0%{?beta_version:.%{beta_version}}%{?dist}
+Summary:	PHASEX -- Phase Harmonic Advanced Synthesis EXperiment
+Group:		Applications/Multimedia
+License:	GPLv3+
+URL:		http://github.com/williamweston/phasex/
+
+Source0:    https://github.com/downloads/williamweston/phasex/%{name}-%{version}%{?beta_version:-%{beta_version}}.tar.gz
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
+
+BuildRequires:	glibc-devel >= 2.3.0
+BuildRequires:	glib2-devel >= 2.12.0
+BuildRequires:	gtk2-devel >= 2.4.0
+BuildRequires:	alsa-lib-devel >= 0.9.0
+BuildRequires:	jack-audio-connection-kit-devel >= 0.99.0
+BuildRequires:	libsamplerate-devel >= 0.1.0
+BuildRequires:	lash-devel >= 0.5.4
+BuildRequires:	desktop-file-utils
+BuildRequires:	perl
+BuildRequires:	autoconf
+BuildRequires:	automake
+
+Requires:	glibc >= 2.3.0
+Requires:	glib2 >= 2.12.0
+Requires:	gtk2 >= 2.4.0
+Requires:	alsa-lib >= 0.9.0
+Requires:	jack-audio-connection-kit >= 0.99.0
+Requires:	libsamplerate >= 0.1.0
+Requires:	lash >= 0.5.4
+Requires:	gtk-nodoka-engine
+
+
+%description
+PHASEX is an experimental MIDI softsynth for Linux/ALSA/JACK with a
+synth engine built around flexible phase modulation and flexible
+oscillator/LFO sources.  Modulations include AM, FM, offset PM, and wave
+select.  PHASEX comes equipped with multiple filter types and modes, a
+stereo crossover delay and chorus with phaser, ADSR envelopes for amplifier
+and filter, realtime audio input processing capabilities, and more.
+
+
+%prep
+%setup -q
+
+
+%build
+echo _arch=%{_arch} _target_cpu=%{_target_cpu} _build_arch=%{_build_arch}
+aclocal && autoconf && automake && autoheader
+CFLAGS="$RPM_OPT_FLAGS" %configure \
+	%{?build_32bit:--enable-32bit} \
+	--prefix=%{_prefix} \
+	--enable-arch=%{_target_cpu} \
+	--enable-cpu-power=3 \
+	--enable-parts=1 \
+    --without-lash
+
+%{__make} %{?_smp_mflags}
+
+
+%install
+%{__rm} -rf $RPM_BUILD_ROOT
+%{__make} install DESTDIR=$RPM_BUILD_ROOT
+
+for s in 16 22 32 48 64 256; do
+	%{__mkdir} -p %{buildroot}%{_datadir}/icons/hicolor/${s}x${s}/apps
+	%{__cp} %{buildroot}%{_datadir}/phasex/pixmaps/phasex-icon-${s}x${s}.png \
+		%{buildroot}%{_datadir}/icons/hicolor/${s}x${s}/apps/phasex-icon.png
+done
+
+BASE="AudioVideo Audio"
+XTRA="X-Jack X-MIDI X-Synthesis X-Digital_Processing"
+
+%{__mkdir} -p %{buildroot}%{_datadir}/applications
+desktop-file-install \
+	--dir %{buildroot}%{_datadir}/applications \
+	`for c in ${BASE} ${XTRA} ; do echo "--add-category $c " ; done` \
+	misc/%{name}.desktop
+
+%{__rm} -rf %{buildroot}%{_docdir}/phasex
+
+
+%post
+touch --no-create %{_datadir}/icons/hicolor || :
+if [ -x %{_bindir}/gtk-update-icon-cache ]; then
+	%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+fi
+
+
+%postun
+touch --no-create %{_datadir}/icons/hicolor || :
+if [ -x %{_bindir}/gtk-update-icon-cache ]; then
+	%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+fi
+
+
+%posttrans
+%{_bindir}/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+
+
+%clean
+%{__rm} -rf $RPM_BUILD_ROOT
+
+
+%files
+%defattr(-,root,root,-)
+%doc README INSTALL LICENSE AUTHORS GPL-3.0.txt ChangeLog TODO doc/ROADMAP doc/signal-diagram.txt
+%{_bindir}/phasex
+%{_bindir}/phasex-convert-patch
+%dir %{_datadir}/phasex
+%dir %{_datadir}/phasex/help
+%dir %{_datadir}/phasex/pixmaps
+%dir %{_datadir}/phasex/sys-midimaps
+%dir %{_datadir}/phasex/sys-patches
+%dir %{_datadir}/phasex/sys-samples
+%dir %{_datadir}/themes/Phasex-Dark
+%dir %{_datadir}/themes/Phasex-Light
+%{_datadir}/applications/phasex.desktop
+%{_datadir}/icons/hicolor/*/apps/phasex-icon.*
+%{_datadir}/phasex/patchbank
+%{_datadir}/phasex/gtkenginerc
+%{_datadir}/phasex/help/*
+%{_datadir}/phasex/pixmaps/*/*.png
+%{_datadir}/phasex/pixmaps/*.png
+%{_datadir}/phasex/pixmaps/*.svg
+%{_datadir}/phasex/sys-midimaps/*
+%{_datadir}/phasex/sys-patches/*
+%{_datadir}/phasex/sys-samples/*
+%{_datadir}/pixmaps/*.png
+%{_datadir}/pixmaps/*.svg
+%{_datadir}/themes/Phasex-Dark/*
+%{_datadir}/themes/Phasex-Light/*
+
+
+%changelog
+* Wed Dec 19 2012 William Weston <whw@linuxmail.org> - 0.14.94
+- Fixed typo in use of ix86 arch macro.
+- Updated description, license, and URL.
+- Updated for 0.14.94.
+
+* Tue Dec 04 2012 William Weston <whw@linuxmail.org> - 0.14.93
+- Removed use of --desktop_vendor for desktop-file-install.
+- Added new files for 0.14.93.
+- Added needed / new options for running configure.
+- Updated Requires and BuildRequires for F15-F18.
+- Fixed atom build conditionals.
+- Enabled passing of RPM_OPT_FLAGS to CFLAGS during build.
+- Fixed install of docs.
+- Updated contact email address.
+
+* Sat Sep 22 2012 William Weston <whw@linuxmail.org> - 0.14.0dev
+- Removed desktop_vendor from desktop-file-install.
+- Added new files for 0.14.x.
+
+* Mon Oct 05 2009 William Weston <whw@linuxmail.org> - 0.12.0-0pre2
+- Removed deprecated Applications category from desktop file install.
+- Added --with-atom rpmbuild option for forcing atom optimizations.
+- Added autoconf and automake to the build requirements.
+
+* Mon Sep 21 2009 William Weston <whw@linuxmail.org> - 0.12.0-0pre1
+- Added 32-bit detection for cross-arch builds.
+- Fixed beta versioning handling.
+- Updated categories for desktop file install.
+- Removed use of RPM_OPT_FLAGS (phasex handles its own optimizations).
+
+* Mon Sep 14 2009 William Weston <whw@linuxmail.org> - 0.12.0-0beta4
+- Update files section to include new Dark and Light themes.
+
+* Mon May 18 2009 William Weston <whw@linuxmail.org> - 0.12.0-0beta2
+- Updated beta version macro system for 0.12.0-0beta2.
+- Fixed case typo in ChangeLog filename.
+
+* Thu Jan 29 2009 William Weston <whw@linuxmail.org> - 0.12.0-0beta
+- Updated for 0.12.0.
+- Added libsamplerate dependency.
+- Added beta versioning macro.
+
+* Wed Sep  3 2008 William Weston <whw@linuxmail.org> - 0.11.2-0
+- Updated for 0.11.2.
+
+* Tue Aug  7 2007 William Weston <whw@linuxmail.org> - 0.11.0-0
+- Updated for 0.11.0.
+
+* Thu May 24 2007 William Weston <whw@linuxmail.org> - 0.10.3-0
+- Updated for 0.10.3.
+
+* Tue May 15 2007 William Weston <whw@linuxmail.org> - 0.10.2-0
+- Updated for 0.10.2.
+
+* Thu May  3 2007 William Weston <whw@linuxmail.org> - 0.10.1-0
+- Added README and COPYING to doc install.
+- Updated for 0.10.1.
+
+* Tue May  1 2007 William Weston <whw@linuxmail.org> - 0.10.0-0
+- Initial RPM spec file.

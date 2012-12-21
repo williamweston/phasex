@@ -1,0 +1,50 @@
+[P]hase [H]armonic [A]dvanced [S]ynthesis [E]xperiment
+
+
+Project Roadmap:
+
+------------------------------------------------------------------------
+
+0.14.9x-dev Current PHASEX development branch, wrapping up development
+	    of tons of new features and bugfixes.
+
+0.14.9x     Current release branch, stabilizing changes from
+	    v0.14.9x-dev.
+
+0.15.x-dev  Next dev series.  New stable features and bugfixes from
+	    v0.15.x-dev will be merged into v0.15.x for releases.
+	    Restructure code under the hood without affecting behavior
+	    in a negative way (ie, redesign the preferences, redesign
+	    param sensitivity, restructure gui layout code for even
+	    more flexibility, lower the CPU utilization for note
+	    triggering, etc.).  Improve session management.
+
+0.15.x      Next stable branch.  Work toward stability and useability.
+            Fix issues with current features, gathering changes from
+	    0.15.x-dev as they become stable.
+
+0.16.x-dev  Dev series branched from final v0.15.x release.  The
+	    v0.15.x-dev series will focus on new API support and new
+	    major features (to be determined with the help of
+	    community feedback).
+
+0.16.x      Stable release branch, gathering new features as they
+	    become stable from v0.16.x-dev.
+
+0.17.x-dev  Dev series branched from final v0.16.x release.  Overhaul
+            parameter data structures, add generic controller
+            conversions, implement mod-matrix, possibly add new synth
+            parameters, improve MIDI spec support.  V0.17.x-dev will
+	    focus on architectural changes necessary for future goals
+	    (like separating GUI, synth engine, and app framework out
+	    into separate libraries).
+
+0.17.x      Stable release branch based on v0.17.x-dev.  This series
+	    will most likely see more architectural changes than new
+	    features.
+
+0.18.x-dev  ??? Plugin API support, with goals of supporting plugins
+	    in signal chain, native synth plugin builds, and synth
+	    plugin hosting.
+
+------------------------------------------------------------------------

@@ -1,0 +1,64 @@
+                    PHASEX License Information
+------------------------------------------------------------------------
+
+All included PHASEX synth patches are created by William Weston
+<whw@linuxmail.org> and released into the public domain.
+
+PHASEX Waveform Logo (branding) Copyright (C) 2012 William Weston
+<whw@linuxmail.org>.  All Rights Reserved.  Permission is hereby
+granted to use this logo to represent PHASEX (in desktop menus,
+software repositories, websites indexing such repositories, etc.) as
+built from the author's source packages, a clone of the author's
+source code repository.  While forking of the PHASEX code is of course
+permitted and encouraged by the GPL, the use of this Logo for branding
+of branches outside the author's tree is not permitted.  For the
+purposes of packaging PHASEX to be included in software distributions
+(maintaining a local copy of the source code with patches necessary to
+a function in a specific distribution) and joining in the development
+effort (maintaining local branches of the source code for features
+and/or fixes that will eventually be merged upstream), this
+restriction need not apply.  In other words, if you fork the code and
+release software from your own fork, please use a different logo for
+your branding.  The intent is to improve brand recognition for all
+parties involved.
+
+Included knob images Copyright (C) 2012 William Weston
+<whw@linuxmail.org>.  All Rights Reserved.  Permission is hereby
+granted to use these images for distribution with other free and open
+source software projects (as defined by the Free Software Foundation),
+as long as this paragraph is maintained verbatim in the license.
+Inclusion of these images with commercial or otherwise non open source
+projects without explicit written consent of the author is not
+permitted.
+
+Source code and audio samples Copyright (C) 1999-2012 William Weston
+<whw@linuxmail.org>, with portions of the source code Copyright (C)
+2010 Anton Kormakov, Copyright (C) 2007 Peter Shorthose, Copyright (C)
+2004 Sean Bolton, and Copyright (C) 1999 Tony Garnock-Jones (see
+AUTHORS).  PHASEX is released under the terms of the GNU General
+Public License version 3 (see GPL-3.0.txt), or any later version.
+
+The use of PHASEX to create new patches and compositions of sound out
+of its included patches and samples is considered fair use of free
+software, and these patches and compositions are not necessarily
+considered derivative works of PHASEX, and thus are not necessarily
+subject to the terms of the GNU General Public License.
+
+For the purposes of redistribution and direct modification, raw audio
+sample files are considered part of the PHASEX source code and are
+subject to the same terms of the GNU General Public License.
+
+PHASEX is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+PHASEX is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with PHASEX.  If not, see <http://www.gnu.org/licenses/>.
+
+------------------------------------------------------------------------

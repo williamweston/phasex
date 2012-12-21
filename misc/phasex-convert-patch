@@ -1,0 +1,218 @@
+#!/usr/bin/perl -w
+
+use strict;
+use feature ":5.10";
+
+use File::Basename;
+
+if ($#ARGV != 1) {
+	print "Usage:  $0 <old-patch-file> <new-patch-file>\n";
+	print "        $0 <old-patch-dir> <new-patch-dir>\n";
+	exit 0;
+}
+
+my $in_arg  = $ARGV[0];
+my $out_arg = $ARGV[1];
+
+my $osc_index = 0;
+my $lfo_index = 0;
+
+my $section = '';
+my $prefix  = '';
+
+my $param_name = '';
+my $param_val  = '';
+
+my $padded_param_name = '';
+
+my $patch_name = '';
+
+my $line = '';
+
+my $spaces = 0;
+
+my $j = 0;
+
+my %offset_params = (
+	'bpm'                   => 64,
+	'patch_tune'            => -64,
+	'keyfollow_vol'         => -64,
+	'transpose'             => -64,
+	'pan'                   => -64,
+	'filter_lfo_cutoff'     => -64,
+	'filter_lfo_resonance'  => -64,
+	'osc1_transpose'        => -64,
+	'osc1_fine_tune'        => -64,
+	'osc1_pitchbend'        => -64,
+	'osc1_am_mod_amount'    => -64,
+	'osc1_fm_mod_amount'    => -64,
+	'osc1_fm_mod_fine'      => -64,
+	'osc1_pm_mod_amount'    => -64,
+	'osc1_wave_lfo_amount'  => -64,
+	'osc2_transpose'        => -64,
+	'osc2_fine_tune'        => -64,
+	'osc2_pitchbend'        => -64,
+	'osc2_am_mod_amount'    => -64,
+	'osc2_fm_mod_amount'    => -64,
+	'osc2_fm_mod_fine'      => -64,
+	'osc2_pm_mod_amount'    => -64,
+	'osc2_wave_lfo_amount'  => -64,
+	'osc3_transpose'        => -64,
+	'osc3_fine_tune'        => -64,
+	'osc3_pitchbend'        => -64,
+	'osc3_am_mod_amount'    => -64,
+	'osc3_fm_mod_amount'    => -64,
+	'osc3_fm_mod_fine'      => -64,
+	'osc3_pm_mod_amount'    => -64,
+	'osc3_wave_lfo_amount'  => -64,
+	'osc4_transpose'        => -64,
+	'osc4_fine_tune'        => -64,
+	'osc4_pitchbend'        => -64,
+	'osc4_am_mod_amount'    => -64,
+	'osc4_fm_mod_amount'    => -64,
+	'osc4_fm_mod_fine'      => -64,
+	'osc4_pm_mod_amount'    => -64,
+	'osc4_wave_lfo_amount'  => -64,
+	'lfo1_transpose'        => -64,
+	'lfo1_pitchbend'        => -64,
+	'lfo1_voice_am'         => -64,
+	'lfo2_transpose'        => -64,
+	'lfo2_pitchbend'        => -64,
+	'lfo2_lfo1_fm'          => -64,
+	'lfo3_transpose'        => -64,
+	'lfo3_pitchbend'        => -64,
+	'lfo3_cutoff'           => -64,
+	'lfo4_transpose'        => -64,
+	'lfo4_pitchbend'        => -64,
+	'lfo4_lfo3_fm'          => -64
+	);
+
+my @suffix_list = ( '.phx' );
+
+my @in_files = ();
+
+my $in_file;
+my $out_file;
+
+my $in_dir  = '';
+my $out_dir = '';
+
+
+if ((-d "${in_arg}/") && (-d "${out_arg}/")) {
+	$in_dir   = $in_arg;
+	$in_dir   =~ s|/*$|/|g;
+
+	$out_dir  = $out_arg;
+	$out_dir  =~ s|/*$|/|g;
+
+	@in_files = <${in_dir}*.phx>;
+}
+elsif ((-f $in_arg) && (-f $out_arg)) {
+	@in_files = ( $in_arg );
+}
+else {
+	die "Script arguments must be of the same type (file or directory.)\n";
+}
+
+foreach $in_file (@in_files) {
+	if (($in_dir ne '') && ($out_dir ne '')) {
+		$out_file = $in_file;
+		$out_file =~ s|$in_dir|$out_dir|g;
+	}
+
+	print "Converting patch.  New file:  ${out_file}\n";
+
+	open (in_f,  "<", $in_file)  || die "Unable to open $in_file for read.\n";
+	open (out_f, ">", $out_file) || die "Unable to open $out_file for write.\n";
+
+	while (<in_f>) {
+		chomp;
+		$line = $_;
+		if (/^\s*([a-z0-9_]+)\s*\{\s*$/) {
+			$section = $1;
+			given ($section) {
+				when ('phasex_patch') {
+					$prefix = '';
+					$section = "PHASEX patch";
+				}
+				when ('info') {
+					$prefix = '';
+					$section = "     (converted by $0)";
+				}
+				when ('oscillator') {
+					$osc_index++;
+					$prefix = "osc${osc_index}_";
+					$section = "Osc-${osc_index}";
+				}
+				when ('lfo') {
+					$lfo_index++;
+					$prefix = "lfo${lfo_index}_";
+					$section = "LFO-${lfo_index}";
+				}
+				when ('general') {
+					$prefix = '';
+					$section = "General Parameters";
+				}
+				when ('filter') {
+					$prefix = 'filter_';
+					$section = "Filter"
+				}
+				when ('chorus') {
+					$prefix = 'chorus_';
+					$section = "Chorus";
+				}
+				when ('delay') {
+					$prefix = 'delay_';
+					$section = "Delay";
+				}
+				when ('envelope') {
+					$prefix = 'amp_';
+					$section = "Amplifier";
+				}
+			}
+			print out_f "# ${section}\n";
+		}
+		elsif (/^\s*\}\s*$/) {
+			$section = '';
+			$prefix  = '';
+		}
+		elsif (/^\s*([a-z0-9_]+)\s*\=\s*"{0,1}([a-z0-9_\/\+\- ]+)"{0,1}\s*;\s*$/) {
+			$param_name = $prefix . $1;
+			$param_val  = $2;
+			if (($param_name eq 'name') || ($param_name eq 'patch_name')) {
+				$param_name = 'patch_name';
+				$param_val =~ s/"(.+)"/$1/g;
+				$patch_name = $param_val;
+			}
+			elsif (($param_name =~ /_wave_lfo$/)) {
+				if ($param_val =~ /[1-4]/) {
+					$param_val = "lfo_${param_val}";
+				}
+				else {
+					$param_val = 'off';
+				}
+			}
+			elsif ($param_val !~ /^\-.*$/) {
+				$param_val =~ s/\-/_/g;
+			}
+			$spaces = 24 - length ($param_name);
+			$padded_param_name = $param_name;
+			for ($j = 0; $j < $spaces; $j++) {
+				$padded_param_name .= ' ';
+			}
+			if (exists($offset_params{$param_name})) {
+				$param_val += $offset_params{$param_name};
+			}
+			print out_f "\t${padded_param_name} = ${param_val};\n";
+		}
+	}
+	if ($patch_name eq '') {
+		$patch_name = basename ($in_file, @suffix_list);
+		$patch_name =~ s/\.phx$//g;
+		print out_f "# Patch info\n";
+		print out_f "\tpatch_name               = ${patch_name};\n";
+	}
+
+	close (out_f);
+	close (in_f);
+}

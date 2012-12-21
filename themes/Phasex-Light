@@ -1,0 +1,370 @@
+# Phasex-New theme
+
+gtk-color-scheme = "bg1:#8090e0\nbg1_shade:#6a78ba\nbg1_dark:#556095\nbg2:#0000a0\nbg2_shade:#000080\nbg2_dark:#000060\nbg3:#5050a0\nbg3_shade:#404080\nbg3_dark:#303060\nhighlight1:#f09311\nhighlight2:#ff7744\nhighlight3:#930000\nhighlight4:#000093\nspecial1:#ff5533\nspecial2:#0000c0\nspecial3:#00d000\ntext1:#000000\ntext2:#f09311\ngrey1:#404040\ngrey2:#202020"
+
+
+style "phasex-default"
+{
+	xthickness		= 1
+	ythickness		= 0
+
+	GtkTreeView::even_row_color		= @bg3	
+	GtkTreeView::odd_row_color		= @bg3_shade
+
+	GtkTreeView::enable_tree_lines		= "true"
+
+	bg[NORMAL]		= @bg1		# normal background
+	bg[PRELIGHT]		= @bg2		# pane slider highlight
+	bg[ACTIVE]		= @bg2		# selected text background
+	bg[SELECTED]		= @special1	# selected text entry border
+	bg[INSENSITIVE]		= @bg1		# insensitive button background
+
+	base[NORMAL]		= @bg3_shade	# text entry and toggle button background
+	base[PRELIGHT]		= @highlight2	#
+	base[ACTIVE]		= @bg2		# active text background (not selected)
+	base[SELECTED]		= @bg2_shade	# active and selected text background
+	base[INSENSITIVE]	= @bg1		#
+
+	fg[NORMAL]		= @text1	# main text
+	fg[PRELIGHT]		= @highlight2	# button text highlight
+	fg[ACTIVE]		= @highlight4	# toggled-on button text
+	fg[SELECTED]		= @highlight2	#
+	fg[INSENSITIVE]		= @grey2	#
+
+	text[NORMAL]		= @text1	# text entry and widget arrow
+	text[PRELIGHT]		= @highlight2	# text entry and widget arrow highlight
+	text[ACTIVE]		= @highlight1	# active entry text (not selected)
+	text[SELECTED]		= @highlight1	# active and selected entry text
+	text[INSENSITIVE]	= @grey1	# insensitive widget arrow and button text
+}
+
+style "phasex-tree" = "phasex-default"
+{
+	text[NORMAL]		= @highlight1
+	fg[NORMAL]		= @highlight1
+}
+
+style "phasex-combo" = "phasex-default"
+{
+	bg[SELECTED]		= @highlight2	# selected text entry border
+	text[PRELIGHT]		= @highlight2	# text entry and widget arrow highlight
+	fg[PRELIGHT]		= @highlight2	#
+	fg[ACTIVE]		= @highlight2	# toggled on button text
+	base[ACTIVE]		= @highlight2	# active text background (not selected)
+}
+
+style "phasex-menubar" = "phasex-default"
+{
+	xthickness		= 2
+	ythickness		= 2
+
+	bg[PRELIGHT]		= @special2	# menu item background highlight
+	bg[ACTIVE]		= @bg2		# active menu item background
+	bg[SELECTED]		= @bg2		# selected menu item background
+	bg[INSENSITIVE]		= @bg3_shade	# insensitive menu item background
+
+	fg[NORMAL]		= @text1
+	fg[PRELIGHT]		= @highlight2
+	fg[ACTIVE]		= @highlight2	# toggled on button text
+
+	base[NORMAL]		= @bg3		#
+	base[INSENSITIVE]	= @bg3		#
+
+	text[PRELIGHT]		= @highlight2	#
+	text[ACTIVE]		= @highlight2	#
+}
+
+style "phasex-menu" = "phasex-default"
+{
+	xthickness		= 2
+	ythickness		= 3
+
+	bg[NORMAL]		= @bg1_shade    # @bg3		# menu item background
+	bg[PRELIGHT]		= @special2	# menu item background highlight
+	bg[ACTIVE]		= @bg2		# active menu item background
+	bg[SELECTED]		= @bg2		# selected menu item background
+	bg[INSENSITIVE]		= @bg3_shade	# insensitive menu item background
+
+	fg[PRELIGHT]		= @highlight2
+	fg[ACTIVE]		= @highlight2	# toggled on button text
+
+	base[NORMAL]		= @bg3		#
+	base[INSENSITIVE]	= @bg3		#
+
+	text[PRELIGHT]		= @highlight2	#
+	text[ACTIVE]		= @highlight2	#
+}
+
+style "phasex-button" = "phasex-default"
+{
+	xthickness		= 0
+	ythickness		= 0
+
+	bg[NORMAL]		= @bg3_shade    # @bg3_dark	# button background & toggle button border
+	bg[PRELIGHT]		= @bg3 # @bg2		# button highlight background
+	bg[ACTIVE]		= @bg3 # @bg2		# button selected / activated background
+	bg[SELECTED]		= @special1	# selected button border & toggle button border highlight
+
+	base[NORMAL]		= @bg3_shade    # @bg1_dark	# toggle button inset background
+	base[PRELIGHT]		= @bg3          # @bg1_shade	# toggle button highlight inset background
+	base[ACTIVE]		= @highlight2	# toggle button activating inset background
+	base[SELECTED]		= @highlight2	# toggle button ?
+
+	fg[NORMAL]		= @text2	# normal button text and toggle button outer ring
+	fg[PRELIGHT]		= @highlight2	# button highlight text
+	fg[ACTIVE]		= @highlight2	# toggled-on button text
+	fg[SELECTED]		= @special1	#
+	fg[INSENSITIVE]		= @grey2	#
+
+	text[NORMAL]		= @highlight2
+	text[PRELIGHT]		= @highlight2	# combobox button arrow highlight
+	text[ACTIVE]		= @highlight2
+	text[SELECTED]		= @highlight2
+	text[INSENSITIVE]	= @bg2_dark
+}
+
+style "phasex-radio" = "phasex-button"
+{
+	GtkButton::default_border		= {0, 0, 0, 0}
+	GtkButton::default_outside_border	= {0, 0, 0, 0}
+	GtkButton::default_spacing		= 0
+	GtkButton::image-spacing		= 0
+	GtkButton::focus-line-width		= 1
+	GtkButton::focus-pading			= 0
+	GtkButton::default-spacing		= 0
+	GtkRadioButton::indicator_size		= 12
+
+	bg[SELECTED]		= @special1	# selected button border & toggle button border highlight
+	bg[PRELIGHT]		= @bg1
+
+	base[ACTIVE]		= @special3	# toggle button activating inset background
+	base[PRELIGHT]		= @bg3_dark # @bg1_dark	# toggle button highlight inset background
+
+	text[NORMAL]		= @special1	# toggle button inset light color
+	text[PRELIGHT]		= @special2
+
+	fg[PRELIGHT]		= @highlight3	# toggle button border and text prelight
+	fg[ACTIVE]		= @highlight4	# toggled-on button text
+	fg[NORMAL]		= @text1	# normal button text
+}
+
+style "phasex-scroll" = "phasex-default"
+{
+	text[NORMAL]		= @bg1		#
+	fg[SELECTED]		= @bg1		#
+	bg[NORMAL]		= @grey1	# scrollbar handle
+	bg[ACTIVE]		= @bg1		# scrollbar background
+	bg[PRELIGHT]		= @special2	# scrollbar handle highlight
+}
+
+style "phasex-frame" = "phasex-default"
+{
+	xthickness		= 2
+	ythickness		= 1
+
+	bg[NORMAL]		= @bg1 # _shade	# frame border
+}
+
+style "phasex-notebook" = "phasex-default"
+{
+	bg[SELECTED]		= "#0000c0"	# active tab top gradient
+	fg[SELECTED]		= @text1	#
+
+	#bg[NORMAL]		= "#000000"	# active tab background
+	fg[NORMAL]		= @highlight3	#
+	text[NORMAL]		= @highlight3	#
+
+	bg[ACTIVE]		= @bg1_shade	# non-active tab background
+	fg[ACTIVE]		= @text1	# non-active tab text
+
+	fg[INSENSITIVE]		= @highlight3	#
+	text[INSENSITIVE]	= @highlight3	#
+}
+
+style "phasex-tooltip"
+{
+	bg[NORMAL]		= @bg3		#
+	fg[NORMAL]		= @text1	#
+	text[NORMAL]		= @text1	#
+}
+
+style "phasex-numeric" = "phasex-default"
+{
+	xthickness		= 5
+	ythickness		= 3
+
+	fg[NORMAL]		= @highlight1
+	fg[SELECTED]		= @special1
+	fg[PRELIGHT]		= @special1
+	text[NORMAL]		= @highlight1
+	text[SELECTED]		= @special1
+	text[PRELIGHT]		= @special1
+
+	fg[INSENSITIVE]		= @grey1
+	text[INSENSITIVE]	= @grey1
+}
+
+style "phasex-spin" = "phasex-default"
+{
+	xthickness		= 5
+	ythickness		= 3
+	fg[NORMAL]		= @highlight1
+	fg[SELECTED]		= @special1
+	fg[PRELIGHT]		= @special1
+	base[SELECTED]		= "#0000a0"
+	text[NORMAL]		= @highlight1
+	text[PRELIGHT]		= @special1
+}
+
+
+style "phasex-numeric-label" = "phasex-default"
+{
+	xthickness		= 5
+	ythickness		= 3
+	bg[NORMAL]		= @bg3_shade
+	bg[SELECTED]		= @bg3_shade
+	bg[PRELIGHT]		= @bg3_shade
+	bg[INSENSITIVE]		= @bg3_shade
+	bg[ACTIVE]		= @bg3_shade
+	fg[NORMAL]		= @highlight1
+	fg[SELECTED]		= @special1
+	fg[PRELIGHT]		= @special1
+	base[SELECTED]		= "#0000a0"
+	text[NORMAL]		= @highlight1
+	text[PRELIGHT]		= @special1
+}
+
+
+style "phasex-detent-label" = "phasex-default"
+{
+	bg[NORMAL]		= @bg3_shade	# text entry and toggle button background
+	bg[SELECTED]		= @bg3_shade	# text entry and toggle button background
+	bg[PRELIGHT]		= @bg3_shade	# text entry and toggle button background
+	bg[INSENSITIVE]		= @bg3_shade	# text entry and toggle button background
+	bg[ACTIVE]		= @bg3_shade	# text entry and toggle button background
+#	bg[PRELIGHT]		= @bg1		#
+#	bg[SELECTED]		= @bg1		#
+	fg[NORMAL]		= "#40e020"	# "#f07000"
+	fg[SELECTED]		= @special1
+	fg[PRELIGHT]		= @special1	# @highlight1
+}
+
+style "phasex-param-name" = "phasex-default"
+{
+	bg[NORMAL]		= @bg1
+	bg[SELECTED]		= @bg1
+	bg[PRELIGHT]		= @bg1
+	bg[INSENSITIVE]		= @bg1
+	bg[ACTIVE]		= @bg1
+	fg[NORMAL]		= "#101060"
+	fg[SELECTED]		= @special1
+	fg[PRELIGHT]		= @special1	# @highlight1
+}
+
+style "phasex-param-group" = "phasex-default"
+{
+	fg[NORMAL]		= "#101010"
+}
+
+style "phasex-patch-param" = "phasex-default"
+{
+	fg[NORMAL]		= "#202020"
+}
+
+#style "phasex-indicator-label" = "phasex-default"
+#{
+#	fg[NORMAL]		= "#e80000"
+#}
+
+style "phasex-indicator-label" = "phasex-detent-label"
+{
+	fg[NORMAL]		= "#d00000"
+}
+
+style "phasex-button-label" = "phasex-default"
+{
+	fg[NORMAL]		= "#101010"
+}
+
+style "phasex-off-button" = "phasex-radio"
+{
+	bg[SELECTED]		= @special1	# selected button border & toggle button border highlight
+	bg[PRELIGHT]		= @bg3 # @bg1
+
+	base[ACTIVE]		= @special3	# toggle button activating inset background
+	base[PRELIGHT]		= @bg3_dark # @bg1_dark	# toggle button highlight inset background
+
+	text[NORMAL]		= @special1	# toggle button inset light color
+	text[PRELIGHT]		= @special2
+
+	fg[PRELIGHT]		= @highlight2	# toggle button border and text prelight
+	fg[ACTIVE]		= @highlight1	# toggled-on button text
+}
+
+style "phasex-patch-group" = "phasex-default"
+{
+	bg[NORMAL]		= "#101010"		# override normal background
+	base[NORMAL]		= "#101010"		# override normal background
+}
+
+class "GtkWidget" style "phasex-default"
+
+class "GtkStatusbar" style "phasex-default"
+
+class "GtkCombo" style "phasex-combo"
+class "GtkComboBox" style "phasex-combo"
+widget_class "*GtkComboBox.GtkButton" style "phasex-combo"
+widget_class "*GtkCombo.GtkButton" style "phasex-combo"
+widget_class "*GtkComboBox*" style "phasex-combo"
+
+widget "*DetentLabel*" style "phasex-detent-label"
+widget "*NumericLabel*" style "phasex-numeric-label"
+widget "*NumericSpin*" style "phasex-spin"
+
+class "GtkButton" style "phasex-button"
+#widget "*PhasexButton*" style "phasex-button"
+widget_class "*GtkButton*" style "phasex-button"
+widget_class "*GtkFileChooserButton*" style "phasex-button"
+widget_class "*GtkFontButton*" style "phasex-button"
+
+
+class "GtkToggleButton" style "phasex-button"
+widget_class "*GtkToggleButton*" style "phasex-button"
+
+class "GtkCheckButton" style "phasex-radio"
+
+class "GtkRadioButton" style "phasex-radio"
+widget_class "*GtkRadioButton*" style "phasex-radio"
+
+class "GtkRange" style "phasex-scroll"
+class "GtkScale" style "phasex-scroll"
+class "*Scrollbar*" style "phasex-scroll"
+
+widget_class "*GtkSpinButton*GtkEntry" style : highest "phasex-numeric"
+
+class "GtkEntry" style "phasex-spin"
+
+class "GtkNotebook" style "phasex-notebook"
+widget_class "GtkNotebook" style "phasex-notebook"
+widget_class "*.GtkNotebook.GtkLabel*" style "phasex-notebook"
+
+widget_class "*GtkMenu*" style "phasex-menu"
+widget_class "*GtkMenuItem*" style "phasex-menu"
+widget_class "*GtkMenuBar*" style "phasex-menubar"
+
+class "GtkTooltip" style "phasex-tooltip"
+widget "*gtk-tooltip*" style "phasex-tooltip"
+
+class "GtkFrame" style "phasex-frame"
+class "MetaFrames" style "phasex-frame"
+widget_class "BasePWidget.GtkEventBox.GtkTable.GtkFrame" style "phasex-frame"
+
+#class "GtkTreeView" style "phasex-tree"
+
+widget "*ParamName*" style "phasex-param-name"
+widget "*GroupName*" style "phasex-param-group"
+widget "*PatchParam*" style "phasex-patch-param"
+widget "*IndicatorLabel*" style "phasex-indicator-label"
+widget "*ButtonLabel*" style "phasex-button-label"
+widget "*ParamButton*" style "phasex-radio"
+widget "*OffButton*" style "phasex-off-button"

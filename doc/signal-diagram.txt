@@ -1,0 +1,76 @@
+-------------------------------------------------------------------------------
+PHASEX Signal Routing:
+-------------------------------------------------------------------------------
+
+
++-----+      +-----+
+|Osc-1|      |Osc-2|      (!) lfos, inputs, envelopes, velocity, midi note,
++-----\      /-----+          or tempo based frequency.
+   ^   \    /   ^
+  (!)   \  /   (!)        (*) inputs, envelopes, velocity, midi note,
+         ||                   or temp based frequency.
++-----+  ||  +-----+
+|Osc-3|  ||  |Osc-4|      (#) velocity.
++-----\  ||  /-----+
+   ^   \----/   ^
+  (!)  |Mix/|  (!)    +------+  +---------+  +------+  +-----+
+       |/Mod|-------->|Filter|->|Amplifier|->|Chorus|->|Delay|
+       /----\         +------+  +---------+  +------+  +-----+
++-----/  ||  \-----+    ^ ^         ^  ^                    |
+|LFO-4|--||->|LFO-3|----+ |         |  |                    v
++-----+  ||  +-----+      |         |  |                 +------+
+   ^     ||     ^        (#)       (#) |                 |Output|
+  (*)   /  \   (*)                     |                 +------+
+       /    \                          |
++-----/      \-----+                   |
+|LFO-2|----->|LFO-1|-------------------+
++-----+      +-----+
+   ^            ^
+  (*)          (*)
+
+
+  Please note that the signal diagram shown above is a simplified
+  overview of the synth architecture as a whole.  Signal inputs marked
+  with (!), (*), (#) add a level of flexibility beyond what is shown.
+
+-------------------------------------------------------------------------------
+
+The oscillators are inter-modulated in the modulator sections, where
+each oscillator serves as the carrier with independently routable
+modulators for amplitude, frequency, and phase offset modulations.
+
+The LFOs serve mostly as additional modulators to facilitate basic
+time-based gating, sweep effects, cyclical effects.  But they can do
+more.
+
+Anything is possible in the modulator sections.  4-op/4-lfo AM/FM/PM.
+This is where a patch gets its texture, timbre, and harmonic content
+beyond that of the original waveforms used.  With PM, this is also
+where a patch gets it's initial spatial quality within the stereo
+field.  Play with the modulations one at a time.  Sometimes combining
+all three modulation types is a bit much, especially AM.  Sometimes
+the FM needs to be fine-tuned to really bring out the right harmonics.
+
+After being modulated, oscillators are then mixed onto a single stereo
+mix bus.  Depending on the 'Mix Mod' setting, an oscillator either
+Mixes down onto the mix bus, Amplitude Modulates the mix bus, detaches
+from the mix bus to allow it to become a Modulator only, or turns Off
+completely.
+
+The filter carves out frequency space (and can add some of it back in
+at higher quantities with resonance).  The phasex filter uses the
+standard filter bands: LowPass (keep frequencies below the cutoff),
+HighPass (keep frequencies above the cutoff), BandPass (keep
+frequencies surrounding the cutoff, and BandStop modes (scoop
+frequencies centered at the cutoff).  The combo modes just stack two
+of these filter bands together, both with their center frequency tied
+to the filter cutoff.  Filter cutoff can modulated by velocity or an
+lfo.  It is also modulated by the filter envelope.
+
+The amplifier gives the patch it's dynamics based on note-on/note-off
+messages, velocity data, and an ADSR envelope.  This is what shapes
+the amplitude, or volume, into distinct "notes".  Panning and stereo
+width are handled in the amplifier before the signal is routed through
+the effects.
+
+-------------------------------------------------------------------------------

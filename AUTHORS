@@ -1,0 +1,36 @@
+------------------------------------------------------------------------
+[P]hase [H]armonic [A]dvanced [S]ynthesis [E]xperiment
+------------------------------------------------------------------------
+
+
+Author / Maintainer:
+------------------------------------------------------------------------
+
+Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>:
+  * All code, documentation, patches, samples, and graphics, execpt
+    as noted below in the contributors section.
+
+
+Contributors:
+------------------------------------------------------------------------
+
+Copyright (C) 1999:  Tony Garnock-Jones
+  * Original gtkknob code.
+
+Copyright (C) 2004,2008-2010 Sean Bolton:
+  * Contributions to the gtkknob code.
+
+Copyright (C) 2007 Peter Shorthose <zenadsl6252@zen.co.uk>:
+  * Abstraction of the pixmap animation in gtkknob.c, allowing
+    animations to be loaded into memory once per unique instance.
+  * Initial backing store support for widgets on X11 displays.
+
+Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>:
+  * Initial JACK Trasport / Tempo & LFO sync code.
+  * Initial LASH support.
+  * Hold pedal (sostenuto pedal) support.
+  * Envelope and chorus fixes.
+  * Initial all-notes-off / all-sound-off handling.
+  * DC offset rejection filter.
+
+------------------------------------------------------------------------
