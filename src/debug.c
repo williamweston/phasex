@@ -33,7 +33,6 @@
 DEBUG_RINGBUFFER    main_debug_queue;
 
 int                 debug       = 0;
-int                 debug_level = DEBUG_ERROR;
 unsigned long       debug_class = 0;
 
 DEBUG_CLASS         debug_class_list[19] = {
@@ -48,12 +47,11 @@ DEBUG_CLASS         debug_class_list[19] = {
 	{ DEBUG_CLASS_MIDI_EVENT,     "event" },
 	{ DEBUG_CLASS_MIDI_TIMING,    "timing" },
 	{ DEBUG_CLASS_AUDIO,          "audio" },
-	{ DEBUG_CLASS_JACK_AUDIO,     "jack-audio" },
 	{ DEBUG_CLASS_JACK_TRANSPORT, "jack-transport" },
 	{ DEBUG_CLASS_JACK_MIDI,      "jack-midi" },
 	{ DEBUG_CLASS_ENGINE,         "engine" },
 	{ DEBUG_CLASS_ENGINE_TIMING,  "engine-timing" },
-	{ DEBUG_CLASS_LASH,           "lash" },
+	{ DEBUG_CLASS_SESSION,        "session" },
 	{ DEBUG_CLASS_ALL,            "all" },
 	{ (~0UL),                     NULL }
 };

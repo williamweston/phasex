@@ -212,7 +212,6 @@ typedef struct part {
 	sample_t    out2;                       /* output sample 2 */
 	sample_t    amp_env_max;                /* max of amp env for all active voices */
 	sample_t    filter_env_max;             /* max of filter env for all active voices */
-	sample_t    env_buffer[16];
 	sample_t    osc_init_index[NUM_OSCS];   /* initial phase index for oscillator */
 	sample_t    osc_pitch_bend[NUM_OSCS];   /* current per-osc pitchbend amount */
 	sample_t    osc_phase_adjust[NUM_OSCS]; /* phase adjustment to wavetable index */

@@ -115,12 +115,7 @@ int                     setting_jack_multi_out              = 0;
 int                     setting_jack_transport_mode         = JACK_TRANSPORT_OFF;
 
 /* Synth settings */
-#if (ARCH_BITS == 32)
-float                   setting_tuning_freq                 = A4FREQ;
-#endif
-#if (ARCH_BITS == 64)
-double                  setting_tuning_freq                 = A4FREQ;
-#endif
+sample_t                setting_tuning_freq                 = A4FREQ;
 #ifdef NONSTANDARD_HARMONICS
 double                  setting_harmonic_base               = 2.0;
 double                  setting_harmonic_steps              = 12.0;
@@ -648,12 +643,7 @@ read_settings(char *filename)
 
 			else if (strcasecmp(setting_name, "tuning_freq") == 0) {
 				a4freq = atof(setting_value);
-#if (ARCH_BITS == 32)
-				setting_tuning_freq = (float) a4freq;
-#endif
-#if (ARCH_BITS == 64)
-				setting_tuning_freq = (double) a4freq;
-#endif
+				setting_tuning_freq = (sample_t) a4freq;
 			}
 
 #ifdef NONSTANDARD_HARMONICS
@@ -695,7 +685,8 @@ read_settings(char *filename)
 				setting_custom_theme = strdup(setting_value);
 			}
 
-			else if ((strcasecmp(setting_name, "font") == 0) && (strcmp(setting_value, "(null)") != 0)) {
+			else if ((strcasecmp(setting_name, "font") == 0) &&
+			         (strcmp(setting_value, "(null)") != 0)) {
 				if (setting_font != NULL) {
 					free(setting_font);
 				}
@@ -706,7 +697,8 @@ read_settings(char *filename)
 				phasex_font_desc = pango_font_description_from_string(setting_font);
 			}
 
-			else if ((strcasecmp(setting_name, "title_font") == 0) && (strcmp(setting_value, "(null)") != 0)) {
+			else if ((strcasecmp(setting_name, "title_font") == 0) &&
+			         (strcmp(setting_value, "(null)") != 0)) {
 				if (setting_title_font != NULL) {
 					free(setting_title_font);
 				}
@@ -717,7 +709,8 @@ read_settings(char *filename)
 				title_font_desc = pango_font_description_from_string(setting_title_font);
 			}
 
-			else if ((strcasecmp(setting_name, "numeric_font") == 0) && (strcmp(setting_value, "(null)") != 0)) {
+			else if ((strcasecmp(setting_name, "numeric_font") == 0) &&
+			         (strcmp(setting_value, "(null)") != 0)) {
 				if (setting_numeric_font != NULL) {
 					free(setting_numeric_font);
 				}
@@ -836,7 +829,8 @@ read_settings(char *filename)
 			sprintf(setting_knob_dir, "%s/%s", PIXMAP_DIR, DEFAULT_LIGHT_KNOB_DIR);
 		}
 		if (setting_detent_knob_dir == NULL) {
-			setting_detent_knob_dir = malloc(strlen(PIXMAP_DIR) + strlen(DEFAULT_LIGHT_DETENT_KNOB_DIR) + 2);
+			setting_detent_knob_dir = malloc(strlen(PIXMAP_DIR) +
+			                                 strlen(DEFAULT_LIGHT_DETENT_KNOB_DIR) + 2);
 			sprintf(setting_detent_knob_dir, "%s/%s", PIXMAP_DIR, DEFAULT_LIGHT_DETENT_KNOB_DIR);
 		}
 		break;
@@ -847,7 +841,8 @@ read_settings(char *filename)
 			sprintf(setting_knob_dir, "%s/%s", PIXMAP_DIR, DEFAULT_DARK_KNOB_DIR);
 		}
 		if (setting_detent_knob_dir == NULL) {
-			setting_detent_knob_dir = malloc(strlen(PIXMAP_DIR) + strlen(DEFAULT_DARK_DETENT_KNOB_DIR) + 2);
+			setting_detent_knob_dir = malloc(strlen(PIXMAP_DIR) +
+			                                 strlen(DEFAULT_DARK_DETENT_KNOB_DIR) + 2);
 			sprintf(setting_detent_knob_dir, "%s/%s", PIXMAP_DIR, DEFAULT_DARK_DETENT_KNOB_DIR);
 		}
 		break;
@@ -928,14 +923,17 @@ save_settings(char *filename)
 #endif
 	fprintf(config_f, "\tmidi_audio_phase_lock\t\t= %f;\n",    setting_audio_phase_lock);
 	fprintf(config_f, "\tignore_midi_program_change\t= %s;\n", boolean_names[setting_ignore_midi_program_change]);
-	fprintf(config_f, "\tclock_constant\t\t\t= %.56f;\n", (float)((timecalc_t) nsec_per_period / (f_buffer_period_size * (timecalc_t) 1000000000.0 / (timecalc_t) f_sample_rate)));
+	fprintf(config_f, "\tclock_constant\t\t\t= %.25f;\n",
+	        (float)((timecalc_t) nsec_per_period /
+	                (f_buffer_period_size * (timecalc_t) 1000000000.0 /
+	                 (timecalc_t) f_sample_rate)));
 	fprintf(config_f, "# Synth:\n");
-	fprintf(config_f, "\ttuning_freq\t\t\t= %f;\n",            setting_tuning_freq);
+	fprintf(config_f, "\ttuning_freq\t\t\t= %3.7f;\n",         (float)setting_tuning_freq);
 #ifdef NONSTANDARD_HARMONICS
 	fprintf(config_f, "\tharmonic_base\t\t\t= %f;\n",          setting_harmonic_base);
 	fprintf(config_f, "\tharmonic_steps\t\t\t= %f;\n",         setting_harmonic_steps);
 #endif
-	fprintf(config_f, "\tpolyphony\t\t\t= %d;\n",          setting_polyphony);
+	fprintf(config_f, "\tpolyphony\t\t\t= %d;\n",              setting_polyphony);
 	fprintf(config_f, "\tsample_rate_mode\t\t= %s;\n",         sample_rate_mode_names[setting_sample_rate_mode]);
 	fprintf(config_f, "\tbank_mem_mode\t\t\t= %s;\n",          bank_mode_names[setting_bank_mem_mode]);
 	fprintf(config_f, "# System:\n");
@@ -945,7 +943,7 @@ save_settings(char *filename)
 	fprintf(config_f, "\tsched_policy\t\t\t= %s;\n", ((setting_sched_policy == SCHED_RR) ? "sched_rr" : "sched_fifo"));
 	fprintf(config_f, "# Interface:\n");
 	fprintf(config_f, "\tfullscreen\t\t\t= %s;\n",             boolean_names[setting_fullscreen]);
-	fprintf(config_f, "\tmaximize\t\t\t= %s;\n",       boolean_names[setting_maximize]);
+	fprintf(config_f, "\tmaximize\t\t\t= %s;\n",               boolean_names[setting_maximize]);
 	fprintf(config_f, "\twindow_layout\t\t\t= %s;\n",          layout_names[setting_window_layout]);
 	fprintf(config_f, "\t# warning:  backing store may be broken\n");
 	fprintf(config_f, "\tbacking_store\t\t\t= %s;\n",          boolean_names[setting_backing_store]);
@@ -2046,12 +2044,7 @@ void
 set_tuning_freq(GtkWidget *UNUSED(widget), gpointer data)
 {
 	a4freq = gtk_spin_button_get_value(GTK_SPIN_BUTTON(data));
-#if (ARCH_BITS == 32)
-	setting_tuning_freq = (float) a4freq;
-#endif
-#if (ARCH_BITS == 64)
-	setting_tuning_freq = a4freq;
-#endif
+	setting_tuning_freq = (sample_t) a4freq;
 	build_freq_table();
 	build_filter_tables();
 }
@@ -2536,25 +2529,29 @@ create_config_dialog(void)
 	gtk_button_set_alignment(GTK_BUTTON(button1), button_x, 0.5);
 	gtk_box_pack_start(GTK_BOX(box), button1, FALSE, FALSE, 0);
 
-	button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button1), "ALSA Sequencer  [client:port]");
+	button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button1),
+	                                                      "ALSA Sequencer  [client:port]");
 	widget_set_custom_font(button2, phasex_font_desc);
 	gtk_button_set_alignment(GTK_BUTTON(button2), button_x, 0.5);
 	gtk_box_pack_start(GTK_BOX(box), button2, FALSE, FALSE, 0);
 
-	button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button2), "ALSA Raw MIDI  [hw:x,y]");
+	button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button2),
+	                                                      "ALSA Raw MIDI  [hw:x,y]");
 	widget_set_custom_font(button3, phasex_font_desc);
 	gtk_button_set_alignment(GTK_BUTTON(button3), button_x, 0.5);
 	gtk_box_pack_start(GTK_BOX(box), button3, FALSE, FALSE, 0);
 
 #ifdef ENABLE_RAWMIDI_GENERIC
-	button4 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button3), "Generic MIDI  [/dev/midi]");
+	button4 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button3),
+	                                                      "Generic MIDI  [/dev/midi]");
 	widget_set_custom_font(button4, phasex_font_desc);
 	gtk_button_set_alignment(GTK_BUTTON(button4), button_x, 0.5);
 	gtk_box_pack_start(GTK_BOX(box), button4, FALSE, FALSE, 0);
 #endif
 
 #ifdef ENABLE_RAWMIDI_OSS
-	button5 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button4), "OSS  [/dev/midi?]  (untested!!!)");
+	button5 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(button4),
+	                                                      "OSS  [/dev/midi?]  (untested!!!)");
 	widget_set_custom_font(button5, phasex_font_desc);
 	gtk_button_set_alignment(GTK_BUTTON(button5), button_x, 0.5);
 	gtk_box_pack_start(GTK_BOX(box), button5, FALSE, FALSE, 0);
@@ -2596,15 +2593,12 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_midi_driver),
 	                 (gpointer) MIDI_DRIVER_JACK);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_midi_driver),
 	                 (gpointer) MIDI_DRIVER_ALSA_SEQ);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_midi_driver),
 	                 (gpointer) MIDI_DRIVER_RAW_ALSA);
-
 #ifdef ENABLE_RAWMIDI_GENERIC
 	g_signal_connect(GTK_OBJECT(button4), "toggled",
 	                 GTK_SIGNAL_FUNC(set_midi_driver),
@@ -2923,7 +2917,6 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_audio_driver),
 	                 (gpointer) AUDIO_DRIVER_ALSA_PCM);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_audio_driver),
 	                 (gpointer) AUDIO_DRIVER_JACK);
@@ -3013,7 +3006,8 @@ create_config_dialog(void)
 	sep = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(vbox), sep, FALSE, FALSE, 3);
 
-	label = gtk_label_new("* Options for ALSA PCM and JACK audio can\n   be found under their respective tabs.");
+	label = gtk_label_new("* Options for ALSA PCM and JACK audio can\n"
+	                      "   be found under their respective tabs.");
 	widget_set_custom_font(label, phasex_font_desc);
 	gtk_box_pack_start(GTK_BOX(vbox), label, TRUE, TRUE, 3);
 
@@ -3144,23 +3138,18 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate),
 	                 (gpointer) 22050);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate),
 	                 (gpointer) 44100);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate),
 	                 (gpointer) 48000);
-
 	g_signal_connect(GTK_OBJECT(button4), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate),
 	                 (gpointer) 64000);
-
 	g_signal_connect(GTK_OBJECT(button5), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate),
 	                 (gpointer) 88200);
-
 	g_signal_connect(GTK_OBJECT(button6), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate),
 	                 (gpointer) 96000);
@@ -3252,23 +3241,18 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_buffer_period_size),
 	                 (gpointer) 32);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_buffer_period_size),
 	                 (gpointer) 64);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_buffer_period_size),
 	                 (gpointer) 128);
-
 	g_signal_connect(GTK_OBJECT(button4), "toggled",
 	                 GTK_SIGNAL_FUNC(set_buffer_period_size),
 	                 (gpointer) 256);
-
 	g_signal_connect(GTK_OBJECT(button5), "toggled",
 	                 GTK_SIGNAL_FUNC(set_buffer_period_size),
 	                 (gpointer) 512);
-
 	g_signal_connect(GTK_OBJECT(button6), "toggled",
 	                 GTK_SIGNAL_FUNC(set_buffer_period_size),
 	                 (gpointer) 1024);
@@ -3471,7 +3455,6 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_multi_out),
 	                 (gpointer) 0);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_multi_out),
 	                 (gpointer) 1);
@@ -3512,7 +3495,6 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_autoconnect),
 	                 (gpointer) 0);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_autoconnect),
 	                 (gpointer) 1);
@@ -3570,11 +3552,9 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_transport_mode),
 	                 (gpointer) JACK_TRANSPORT_OFF);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_transport_mode),
 	                 (gpointer) JACK_TRANSPORT_TEMPO);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_jack_transport_mode),
 	                 (gpointer) JACK_TRANSPORT_TNP);
@@ -3793,11 +3773,9 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate_mode),
 	                 (gpointer) SAMPLE_RATE_NORMAL);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate_mode),
 	                 (gpointer) SAMPLE_RATE_UNDERSAMPLE);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sample_rate_mode),
 	                 (gpointer) SAMPLE_RATE_OVERSAMPLE);
@@ -3857,11 +3835,9 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(bank_autosave_button), "toggled",
 	                 GTK_SIGNAL_FUNC(set_bank_mem_mode),
 	                 (gpointer) BANK_MEM_AUTOSAVE);
-
 	g_signal_connect(GTK_OBJECT(bank_warn_button), "toggled",
 	                 GTK_SIGNAL_FUNC(set_bank_mem_mode),
 	                 (gpointer) BANK_MEM_WARN);
-
 	g_signal_connect(GTK_OBJECT(bank_protect_button), "toggled",
 	                 GTK_SIGNAL_FUNC(set_bank_mem_mode),
 	                 (gpointer) BANK_MEM_PROTECT);
@@ -4043,7 +4019,6 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sched_policy),
 	                 (gpointer) SCHED_FIFO);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_sched_policy),
 	                 (gpointer) SCHED_RR);
@@ -4197,11 +4172,9 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_window_layout),
 	                 (gpointer) LAYOUT_NOTEBOOK);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_window_layout),
 	                 (gpointer) LAYOUT_ONE_PAGE);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_window_layout),
 	                 (gpointer) LAYOUT_WIDESCREEN);
@@ -4341,47 +4314,36 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_16x16);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_20x20);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_24x24);
-
 	g_signal_connect(GTK_OBJECT(button4), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_28x28);
-
 	g_signal_connect(GTK_OBJECT(button5), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_32x32);
-
 	g_signal_connect(GTK_OBJECT(button6), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_36x36);
-
 	g_signal_connect(GTK_OBJECT(button7), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_40x40);
-
 	g_signal_connect(GTK_OBJECT(button8), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_44x44);
-
 	g_signal_connect(GTK_OBJECT(button9), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_48x48);
-
 	g_signal_connect(GTK_OBJECT(button10), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_52x52);
-
 	g_signal_connect(GTK_OBJECT(button11), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_56x56);
-
 	g_signal_connect(GTK_OBJECT(button12), "toggled",
 	                 GTK_SIGNAL_FUNC(set_knob_size),
 	                 (gpointer) KNOB_SIZE_60x60);
@@ -4514,15 +4476,12 @@ create_config_dialog(void)
 	g_signal_connect(GTK_OBJECT(button1), "toggled",
 	                 GTK_SIGNAL_FUNC(set_theme),
 	                 (gpointer) PHASEX_THEME_DARK);
-
 	g_signal_connect(GTK_OBJECT(button2), "toggled",
 	                 GTK_SIGNAL_FUNC(set_theme),
 	                 (gpointer) PHASEX_THEME_LIGHT);
-
 	g_signal_connect(GTK_OBJECT(button3), "toggled",
 	                 GTK_SIGNAL_FUNC(set_theme),
 	                 (gpointer) PHASEX_THEME_SYSTEM);
-
 	g_signal_connect(GTK_OBJECT(button4), "toggled",
 	                 GTK_SIGNAL_FUNC(set_theme),
 	                 (gpointer) PHASEX_THEME_CUSTOM);
@@ -4752,7 +4711,6 @@ create_config_dialog(void)
 	g_signal_connect(G_OBJECT(config_dialog), "response",
 	                 GTK_SIGNAL_FUNC(close_config_dialog),
 	                 (gpointer) 0);
-
 	g_signal_connect(G_OBJECT(config_dialog), "destroy",
 	                 GTK_SIGNAL_FUNC(close_config_dialog),
 	                 (gpointer) - 1);

@@ -276,7 +276,7 @@ init_help(void)
 	}
 
 	/* read help entries */
-	if ((textbuf = malloc(16384)) == NULL) {
+	if ((textbuf = malloc(32768)) == NULL) {
 		phasex_shutdown("Out of Memory!\n");
 	}
 	memset(textbuf, '\0', sizeof(textbuf));

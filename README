@@ -1,18 +1,20 @@
 
-PHASEX-0.14.95:
+PHASEX-0.14.96:
 
 -------------------------------------------------------------------------------
 [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
 -------------------------------------------------------------------------------
 
-Welcome to the new incarnation of PHASEX!
+Welcome to the latest and greatest of PHASEX!
 
 PHASEX is an experimental MIDI softsynth for Linux/ALSA/JACK with a
 synth engine built around flexible phase modulation and flexible
-oscillator/LFO sources.  Modulations include AM, FM, offset PM, and wave
-select.  PHASEX comes equipped with multiple filter types and modes, a
-stereo crossover delay and chorus with phaser, ADSR envelopes for amplifier
-and filter, realtime audio input processing capabilities, and more.
+oscillator/LFO sources.  Modulations include AM, FM, offset PM, and
+wave select.  PHASEX comes equipped with multiple filter types and
+modes, a stereo crossover delay and chorus with phaser, ADSR envelopes
+for both amplifier and filter, realtime audio input processing
+capabilities, and more.  Inspirations come from a variety of analog
+and early digital MIDI synthesizers from the '80s and '90s.
 
 -------------------------------------------------------------------------------
 
@@ -40,15 +42,15 @@ GOALS:
   chosen for this reason -- not all sequencers and DAWs support all
   instrument plugin formats.  For this reason, PHASEX will most likely
   see support for features such as ALSA channel mapping, JACK
-  Freewheel, JACK Session, and even Non Session Manager (NSM) before
-  seeing support for DSSI or LV2?  Why?  PHASEX already runs side by
-  side with Ardour, MusE, Rosegarden, Qtractor, Seq24, or any other
-  sequencer supporting JACK MIDI or the ALSA sequencer interface, no
-  matter what plugin APIs these sequencers do or do not happen to
-  support.  In the future, adding support for plugin formats may be
-  deemed necessary for making PHASEX more useful in certain
-  situations.  For now, the development effort will focus on
-  fine-tuning and extending the usage of the APIs already supported.
+  Freewheel, and even Non Session Manager (NSM) before seeing support
+  for DSSI or LV2?  Why?  PHASEX already runs side by side with
+  Ardour, MusE, Rosegarden, Qtractor, Seq24, or any other sequencer
+  supporting JACK MIDI or the ALSA sequencer interface, no matter what
+  plugin APIs these sequencers do or do not happen to support.  In the
+  future, adding support for plugin formats may be deemed necessary
+  for making PHASEX more useful in certain situations.  For now, the
+  development effort will focus on fine-tuning and extending the usage
+  of the APIs already supported.
 
 * Stage friendly.  Low MIDI latency and low timing jitter.  Run with
   or without the GUI.  Ability to specify alternate config files
@@ -66,9 +68,7 @@ GOALS:
   music, not on remembering how to make the instrument jump through a
   bunch of hoops just to do it's job.  PHASEX development will
   continue in this direction with new session management features
-  starting with storing audio and MIDI connections, midimaps, and
-  configs with session saves, and optionally recalling these with
-  session loads.
+  based on community feedback.
 
 * Great sound.  This one is of course, quite subjective, but it still
   comes down to the same juggling act on the programming end:  Choosing
@@ -89,13 +89,15 @@ FEATURES:
 -------------------------------------------------------------------------------
 
 * GTK Interface:
-    
-    PHASEX has a GUI, complete with knobs and buttons for all 150+
-    patch parameters and switchable color themes.  True fullscreen
-    mode, notebook, one-page, and widescreen layouts, and select-able
-    fonts and knob sizes allow PHASEX to fit into any amount of screen
-    real-estate (now able to squeeze into sizes smaller than 800x600,
-    or more comfortably sit in a 1920x1080 desktop).
+
+    PHASEX has a GUI with switchable color themes, knobs and buttons
+    for all 150+ patch parameters, preferences dialog for easy
+    configuration, patch bank and session bank, MIDI connections from
+    the main menu, and more.  True fullscreen mode, notebook,
+    one-page, and widescreen layouts, and select-able fonts and knob
+    sizes allow PHASEX to fit into any amount of screen real-estate
+    (now able to squeeze into sizes smaller than 800x600, or more
+    comfortably sit in a 1920x1080 desktop).
 
 * Polyphonic:
 
@@ -129,11 +131,11 @@ FEATURES:
 * JACK Audio:
 
     PHASEX has supported JACK audio from the beginning of the public
-    releases.  Any sample rate or buffer size used by jackd can be
-    utilized.  Both single-stereo-pair and multi-stereo-pair routings
-    are supported.  Basic Transport is supported, but as of this time,
-    the tempo and LFO sync are largely untested and still need some
-    fine-tuning.
+    MIDI enabled releases.  Any sample rate or buffer size used by
+    jackd can be utilized.  Both single- and multi- stereo-pair
+    routings are supported.  Basic Transport is supported, but as of
+    this time, the tempo and LFO sync are largely untested and may
+    still need some fine-tuning.
 
 * ALSA MIDI:
 
@@ -251,7 +253,8 @@ FEATURES:
     Poly mode.
 
     As of v0.14.x, a 4-pole 24db/octave Stilson/Smith style Moog
-    filter has been added.  In PHASEX style, both a distorted and a
+    filter has been added.  In PHASEX style, cutoff frequency is
+    adjusted in halfstep increments, and both a distorted and a
     clean version are available.
 
     The 3-pole filter is experimental, and might not be included in
@@ -293,6 +296,80 @@ FEATURES:
     Velocity of Note-On events can modify the filter or amplifier, and
     can also be routed through the LFOs.
 
+* Session Handling:
+
+    For multitimbral builds, PHASEX comes equipped with a session bank
+    which operates much like the existing patch bank.  In addition to
+    the new native session handling, LASH and JACK Session supported
+    as well.
+
+-------------------------------------------------------------------------------
+
+
+MAJOR CHANGES SINCE v0.12.x:
+-------------------------------------------------------------------------------
+
+In addition to new major features listed above, all parts of the
+PHASEX source code have been overhauled, with some important changes:
+
+* New synth patch file format:  This decision was not made lightly,
+  and there are many reasons for this:  The behavior of some
+  parameters has changed (anything dealing with velocity curves,
+  envelope curves, offset of negative envelopes), new parameters have
+  been added, new parameter values have been added, and the old patch
+  parser code grew into an almost unmanageable mess.  Starting with
+  v0.14.x, parameter values in patch files reflect the values shown in
+  the GUI instead of _mostly_ reflectling MIDI values, which should be
+  better for human readability.  Improperly named parameters have been
+  renamed to avoid confusion as well.  A patch conversion script is
+  provided to convert patches from v0.12.x to v0.14.x, and should work
+  well in most cases.  With the new synth engine improvements, a lot
+  of old patches can be modified to sound better with very little
+  effort, so please don't fret when old patches don't sound _exactly_
+  the same.  If there is one apology that needs to be made with the
+  new PHASEX release, this is it.  If converting all your old patches
+  into the new format really throws a monkeywrench into the works, I
+  do apologize.
+
+* GUI and engine are (almost) fully separated.  Engine parameters and
+  GUI parameters now have separate callback paths.  The GUI queues
+  parameter change events for the engine instead of modifying engine
+  parameters directly.  GUI-initiated patch changes are still
+  performed by the GUI (hence 'almost separated').  Current plans
+  include separating this out as well.  Cleaning up this aspect of the
+  GUI has helped tremendously, allowing all the weird hacks and
+  workarounds for parameter state handling to be replaced with a
+  design that works efficiently and dependably.  Since the engine and
+  MIDI code no longer have to be aware of the GUI, phasex can now be
+  started without the GUI.
+
+* Lock-free buffer synchronization:  The pthreads mutexes in the
+  buffer processing code been removed in favor of lock-free buffering
+  and for the engine, clock_nanosleep() based adaptive sleep timing.
+  Moving away from the old broken design means fewer context switches,
+  fewer (if any) priority inversion problems, a better guarantee that
+  engine threads can fill buffers on time, and most important of all:
+  no more "bad PHASEX sound" from engine and audio losing sync.
+
+* New MIDI queue:  Single-reader.  Multiple-writer.  Multiple events
+  per frame.  Monotonic.  Reliable.  Used by GUI and all MIDI drivers
+  to queue events for the engine.  Queue data format is designed to
+  hold 2 and 3 byte MIDI messages.  Event types not defined in the
+  MIDI spec are used for internal non-MIDI events (currently 0x01
+  through 0x04).
+
+* MIDI Reference Clock:  All of the MIDI event queuing and realtime
+  buffer synchronization between audio, engine, and MIDI threads is
+  built around the new MIDI reference clock.  All synchronization
+  events (engine waking up, audio waking up, timestamping MIDI events,
+  and updating audio,engine, and MIDI buffer indices) happen at a time
+  relative to the begininng of a MIDI period (equal in time to an
+  average audio buffer period, but starting some configurable amount
+  of time earlier).
+
+* There's plenty more if you're curious.  Have a look at the
+  ChangeLog, or just go straight to the source.
+
 -------------------------------------------------------------------------------
 
 
@@ -311,22 +388,23 @@ Optional:
   * LASH >= 0.5.4.
   * libuuid (required by LASH).
 
-
 -------------------------------------------------------------------------------
 
 
 COMPILING AND INSTALLING PHASEX:
 -------------------------------------------------------------------------------
 
-For most installations, all that should be needed is the following:
+For a standard, multitimbral configuration optimized for your CPU,
+run the following:
 
-	cd phasex-0.14.95
-	./configure --enable-arch=native
-	make
-	make install
+    cd phasex
+    aclocal && autoconf && automake && autoheader
+    ./configure --enable-arch=native --enable-parts=2
+    make
+    make install
 
 Other useful configure flags are --enable-debug=, --enable-32bit,
---enable-cpu-power=, and enable-parts=.
+--enable-cpu-power=, and --without-lash.
 
 See INSTALL for full compilation and installation instructions.
 
@@ -356,6 +434,8 @@ Usage:  phasex [options] [<patch>[,<patch>[,<patch>[,...]]]]
   -O, --oversample       Use double the sample rate for internal math.
   -U, --undersample      Use half the sample rate for internal math.
   -G, --no-gui           Run PHASEX without starting the GUI.
+  -D, --session-dir=     Set directory for loading initial session.
+  -u, --uuid=            Set UUID for JACK Session handling.
   -d, --debug=           Debug class (Can be repeated. See debug.c).
   -l, --list             Scan and list audio and MIDI devices.
   -v, --version          Display version and exit.
@@ -380,7 +460,7 @@ names.  The -m option takes a comma separated list of MIDI ports (X:Y
 for ALSA Seq, hw:X,Y for ALSA Raw, or device file for generic raw
 MIDI).  For example:
 
-	phasex -A jack -i _1,_2 -o _1,_2 -M alsa-seq -m 16:0,20:0
+    phasex -A jack -i _1,_2 -o _1,_2 -M alsa-seq -m 16:0,20:0
 
 will match JACK ports alsa_pcm:capture_1 and alsa_pcm:capture_2 for
 input, alsa_pcm:playback_1 and alsa_pcm:playback_2 for output, and the
@@ -420,7 +500,7 @@ the default config and auto-detect your setup all over again.
 -------------------------------------------------------------------------------
 
 
-LICENSING:
+LICENSING AND COPYRIGHT:
 -------------------------------------------------------------------------------
 
 PHASEX is distributed under the terms of the GNU Public License,
@@ -440,15 +520,17 @@ See AUTHORS for details.
 -------------------------------------------------------------------------------
 
 
-
 OBTAINING PHASEX:
 -------------------------------------------------------------------------------
 
-A new PHASEX web site and git repository are coming soon.  Until then,
-please download PHASEX using the links provided in the mailing lists.
+Currently, PHASEX dev sources are only available via git:
+
+	git clone https://github.com/williamweston/phasex.git
+
+RPM and .tar.gz packages will be made available with the
+upcoming v0.15.0 stable release.
 
 -------------------------------------------------------------------------------
-
 
 
 CONTACTING THE AUTHOR:

@@ -693,8 +693,6 @@ scan_audio_and_midi(void)
 	ALSA_SEQ_PORT           *seq_port_list;
 	ALSA_RAWMIDI_HW_INFO    *rawmidi_hw_list;
 
-	printf("\n");
-
 	/* scan for ALSA PCM capture and playback devices */
 #ifdef ENABLE_INPUTS
 	if (alsa_pcm_capture_hw != NULL) {
@@ -769,7 +767,6 @@ scan_audio_and_midi(void)
 		       seq_port_list->port_name);
 		seq_port_list = seq_port_list->next;
 	}
-	printf("\n");
 
 	alsa_seq_port_free(alsa_seq_info->capture_ports);
 	snd_seq_close(alsa_seq_info->seq);
@@ -780,8 +777,8 @@ scan_audio_and_midi(void)
 		alsa_rawmidi_hw_info_free(alsa_rawmidi_hw);
 	}
 	alsa_rawmidi_hw = alsa_rawmidi_get_hw_list();
-	if ((alsa_rawmidi_hw != NULL) && (debug_class & DEBUG_CLASS_RAW_MIDI)) {
-		printf("Found ALSA Raw MIDI hardware devices:\n");
+	if (alsa_rawmidi_hw != NULL) {
+		printf("\nFound ALSA Raw MIDI hardware devices:\n");
 		rawmidi_hw_list = alsa_rawmidi_hw;
 		while (rawmidi_hw_list != NULL) {
 			printf("    [%s]\t%s: %s: %s\n",

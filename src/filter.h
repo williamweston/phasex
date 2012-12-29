@@ -67,9 +67,9 @@ extern int          filter_limit;
 
 void build_filter_tables(void);
 #ifdef FILTER_WAVETABLE_12DB
-void filter_wave_table_12dB(int wave_num, int num_cycles, double octaves);
+void filter_osc_table_12dB(int wave_num, int num_cycles, double octaves);
 #endif
-void filter_wave_table_24dB(int wave_num, int num_cycles, double octaves);
+void filter_osc_table_24dB(int wave_num, int num_cycles, double octaves, sample_t scale);
 void run_filter(VOICE *voice, PART *part, PATCH_STATE *state);
 void run_moog_filter(VOICE *voice, PART *part, PATCH_STATE *state);
 void run_experimental_filter(VOICE *voice, PART *part, PATCH_STATE *state);

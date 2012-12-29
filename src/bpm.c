@@ -91,8 +91,6 @@ update_bpm(PARAM *param)
 	global.bpm    = (sample_t)(state->bpm);
 	global.bps    = (sample_t)(state->bpm) / 60.0;
 
-	//midi->tick_sample = f_sample_rate / (global.bps * 24.0);
-
 	/* For now, keep bpm as a per part param, and update all parts at once to
 	   make it appear as a global.  this way, bpm can still be saved with
 	   patches. */

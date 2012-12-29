@@ -325,8 +325,7 @@ select_program(GtkWidget *widget, gpointer data)
 				                                     "Save and Select New",
 				                                     GTK_RESPONSE_YES,
 				                                     NULL);
-				gtk_window_set_wmclass(GTK_WINDOW(dialog),
-				                       "phasex", "phasex-dialog");
+				gtk_window_set_wmclass(GTK_WINDOW(dialog), "phasex", "phasex-dialog");
 				gtk_window_set_role(GTK_WINDOW(dialog), "verify-save");
 
 				/* Alert message */
@@ -812,7 +811,7 @@ run_patch_load_dialog(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 
 			g_slist_free(file_list);
 
-			save_patch_bank();
+			save_patch_bank(NULL);
 		}
 	}
 
@@ -991,7 +990,7 @@ run_patch_save_as_dialog(GtkWidget *UNUSED(widget), gpointer data)
 			if (save_patch(patchfile, patch) == 0) {
 				update_gui_patch_name();
 				update_gui_patch_modified();
-				save_patch_bank();
+				save_patch_bank(NULL);
 			}
 			break;
 		case BANK_MEM_WARN:
@@ -1001,7 +1000,7 @@ run_patch_save_as_dialog(GtkWidget *UNUSED(widget), gpointer data)
 				if (save_patch(patchfile, patch) == 0) {
 					update_gui_patch_name();
 					update_gui_patch_modified();
-					save_patch_bank();
+					save_patch_bank(NULL);
 				}
 			}
 			break;
@@ -1044,7 +1043,7 @@ on_patch_save_activate(GtkWidget *UNUSED(widget), gpointer data)
 			if (save_patch(filename, patch) == 0) {
 				update_gui_patch_name();
 				update_gui_patch_modified();
-				save_patch_bank();
+				save_patch_bank(NULL);
 			}
 			break;
 		case BANK_MEM_WARN:
@@ -1054,7 +1053,7 @@ on_patch_save_activate(GtkWidget *UNUSED(widget), gpointer data)
 				if (save_patch(filename, patch) == 0) {
 					update_gui_patch_name();
 					update_gui_patch_modified();
-					save_patch_bank();
+					save_patch_bank(NULL);
 				}
 			}
 			break;
@@ -1076,7 +1075,7 @@ on_patch_reset_activate(GtkWidget *UNUSED(widget), gpointer data)
 
 	if (setting_bank_mem_mode == BANK_MEM_AUTOSAVE) {
 		if (save_patch(filename, patch) == 0) {
-			save_patch_bank();
+			save_patch_bank(NULL);
 		}
 	}
 	if (read_patch(user_default_patch, patch) != 0) {

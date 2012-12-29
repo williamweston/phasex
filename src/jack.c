@@ -29,6 +29,7 @@
 #include <pthread.h>
 #include <jack/jack.h>
 #include <jack/midiport.h>
+#include <jack/session.h>
 #include <glib.h>
 #include "phasex.h"
 #include "config.h"
@@ -40,6 +41,8 @@
 #include "midi_event.h"
 #include "midi_process.h"
 #include "engine.h"
+#include "bank.h"
+#include "session.h"
 #include "settings.h"
 #include "debug.h"
 #include "driver.h"
@@ -58,10 +61,8 @@ int                     num_output_pairs           = 0;
 jack_port_t             *input_port1;
 jack_port_t             *input_port2;
 #endif
-
 jack_port_t             *output_port1[MAX_PARTS];
 jack_port_t             *output_port2[MAX_PARTS];
-
 jack_port_t             *dest_port1[MAX_PARTS];
 jack_port_t             *dest_port2[MAX_PARTS];
 
@@ -77,8 +78,11 @@ int                     jack_running                = 0;
 JACK_PORT_INFO          *jack_midi_ports            = NULL;
 
 int                     jack_midi_ports_changed     = 0;
-
 int                     jack_rebuilding_port_list   = 0;
+
+jack_session_event_t    *jack_session_event         = NULL;
+
+char                    *jack_session_uuid          = NULL;
 
 
 /*****************************************************************************
@@ -96,8 +100,9 @@ jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg))
 	jack_default_audio_sample_t *out1;
 	jack_default_audio_sample_t *out2;
 	unsigned int                i;
+	unsigned int                j;
 	PART                        *part;
-	unsigned int                index;
+	unsigned int                a_index;
 
 	if (!jack_running || pending_shutdown) {
 		return 0;
@@ -108,12 +113,10 @@ jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg))
 		jack_process_midi(nframes);
 	}
 	else if (check_active_sensing_timeout() > 0) {
-		for (i = 0; i < MAX_PARTS; i++) {
-			all_notes_off[i] = 1;
-		}
+		broadcast_notes_off();
 	}
 
-	index = get_audio_index();
+	a_index = get_audio_index();
 
 	for (i = 0; i < MAX_PARTS; i++) {
 		out1 = jack_port_get_buffer(output_port1[i], nframes);
@@ -121,20 +124,30 @@ jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg))
 
 		part = get_part(i);
 
-		memcpy((void *) out1, (void *) & (part->output_buffer1[index]),
-		       sizeof(jack_default_audio_sample_t) * nframes);
-		memcpy((void *) out2, (void *) & (part->output_buffer2[index]),
-		       sizeof(jack_default_audio_sample_t) * nframes);
+		//		memcpy((void *) out1, (void *) & (part->output_buffer1[a_index]),
+		//		       sizeof(jack_default_audio_sample_t) * nframes);
+		//		memcpy((void *) out2, (void *) & (part->output_buffer2[a_index]),
+		//		       sizeof(jack_default_audio_sample_t) * nframes);
+
+		for (j = 0; j < nframes; j++) {
+			out1[j] = (jack_default_audio_sample_t)part->output_buffer1[a_index + j];
+			out2[j] = (jack_default_audio_sample_t)part->output_buffer2[a_index + j];
+		}
 	}
 
 # ifdef ENABLE_INPUTS
 	in1 = jack_port_get_buffer(input_port1, nframes);
 	in2 = jack_port_get_buffer(input_port2, nframes);
 
-	memcpy((void *) & (input_buffer1[index]), (void *) in1,
-	       sizeof(jack_default_audio_sample_t) * nframes);
-	memcpy((void *) & (input_buffer2[index]), (void *) in2,
-	       sizeof(jack_default_audio_sample_t) * nframes);
+	//	memcpy((void *) & (input_buffer1[a_index]), (void *) in1,
+	//	       sizeof(jack_default_audio_sample_t) * nframes);
+	//	memcpy((void *) & (input_buffer2[a_index]), (void *) in2,
+	//	       sizeof(jack_default_audio_sample_t) * nframes);
+
+	for (j = 0; j < nframes; j++) {
+		input_buffer1[a_index + j] = (sample_t)in1[j];
+		input_buffer2[a_index + j] = (sample_t)in2[j];
+	}
 #endif
 
 	inc_audio_index(nframes);
@@ -156,7 +169,7 @@ jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg))
 	PART                        *part;
 	unsigned int                i;
 	unsigned int                j;
-	unsigned int                index;
+	unsigned int                a_index;
 # ifdef ENABLE_INPUTS
 	jack_default_audio_sample_t *in1;
 	jack_default_audio_sample_t *in2;
@@ -173,9 +186,7 @@ jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg))
 		jack_process_midi(nframes);
 	}
 	else if (check_active_sensing_timeout() > 0) {
-		for (i = 0; i < MAX_PARTS; i++) {
-			all_notes_off[i] = 1;
-		}
+		broadcast_notes_off();
 	}
 
 	out1 = jack_port_get_buffer(output_port1[0], nframes);
@@ -184,14 +195,14 @@ jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg))
 	memset((void *) out1, 0, nframes * sizeof(jack_default_audio_sample_t));
 	memset((void *) out2, 0, nframes * sizeof(jack_default_audio_sample_t));
 
-	index = get_audio_index();
+	a_index = get_audio_index();
 
 	for (i = 0; i < MAX_PARTS; i++) {
 		part = get_part(i);
 
 		for (j = 0; j < nframes; j++) {
-			out1[j] += (jack_default_audio_sample_t) part->output_buffer1[index + j];
-			out2[j] += (jack_default_audio_sample_t) part->output_buffer2[index + j];
+			out1[j] += (jack_default_audio_sample_t) part->output_buffer1[a_index + j];
+			out2[j] += (jack_default_audio_sample_t) part->output_buffer2[a_index + j];
 		}
 	}
 
@@ -199,9 +210,9 @@ jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg))
 	in1 = jack_port_get_buffer(input_port1, nframes);
 	in2 = jack_port_get_buffer(input_port2, nframes);
 
-	memcpy((void *) & (input_buffer1[index]), (void *) in1,
+	memcpy((void *) & (input_buffer1[a_index]), (void *) in1,
 	       sizeof(jack_default_audio_sample_t) * nframes);
-	memcpy((void *) & (input_buffer2[index]), (void *) in2,
+	memcpy((void *) & (input_buffer2[a_index]), (void *) in2,
 	       sizeof(jack_default_audio_sample_t) * nframes);
 # endif
 
@@ -391,13 +402,13 @@ jack_port_registration_handler(jack_port_id_t port_id, int reg, void *UNUSED(arg
 		if ((new = malloc(sizeof(JACK_PORT_INFO))) == NULL) {
 			phasex_shutdown("Out of Memory!\n");
 		}
-		new->name      = strdup(jack_port_name(port));
+		new->name      = strdup(port_name);
 		new->type      = strdup(JACK_DEFAULT_MIDI_TYPE);
 		new->type_id   = jack_port_type_id(port);
-		new->connected = jack_port_connected(port);
+		new->connected = (jack_port_connected_to(midi_input_port, port_name) ? 1 : 0);
 		new->connect_request    = 0;
 		new->disconnect_request = 0;
-		new->next      = NULL;
+		new->next               = NULL;
 		head = cur = jack_midi_ports;
 		while (cur != NULL) {
 			if (strcmp(cur->name, port_name) > 0) {
@@ -642,52 +653,75 @@ jack_xrun_handler(void *UNUSED(arg))
  *****************************************************************************/
 #ifdef ENABLE_JACK_LATENCY_CALLBACK
 void
-jack_latency_handler(jack_latency_callback_mode_t mode, void *arg)
+jack_latency_handler(jack_latency_callback_mode_t mode, void *UNUSED(arg))
 {
 	jack_latency_range_t    range;
-	int                     i       = (int)(long int) arg;
-	jack_nframes_t          min_adj = buffer_size - buffer_period_size;
-	jack_nframes_t          max_adj = buffer_size - buffer_period_size;
+	jack_nframes_t          min_adj;
+	jack_nframes_t          max_adj;
+	int                     i;
 
 	if (mode == JackCaptureLatency) {
 #ifdef ENABLE_INPUTS
+		min_adj = 0;
+		max_adj = 0;
 		jack_port_get_latency_range(input_port1, JackCaptureLatency, &range);
+		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+		             "Latency handler:  Input Channel 1:     "
+		             "old:  range.min = %5d  range.max = %5d\n",
+		             range.min, range.max);
 		range.min += min_adj;
 		range.max += max_adj;
+		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+		             "                                       "
+		             "new:  range.min = %5d  range.max = %5d\n",
+		             range.min, range.max);
 		jack_port_set_latency_range(input_port1, JackCaptureLatency, &range);
 
 		jack_port_get_latency_range(input_port2, JackCaptureLatency, &range);
+		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+		             "                  Input Channel 2:     "
+		             "old:  range.min = %5d  range.max = %5d\n",
+		             range.min, range.max);
 		range.min += min_adj;
 		range.max += max_adj;
+		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+		             "                                       "
+		             "new:  range.min = %5d  range.max = %5d\n",
+		             range.min, range.max);
 		jack_port_set_latency_range(input_port2, JackCaptureLatency, &range);
 #endif
 	}
-	else if (mode == JackPlaybackLatency) {
-		jack_port_get_latency_range(dest_port1[i], JackPlaybackLatency, &range);
-		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
-		             "Latency handler:  Part %d:  Channel 1:  "
-		             "old:  range.min = %d  range.max = %d\n",
-		             i, range.min, range.max);
-		range.min += min_adj;
-		range.max += max_adj;
-		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
-		             "                  Part %d:  Channel 1:  "
-		             "new:  range.min = %d  range.max = %d\n",
-		             i, range.min, range.max);
-		jack_port_set_latency_range(output_port1[i], JackPlaybackLatency, &range);
 
-		jack_port_get_latency_range(dest_port2[i], JackPlaybackLatency, &range);
-		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
-		             "                  Part %d:  Channel 2:  "
-		             "old:  range.min = %d  range.max = %d\n",
-		             i, range.min, range.max);
-		range.min += min_adj;
-		range.max += max_adj;
-		PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
-		             "                  Part %d:  Channel 2:  "
-		             "new:  range.min = %d  range.max = %d\n",
-		             i, range.min, range.max);
-		jack_port_set_latency_range(output_port2[i], JackPlaybackLatency, &range);
+	else if (mode == JackPlaybackLatency) {
+		min_adj = buffer_period_size;
+		max_adj = buffer_period_size * 3;
+		for (i = 0; i < num_output_pairs; i++) {
+			jack_port_get_latency_range(dest_port1[i], JackPlaybackLatency, &range);
+			PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+			             "Latency handler:  Part %d:  Channel 1:  "
+			             "old:  range.min = %5d  range.max = %5d\n",
+			             i, range.min, range.max);
+			range.min += min_adj;
+			range.max += max_adj;
+			PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+			             "                                       "
+			             "new:  range.min = %5d  range.max = %5d\n",
+			             range.min, range.max);
+			jack_port_set_latency_range(output_port1[i], JackPlaybackLatency, &range);
+
+			jack_port_get_latency_range(dest_port2[i], JackPlaybackLatency, &range);
+			PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+			             "                           Channel 2:  "
+			             "old:  range.min = %5d  range.max = %5d\n",
+			             range.min, range.max);
+			range.min += min_adj;
+			range.max += max_adj;
+			PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
+			             "                                       "
+			             "new:  range.min = %5d  range.max = %5d\n",
+			             range.min, range.max);
+			jack_port_set_latency_range(output_port2[i], JackPlaybackLatency, &range);
+		}
 	}
 }
 #endif /* ENABLE_JACK_LATENCY_CALLBACK */
@@ -711,6 +745,26 @@ jack_graph_order_handler(void *arg)
 	return 0;
 }
 #endif /* ENABLE_JACK_GRAPH_ORDER_CALLBACK */
+
+
+/*****************************************************************************
+ * jack_session_handler()
+ *
+ * Called when jack needs to save the session.
+ *****************************************************************************/
+void
+jack_session_handler(jack_session_event_t *event, void *UNUSED(arg))
+{
+	char                    cmd[256];
+
+	snprintf(cmd, sizeof(cmd), "phasex -u %s -D %s",
+	         event->client_uuid, event->session_dir);
+	event->command_line = strdup(cmd);
+	jack_session_reply(jack_audio_client, event);
+
+	/* keep session event and let watchdog do the real work */
+	jack_session_event = event;
+}
 
 
 /*****************************************************************************
@@ -952,6 +1006,9 @@ jack_audio_init(void)
 	jack_set_port_rename_callback(jack_audio_client,
 	                              jack_port_rename_handler,
 	                              (void *) NULL);
+	jack_set_session_callback(jack_audio_client,
+	                          jack_session_handler,
+	                          (void *) NULL);
 #ifdef ENABLE_JACK_LATENCY_CALLBACK
 	jack_set_latency_callback(jack_audio_client,
 	                          jack_latency_handler,
@@ -1237,6 +1294,60 @@ jack_restart(void)
 
 
 /*****************************************************************************
+ * jack_get_session_name_from_directory()
+ *****************************************************************************/
+char *
+jack_get_session_name_from_directory(const char *directory)
+{
+	SESSION *session = get_current_session();
+	char    *dir;
+	char    *p;
+	char    *q;
+	int     slashes;
+
+	dir = strdup(directory);
+	p = dir;
+	while (*p != '\0') {
+		p++;
+	}
+	p--;
+	if (*p == '/') {
+		*p-- = '\0';
+	}
+	slashes = 2;
+	while (slashes > 0) {
+		if ((*p == '/') && (* (p + 1) != '.')) {
+			slashes--;
+		}
+		p--;
+		if (p < dir) {
+			break;
+		}
+	}
+	p++;
+	if (slashes == 0) {
+		q = ++p;
+		while (*p != '/') {
+			p++;
+		}
+		*p = '\0';
+		if (session->name == NULL) {
+			session->name = strdup(q);
+		}
+		else {
+			p = session->name;
+			session->name = strdup(q);
+			free(p);
+		}
+		session_name_changed = 1;
+	}
+	free(dir);
+
+	return session->name;
+}
+
+
+/*****************************************************************************
  * jack_watchdog_cycle()
  *
  * Called by the audio watchdog to handle (dis)connect requests.
@@ -1245,7 +1356,25 @@ void
 jack_watchdog_cycle(void)
 {
 	JACK_PORT_INFO  *cur;
+	char            *name;
+	int             save_and_quit = 0;
 
+	if (jack_session_event != NULL) {
+		switch(jack_session_event->type) {
+		case JackSessionSaveAndQuit:
+			save_and_quit = 1;
+		case JackSessionSave:
+		case JackSessionSaveTemplate:
+			save_session((char *)(jack_session_event->session_dir), visible_sess_num, 1);
+			name = jack_get_session_name_from_directory(jack_session_event->session_dir);
+			PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK Saved session '%s'\n", name);
+			jack_session_event_free(jack_session_event);
+			jack_session_event = NULL;
+		}
+		if (save_and_quit) {
+			phasex_shutdown("Saved JACK Session.  Goodbye!\n");
+		}
+	}
 	if ((midi_driver == MIDI_DRIVER_JACK) && (jack_midi_ports != NULL)) {
 		cur = jack_midi_ports;
 		while (cur != NULL) {

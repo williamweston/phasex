@@ -52,6 +52,8 @@ extern JACK_PORT_INFO       *jack_midi_ports;
 
 extern int                  jack_midi_ports_changed;
 
+extern char                 *jack_session_uuid;
+
 
 int jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg));
 int jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg));
@@ -66,6 +68,8 @@ int  jack_stop(void);
 void jack_restart(void);
 void jack_watchdog_cycle(void);
 void *jack_audio_thread(void *UNUSED(arg));
+
+char *jack_get_session_name_from_directory(const char *directory);
 
 
 #endif /* _PHASEX_JACK_H_ */

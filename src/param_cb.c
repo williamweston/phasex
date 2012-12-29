@@ -498,7 +498,6 @@ void
 update_amp_sustain(PARAM *param)
 {
 	PATCH_STATE     *state  = param->patch->state;
-	PART            *part   = param->patch->part;
 	int             cc_val  = param->value.cc_val;
 	int             int_val = param->value.int_val;
 	VOICE           *voice;
@@ -512,13 +511,6 @@ update_amp_sustain(PARAM *param)
 			voice->amp_env_raw = state->amp_sustain;
 		}
 	}
-
-	part->env_buffer[4] = (1.0 - ((1.0 - state->amp_sustain) * 0.5));
-	part->env_buffer[5] = state->amp_sustain;
-	part->env_buffer[6] = state->amp_sustain;
-	part->env_buffer[7] = state->amp_sustain;
-	part->env_buffer[8] = state->amp_sustain;
-	part->env_buffer[9] = state->amp_sustain * 0.5;
 }
 
 /*****************************************************************************

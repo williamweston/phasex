@@ -58,7 +58,7 @@ jack_process_midi(jack_nframes_t nframes)
 	unsigned char       channel;
 	unsigned short      e;
 	unsigned short      part_num;
-	unsigned int        index;
+	unsigned int        m_index;
 
 	out_event->state = EVENT_STATE_ALLOCATED;
 	out_event->next  = NULL;
@@ -68,7 +68,7 @@ jack_process_midi(jack_nframes_t nframes)
 	   midi does not need the clock per se, but currently the engine is
 	   synchronized to the midi, so it's easier to work with the existing
 	   system of synchronizing and updating buffer indices. */
-	index = get_midi_index();
+	m_index = get_midi_index();
 
 	/* handle all events for this process cycle */
 	for (e = 0; e < num_events; e++) {
@@ -92,7 +92,7 @@ jack_process_midi(jack_nframes_t nframes)
 			for (part_num = 0; part_num < MAX_PARTS; part_num++) {
 				part = get_part(part_num);
 				if ((channel == part->midi_channel) || (part->midi_channel == 16)) {
-					queue_midi_event(part_num, out_event, in_event.time, index);
+					queue_midi_event(part_num, out_event, in_event.time, m_index);
 				}
 			}
 		}
@@ -121,7 +121,7 @@ jack_process_midi(jack_nframes_t nframes)
 			case MIDI_EVENT_STOP:           // 0xFC
 			case MIDI_EVENT_SYSTEM_RESET:   // 0xFF
 				/* send stop and reset events to all queues */
-				queue_midi_realtime_event(ALL_PARTS, type, in_event.time, index);
+				queue_midi_realtime_event(ALL_PARTS, type, in_event.time, m_index);
 				break;
 				/* ignored 1-byte system and realtime messages */
 			case MIDI_EVENT_BUS_SELECT:     // 0xF5
@@ -145,7 +145,7 @@ jack_process_midi(jack_nframes_t nframes)
 	if (check_active_sensing_timeout() > 0) {
 		/* a real timeout has occurred when there are _no_ midi events. */
 		if (num_events == 0) {
-			queue_midi_realtime_event(ALL_PARTS, MIDI_EVENT_STOP, (nframes - 1), index);
+			queue_midi_realtime_event(ALL_PARTS, MIDI_EVENT_STOP, (nframes - 1), m_index);
 		}
 	}
 

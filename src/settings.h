@@ -110,12 +110,7 @@ extern int                          setting_jack_autoconnect;
 extern int                          setting_jack_transport_mode;
 
 /* Synth settings */
-#if (ARCH_BITS == 32)
-extern float                        setting_tuning_freq;
-#endif
-#if (ARCH_BITS == 64)
-extern double                       setting_tuning_freq;
-#endif
+extern sample_t                     setting_tuning_freq;
 #ifdef NONSTANDARD_HARMONICS
 extern double                       setting_harmonic_base;
 extern double                       setting_harmonic_steps;

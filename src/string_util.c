@@ -38,7 +38,7 @@ get_next_token(char *inbuf)
 	int             in_quote        = 0;
 	static int      eob             = 1;
 	char            *token_begin;
-	static char     *index          = NULL;
+	static char     *t_index          = NULL;
 	static char     *last_inbuf     = NULL;
 	static char     token_buf[256];
 
@@ -50,70 +50,71 @@ get_next_token(char *inbuf)
 	/* was end of buffer set last time? */
 	if (eob) {
 		eob = 0;
-		index = inbuf;
+		t_index = inbuf;
 	}
 
 	/* keep us out of more trouble */
-	if ((index == NULL) || (*index == '\0') ||
-	    (*index == '#') || (*index == '\n')) {
+	if ((t_index == NULL) || (*t_index == '\0') ||
+	    (*t_index == '#') || (*t_index == '\n')) {
 		eob = 1;
 		return NULL;
 	}
 
 	/* skip past whitespace */
-	while ((*index == ' ') || (*index == '\t')) {
-		index++;
+	while ((*t_index == ' ') || (*t_index == '\t')) {
+		t_index++;
 	}
 
 	/* check for quoted token */
-	if (*index == '"') {
+	if (*t_index == '"') {
 		in_quote = 1;
-		index++;
+		t_index++;
 	}
 
 	/* we're at the start of the current token */
-	token_begin = index;
+	token_begin = t_index;
 
 	/* go just past the last character of the token */
 	if (in_quote) {
-		while (*index != '"') {
-			index++;
+		while (*t_index != '"') {
+			t_index++;
 		}
-		//index++;
+		//t_index++;
 	}
-	else if ((*index == '{') || (*index == '}') ||
-	         (*index == ';') || (*index == '=') || (*index == ',')) {
-		index++;
+	else if ((*t_index == '{') || (*t_index == '}') ||
+	         (*t_index == ';') || (*t_index == '=') || (*t_index == ',')) {
+		t_index++;
 	}
 	else {
-		while ((*index != ' ')  && (*index != '\t') &&
-		       (*index != '{')  && (*index != '}')  &&
-		       (*index != ';')  && (*index != '=')  &&
-		       (*index != '\0') && (*index != '\n') &&
-		       (*index != '#')  && (*index != ',')) {
-			index++;
+		while ((*t_index != ' ')  && (*t_index != '\t') &&
+		       (*t_index != '{')  && (*t_index != '}')  &&
+		       (*t_index != ';')  && (*t_index != '=')  &&
+		       (*t_index != '\0') && (*t_index != '\n') &&
+		       (*t_index != '#')  && (*t_index != ',')) {
+			t_index++;
 		}
 	}
 
 	/* check for end of buffer (null, newline, or comment delim) */
-	if ((index == token_begin) && ((*index == '\0') || (*index == '\n') || (*index == '#'))) {
+	if ((t_index == token_begin) &&
+	    ((*t_index == '\0') || (*t_index == '\n') || (*t_index == '#'))) {
 		eob = 1;
 		return NULL;
 	}
 
 	/* copy the token to our static buffer and terminate */
-	len = (long unsigned int)(index - token_begin) % sizeof(token_buf);
+	len = (long unsigned int)(t_index - token_begin) % sizeof(token_buf);
 	strncpy(token_buf, token_begin, len);
 	token_buf[len] = '\0';
 
 	/* skip past quote */
 	if (in_quote) {
-		index++;
+		t_index++;
 	}
 
 	/* skip past whitespace */
-	while ((*index == ' ') || (*index == '\t')) {
-		index++;
+	while ((*t_index == ' ') || (*t_index == '\t')) {
+		t_index++;
 	}
 
 	/* return the address to the token buffer */

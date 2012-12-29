@@ -62,11 +62,11 @@ extern int          session_name_changed;
 SESSION *get_current_session(void);
 SESSION *get_session(unsigned int session_num);
 PATCH *set_patch_from_session_bank(unsigned int part_num, unsigned int session_num);
-void init_session_patch_bank(void);
-void load_session_bank(void);
-void save_session_bank(void);
-int load_session(char *directory, unsigned int session_num);
-int save_session(char *directory, unsigned int session_num);
+void init_session_bank(char *filename);
+void load_session_bank(char *filename);
+void save_session_bank(char *filename);
+int load_session(char *directory, unsigned int session_num, int managed);
+int save_session(char *directory, unsigned int session_num, int managed);
 char *get_session_name_from_directory(char *directory);
 
 

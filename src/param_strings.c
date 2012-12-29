@@ -216,7 +216,7 @@ char *fm_mod_names[] = {
 	NULL
 };
 
-/* Names of waves in wave_table */
+/* Names of waves in osc_table */
 char *wave_names[] = {
 	"sine",
 	"triangle",

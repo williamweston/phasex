@@ -18,27 +18,53 @@ Optional:
 -------------------------------------------------------------------------------
 
 
+OBTAINING PHASEX SOURCES:
+-------------------------------------------------------------------------------
+
+Currently, PHASEX dev sources are only available via git:
+
+	git clone https://github.com/williamweston/phasex.git
+
+RPM and .tar.gz packages will be made available with the
+upcoming v0.15.0 stable release.
+
+
 COMPILING AND INSTALLING PHASEX:
 -------------------------------------------------------------------------------
 
-PHASEX uses the autoconf/automake build system, so all that is needed
-is the usual:
+Start in toplevel source directory:
 
-	cd phasex-0.14.95
-	./configure		(or ./configure --enable-arch=my-cpu)
-	make
-	make install
+	cd phasex
 
-Errors and warnings from autoconf/automake can normally be cleaned up
-by rebuilding all of the dynamically generated build files:
+When building PHASEX from git sources, switching autoconf/automake
+versions, or in any other situation where 'configure' is missing or
+throwing errors, it may be necessary to rebuild all of the dynamically
+generated build files:
 
 	aclocal
 	autoconf
 	automake
 	autoheader
 
-The --enable-arch= flag will take any CPU type supported by your gcc
-version for its -march= and -mtune= optimization flags.
+PHASEX uses the familiar autoconf/automake build system.  For a list
+of confguration options, run './configure --help' or read below.
+
+For a default configuration (which is probably not what you want):
+
+	./configure
+
+For a multimbral build optimized for your CPU you might want to run:
+
+	./configure --enable-arch=native --enable-parts=2
+
+Once configured, PHASEX can be compiled and installed with the usual:
+
+	make
+	make install
+
+The --enable-arch= flag to ./configure will take any CPU type
+supported by your gcc version for its -march= and -mtune= optimization
+flags.
 
 Architechtures currently supported:
 
@@ -47,8 +73,9 @@ Architechtures currently supported:
 	pentium4m k6-2 k6-3 winchip2 c3 geode athlon athlon-tbird
 	athlon-4 athlon-mp athlon-xp k8 opteron athlon64 athlon-fx
 	k8-sse3 opteron-sse3 athlon64-sse3 amdfam10 barcelona x86_64
-	prescott nocona core2 amd64 itanium itanium1 merced itanium2
-	mckinley ia64 ia32e atom generic native
+	prescott nocona core2 corei7 corei7-avx core-avx-i amd64
+	itanium itanium1 merced itanium2 mckinley ia64 ia32e atom
+	generic native
 
 If building with gcc-4.2 or newer, you may use --enable-arch=native
 to optimize for your CPU.
@@ -88,7 +115,7 @@ Examples:
             --enable-parts=4
 
 For custom builds, additional settings may be configured in
-src/phasex.h.  For most builds, modifiying phasex should not be
+src/phasex.h.  For most builds, modifiying phasex.h should not be
 necessary.
 
 -------------------------------------------------------------------------------

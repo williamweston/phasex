@@ -64,7 +64,7 @@
 
 /* lookup tables */
 extern sample_t freq_shift_table[FREQ_SHIFT_TABLE_SIZE];
-extern sample_t wave_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
+extern sample_t osc_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
 extern sample_t freq_table[128][648];
 extern sample_t keyfollow_table[128][128];
 extern sample_t mix_table[128];
@@ -90,15 +90,15 @@ void build_velocity_gain_table(void);
 void build_keyfollow_table(void);
 
 #ifdef ENABLE_SAMPLE_LOADING
-int load_waveform_sample(int wavenum, int num_cycles, double octaves);
+int load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale);
 #endif /* ENABLE_SAMPLE_LOADING */
 
 #ifdef NEED_GENERIC_HERMITE
-sample_t hermite(sample_t *buf, unsigned int max, sample_t index);
+sample_t hermite(sample_t *buf, unsigned int max, sample_t sample_index);
 #endif
-sample_t chorus_hermite(sample_t *buf, sample_t index);
-sample_t wave_table_hermite(int wave_num, sample_t index);
-sample_t wave_table_linear(int wave_num, sample_t index);
+sample_t chorus_hermite(sample_t *buf, sample_t sample_index);
+sample_t osc_table_hermite(int wave_num, sample_t sample_index);
+sample_t osc_table_linear(int wave_num, sample_t sample_index);
 
 
 /* these are the functions for building the initial waveforms */

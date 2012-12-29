@@ -27,8 +27,6 @@
 #include "engine.h"
 
 
-int  get_midi_event_state(MIDI_EVENT *event);
-void set_midi_event_state(MIDI_EVENT *event, int state);
 void init_midi_event_queue(unsigned int part_num);
 void queue_midi_event(unsigned int part_num,
                       MIDI_EVENT *event,
@@ -38,6 +36,7 @@ void queue_midi_realtime_event(unsigned int part_num,
                                unsigned char type,
                                unsigned int cycle_frame,
                                unsigned int index);
+void queue_midi_param_event(unsigned int part_num, unsigned int id, int cc_val);
 
 
 #endif /* _MIDI_EVENT_H_ */

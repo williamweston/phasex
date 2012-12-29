@@ -30,6 +30,7 @@
 #include "phasex.h"
 #include "patch.h"
 #include "param.h"
+#include "bank.h"
 #include "session.h"
 #include "midimap.h"
 #include "driver.h"
@@ -70,12 +71,12 @@ lash_client_init(int *argc, char ***argv)
 		lash_event_set_string(event, lash_name);
 		lash_send_event(lash_client, event);
 
-		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_LASH), "LASH client initialized.\n");
+		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_SESSION), "LASH client initialized.\n");
 		fprintf(stderr, "LASH client initialized.  (LASH_Client_Name='%s').\n", lash_name);
 		return 0;
 	}
 	if (debug_thread_p) {
-		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_LASH),
+		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_SESSION),
 		             "LASH client initialization failed.\n");
 	}
 	else {
@@ -112,57 +113,10 @@ lash_client_set_alsa_id(snd_seq_t *seq)
 
 
 /*****************************************************************************
- * lash_read_patches()
+ * lash_set_phasex_session_name()
  *****************************************************************************/
-void
-lash_read_patches(char *lash_path)
-{
-	PATCH           *patch;
-	char            *l_path;
-	unsigned int    part_num;
-
-	if ((lash_path != NULL) && !lash_disabled && lash_enabled(lash_client)) {
-		PHASEX_DEBUG(DEBUG_CLASS_LASH, "lash_read_patches():  lash_path='%s'\n", lash_path);
-		l_path = (char *) malloc(strlen(lash_path) + 16);
-		for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-			patch = get_active_patch(part_num);
-			snprintf(l_path, PATH_MAX, "%s/phasex-%02d.phx", lash_path, (part_num + 1));
-			read_patch(l_path, patch);
-		}
-		free(l_path);
-		patch_name_changed = 1;
-	}
-}
-
-
-/*****************************************************************************
- * lash_save_patches()
- *****************************************************************************/
-void
-lash_save_patches(char *lash_path)
-{
-	PATCH           *patch;
-	char            *l_path;
-	unsigned int    part_num;
-
-	if ((lash_path != NULL) && !lash_disabled && lash_enabled(lash_client)) {
-		PHASEX_DEBUG(DEBUG_CLASS_LASH, "lash_save_patches():  lash_path='%s'\n", lash_path);
-		l_path = (char *) malloc(strlen(lash_path) + 16);
-		for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-			patch = get_active_patch(part_num);
-			snprintf(l_path, PATH_MAX, "%s/phasex-%02d.phx", lash_path, (part_num + 1));
-			save_patch(l_path, patch);
-		}
-		free(l_path);
-	}
-}
-
-
-/*****************************************************************************
- * lash_set_project_info()
- *****************************************************************************/
-void
-lash_set_project_info(char *lash_dir)
+char *
+lash_set_phasex_session_name(char *lash_dir)
 {
 	SESSION *session = get_current_session();
 	char    *dir;
@@ -170,71 +124,65 @@ lash_set_project_info(char *lash_dir)
 	char    *q;
 	int     slashes;
 
-	dir = strdup(lash_dir);
-
-	p = dir + strlen(dir) - 1;
-	slashes = 2;
-	while (slashes > 0) {
-		if ((*p == '/') && (* (p + 1) != '.') &&
-		    (* (p + 2) != 'i') && (* (p + 3) != 'd')) {
-			slashes--;
-		}
-		p--;
-		if (p < dir) {
-			break;
-		}
-	}
-	p++;
-	if (slashes == 0) {
-		q = ++p;
-		while (*p != '/') {
-			p++;
-		}
-		*p = '\0';
-		if (lash_project_name == NULL) {
-			lash_project_name = strdup(q);
-		}
-		else {
-			p = lash_project_name;
-			lash_project_name = strdup(q);
-			free(p);
-		}
-		if (session->name == NULL) {
-			session->name = strdup(q);
-		}
-		else {
+	if (lash_dir == NULL) {
+		if (lash_project_name != NULL) {
 			p = session->name;
-			session->name = strdup(q);
+			session->name = strdup(lash_project_name);
+			session_name_changed = 1;
 			free(p);
 		}
-		session_name_changed = 1;
 	}
-	free(dir);
+	else {
 
-	p = lash_project_dir;
-	lash_project_dir = strdup(lash_buffer);
-	if (p != NULL) {
-		free(p);
+		dir = strdup(lash_dir);
+
+		p = dir + strlen(dir) - 1;
+		slashes = 2;
+		while (slashes > 0) {
+			if ((*p == '/') && (* (p + 1) != '.') &&
+			    (* (p + 2) != 'i') && (* (p + 3) != 'd')) {
+				slashes--;
+			}
+			p--;
+			if (p < dir) {
+				break;
+			}
+		}
+		p++;
+		if (slashes == 0) {
+			q = ++p;
+			while (*p != '/') {
+				p++;
+			}
+			*p = '\0';
+			if (lash_project_name == NULL) {
+				lash_project_name = strdup(q);
+			}
+			else {
+				p = lash_project_name;
+				lash_project_name = strdup(q);
+				free(p);
+			}
+			if (session->name == NULL) {
+				session->name = strdup(q);
+			}
+			else {
+				p = session->name;
+				session->name = strdup(q);
+				free(p);
+			}
+			session_name_changed = 1;
+		}
+		free(dir);
+
+		p = lash_project_dir;
+		lash_project_dir = strdup(lash_buffer);
+		if (p != NULL) {
+			free(p);
+		}
 	}
-}
 
-
-/*****************************************************************************
- * lash_set_session_name_from_project()
- *****************************************************************************/
-void
-lash_set_phasex_session_name(void)
-{
-	SESSION     *session;
-	char        *tmp;
-
-	if (lash_project_name != NULL) {
-		session = get_current_session();
-		tmp = session->name;
-		session->name = strdup(lash_project_name);
-		session_name_changed = 1;
-		free(tmp);
-	}
+	return session->name;
 }
 
 
@@ -245,7 +193,6 @@ int
 lash_poll_event(void)
 {
 	lash_event_t    *event;
-	char            *l_path;
 
 	if (lash_disabled || !lash_enabled(lash_client)) {
 		return -1;
@@ -257,102 +204,87 @@ lash_poll_event(void)
 
 		case LASH_Save_File:
 			lash_buffer = (char *) lash_event_get_string(event);
-			PHASEX_DEBUG(DEBUG_CLASS_LASH, "lash_poll_event():  LASH_Save_File  dir='%s'\n",
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION, "lash_poll_event():  LASH_Save_File  dir='%s'\n",
 			             lash_buffer);
-			lash_set_project_info(lash_buffer);
-			lash_save_patches(lash_buffer);
-			l_path = (char *) malloc(strlen(lash_buffer) + 16);
-			sprintf(l_path, "%s/phasex.map", lash_buffer);
-			save_midimap(l_path);
-			sprintf(l_path, "%s/phasex.cfg", lash_buffer);
-			save_settings(l_path);
+			lash_set_phasex_session_name(lash_buffer);
+			save_session(lash_buffer, visible_sess_num, 1);
 			lash_send_event(lash_client, lash_event_new_with_type(LASH_Save_File));
-			free(l_path);
 			break;
 
 		case LASH_Restore_File:
 			lash_buffer = (char *) lash_event_get_string(event);
-			PHASEX_DEBUG(DEBUG_CLASS_LASH, "lash_poll_event():  LASH_Restore_File  dir='%s'\n",
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION, "lash_poll_event():  LASH_Restore_File  dir='%s'\n",
 			             lash_buffer);
-			lash_set_project_info(lash_buffer);
-			lash_read_patches(lash_buffer);
-			l_path = (char *) malloc(strlen(lash_buffer) + 16);
-			sprintf(l_path, "%s/phasex.map", lash_buffer);
-			read_midimap(l_path);
-			//sprintf (l_path, "%s/phasex.cfg", lash_buffer);
-			//PHASEX_DEBUG (DEBUG_CLASS_LASH,
-			//            "lash_poll_event():  LASH_Restore_File  file='%s'\n",
-			//            l_path);
-			//read_settings (l_path);
+			load_session(lash_buffer, visible_sess_num, 1);
+			lash_set_phasex_session_name(lash_buffer);
 			lash_send_event(lash_client, lash_event_new_with_type(LASH_Restore_File));
-			free(l_path);
 			break;
 
 			/* TODO: support the complete LASH spec. */
 		case LASH_Client_Name:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Client_Name'\n");
 			break;
 		case LASH_Jack_Client_Name:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Jack_Client_Name'\n");
 			break;
 		case LASH_Alsa_Client_ID:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Alsa_Client_ID'\n");
 			break;
 		case LASH_Save_Data_Set:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Save_Data_Set'\n");
 			break;
 		case LASH_Restore_Data_Set:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Restore_Data_Set'\n");
 			break;
 		case LASH_Save:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Save'\n");
 			break;
 		case LASH_Server_Lost:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Server_Lost'\n");
 			break;
 		case LASH_Project_Add:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Project_Add'\n");
 			break;
 		case LASH_Project_Remove:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Project_Remove'\n");
 			break;
 		case LASH_Project_Dir:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Project_Dir'\n");
 			break;
 		case LASH_Project_Name:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Project_Name'\n");
 			break;
 		case LASH_Client_Add:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Client_Add'\n");
 			break;
 		case LASH_Client_Remove:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Client_Remove'\n");
 			break;
 		case LASH_Percentage:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Percentage'\n");
 			break;
 		case LASH_Quit:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH LASH_Quit!  Shutting down.\n");
 			pending_shutdown = 1;
 			break;
 			//              case LASH_Event_Unknown:
 		default:
-			PHASEX_DEBUG(DEBUG_CLASS_LASH,
+			PHASEX_DEBUG(DEBUG_CLASS_SESSION,
 			             "LASH received unhandled event 'LASH_Event_Unknown'\n");
 			break;
 		}

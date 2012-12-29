@@ -328,9 +328,9 @@ on_load_session(GtkWidget *UNUSED(widget), gpointer data)
 	/* load session specified by entry or assign an Untitled name */
 	if (need_load) {
 		session_load_in_progress = 1;
-		if ((need_load = load_session(directory, visible_sess_num)) != 0) {
+		if ((need_load = load_session(directory, visible_sess_num, 0)) != 0) {
 			snprintf(directory, PATH_MAX, "%s/%s", user_session_dir, name);
-			need_load = load_session(directory, visible_sess_num);
+			need_load = load_session(directory, visible_sess_num, 0);
 		}
 		for (part_num = 0; part_num < MAX_PARTS; part_num++) {
 			visible_prog_num[part_num] = 0;
@@ -347,7 +347,7 @@ on_load_session(GtkWidget *UNUSED(widget), gpointer data)
 		session->modified = 0;
 		session_load_in_progress = 0;
 		update_gui_patch(NULL, 0);
-		save_session_bank();
+		save_session_bank(NULL);
 	}
 }
 
@@ -519,18 +519,20 @@ run_session_load_dialog(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 			cur = file_list;
 			while (cur != NULL) {
 				directory = (char *) cur->data;
-				if (load_session(directory, sess_num) == 0) {
-					if (sess_num == visible_sess_num) {
-						for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-							visible_prog_num[part_num] = 0;
-							patch = set_active_patch(visible_sess_num, part_num, 0);
-							init_patch_state(patch);
-							if (part_num == visible_part_num) {
-								update_gui_patch(patch, 0);
+				if (strcmp(directory, user_session_dump_dir) != 0) {
+					if (load_session(directory, sess_num, 0) == 0) {
+						if (sess_num == visible_sess_num) {
+							for (part_num = 0; part_num < MAX_PARTS; part_num++) {
+								visible_prog_num[part_num] = 0;
+								patch = set_active_patch(visible_sess_num, part_num, 0);
+								init_patch_state(patch);
+								if (part_num == visible_part_num) {
+									update_gui_patch(patch, 0);
+								}
 							}
 						}
+						sess_num++;
 					}
-					sess_num++;
 				}
 				if (sess_num >= SESSION_BANK_SIZE) {
 					break;
@@ -543,7 +545,7 @@ run_session_load_dialog(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 			update_gui_patch_name();
 			update_gui_session_name();
 
-			save_session_bank();
+			save_session_bank(NULL);
 		}
 
 	}
@@ -701,18 +703,18 @@ run_session_save_as_dialog(GtkWidget *UNUSED(widget), gpointer data)
 		switch (setting_bank_mem_mode) {
 		case BANK_MEM_AUTOSAVE:
 			/* save session without overwrite protection */
-			if (save_session(session_dir, session_io_start) == 0) {
+			if (save_session(session_dir, session_io_start, 0) == 0) {
 				update_gui_session_name();
-				save_session_bank();
+				save_session_bank(NULL);
 			}
 			break;
 		case BANK_MEM_WARN:
 		case BANK_MEM_PROTECT:
 			/* save session with overwrite protection */
 			if (!check_session_overwrite(session_dir)) {
-				if (save_session(session_dir, session_io_start) == 0) {
+				if (save_session(session_dir, session_io_start, 0) == 0) {
 					update_gui_session_name();
-					save_session_bank();
+					save_session_bank(NULL);
 				}
 			}
 			break;
@@ -757,18 +759,18 @@ on_session_save_activate(GtkWidget *UNUSED(widget), gpointer data)
 		switch (setting_bank_mem_mode) {
 		case BANK_MEM_AUTOSAVE:
 			/* save session without overwrite protection */
-			if (save_session(directory, session_io_start) == 0) {
+			if (save_session(directory, session_io_start, 0) == 0) {
 				update_gui_session_name();
-				save_session_bank();
+				save_session_bank(NULL);
 			}
 			break;
 		case BANK_MEM_WARN:
 		case BANK_MEM_PROTECT:
 			/* save session with overwrite protection */
 			if (!check_session_overwrite(directory)) {
-				if (save_session(directory, session_io_start) == 0) {
+				if (save_session(directory, session_io_start, 0) == 0) {
 					update_gui_session_name();
-					save_session_bank();
+					save_session_bank(NULL);
 				}
 			}
 			break;

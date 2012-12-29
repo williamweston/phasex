@@ -46,7 +46,6 @@ void init_help(void);
 void display_param_help(int param_id);
 void display_phasex_help(void);
 void close_about_phasex_dialog(GtkWidget *UNUSED(dialog), gpointer UNUSED(data));
-//void close_about_phasex_dialog(GtkWidget *dialog);
 
 
 #endif /* _PHASEX_HELP_H_ */

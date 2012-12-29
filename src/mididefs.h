@@ -39,6 +39,8 @@
 #define MIDI_EVENT_NO_EVENT         0x00    /* placeholder for empty events */
 #define MIDI_EVENT_PHASE_SYNC       0x01    /* resync phases with JACK Transport */
 #define MIDI_EVENT_BPM_CHANGE       0x02    /* resync BPM with JACK Transport */
+#define MIDI_EVENT_PARAMETER        0x03    /* internal parameter representation */
+#define MIDI_EVENT_NOTES_OFF        0x04
 
 /* Types < 0xF0 have MIDI channel as 4 least significant bits. */
 #define MIDI_EVENT_NOTE_OFF         0x80    /* note         velocity    */
@@ -86,7 +88,7 @@
 /* PHASEX MIDI event structure */
 typedef struct midi_event {
 	union {
-		int                 state;
+		volatile gint       state;
 		int                 frame;
 	} __attribute__((__transparent_union__));
 	unsigned char       type;
@@ -99,6 +101,7 @@ typedef struct midi_event {
 		unsigned char       pitchbend;
 		unsigned char       lsb;
 		unsigned char       byte2;
+		unsigned char       parameter;
 	} __attribute__((__transparent_union__));
 	union {
 		unsigned char       velocity;
@@ -108,7 +111,10 @@ typedef struct midi_event {
 		unsigned char       byte3;
 	} __attribute__((__transparent_union__));
 	sample_t            float_value;
-	struct midi_event   *next;
+	union {
+		struct midi_event   *next;
+		volatile gpointer   gnext;
+	} __attribute__((__transparent_union__));
 } MIDI_EVENT;
 
 

@@ -34,13 +34,6 @@
 #define DEBUG_MESSAGE_POOL_SIZE     2048
 #define DEBUG_BUFFER_MASK           (DEBUG_MESSAGE_POOL_SIZE - 1)
 
-#define DEBUG_ERROR                 0
-#define DEBUG_WARN                  1
-#define DEBUG_INFO                  2
-#define DEBUG_DEBUG                 3
-#define DEBUG_DEBUG_2               4
-#define DEBUG_DEBUG_3               5
-
 #define DEBUG_CLASS_NONE            0
 #define DEBUG_CLASS_INIT            1
 #define DEBUG_CLASS_MAIN            (1<<1)
@@ -57,7 +50,7 @@
 #define DEBUG_CLASS_RAW_MIDI        (1<<12)
 #define DEBUG_CLASS_ENGINE          (1<<13)
 #define DEBUG_CLASS_ENGINE_TIMING   (1<<14)
-#define DEBUG_CLASS_LASH            (1<<15)
+#define DEBUG_CLASS_SESSION         (1<<15)
 #define DEBUG_CLASS_ALL             ~(0UL | DEBUG_CLASS_MIDI_TIMING | DEBUG_CLASS_ENGINE_TIMING)
 
 #define DEBUG_ATTR_RESET            0
@@ -107,7 +100,6 @@ typedef struct debug_ringbuffer {
 extern DEBUG_RINGBUFFER main_debug_queue;
 
 extern int              debug;
-extern int              debug_level;
 extern unsigned long    debug_class;
 
 extern DEBUG_CLASS      debug_class_list[19];
@@ -132,22 +124,23 @@ extern DEBUG_CLASS      debug_class_list[19];
 	}
 
 #define PHASEX_WARN(args...)                                            \
-	if (debug_level >= 1) { \
-	                       int old_debug_index; \
-	                       int new_debug_index; \
-	                       do { \
-	                           old_debug_index = g_atomic_int_get (&(main_debug_queue.insert_index)); \
-	                           new_debug_index = (old_debug_index + 1) & DEBUG_BUFFER_MASK; \
-	                           } while (!g_atomic_int_compare_and_exchange (&(main_debug_queue.insert_index), \
-		                                                                        old_debug_index, new_debug_index)); \
-	                       snprintf (main_debug_queue.msgs[main_debug_queue.insert_index].msg, \
-		                                 DEBUG_MESSAGE_SIZE, args); \
-	                       do { \
-	                           old_debug_index = g_atomic_int_get (&(main_debug_queue.write_index)); \
-	                           new_debug_index = (old_debug_index + 1) & DEBUG_BUFFER_MASK; \
-	                           } while (!g_atomic_int_compare_and_exchange (&(main_debug_queue.write_index), \
-		                                                                        old_debug_index, new_debug_index)); \
-	                       }
+	{ \
+		int old_debug_index; \
+		int new_debug_index; \
+		do { \
+			old_debug_index = g_atomic_int_get (&(main_debug_queue.insert_index)); \
+			new_debug_index = (old_debug_index + 1) & DEBUG_BUFFER_MASK; \
+		} while (!g_atomic_int_compare_and_exchange (&(main_debug_queue.insert_index), \
+		                                             old_debug_index, new_debug_index)); \
+		snprintf (main_debug_queue.msgs[main_debug_queue.insert_index].msg, \
+		          DEBUG_MESSAGE_SIZE, args); \
+		do { \
+			old_debug_index = g_atomic_int_get (&(main_debug_queue.write_index)); \
+			new_debug_index = (old_debug_index + 1) & DEBUG_BUFFER_MASK; \
+		} while (!g_atomic_int_compare_and_exchange (&(main_debug_queue.write_index), \
+		                                             old_debug_index, new_debug_index)); \
+	}
+
 #ifdef ENABLE_DEBUG
 
 # define PHASEX_DEBUG(class, args...)                                   \

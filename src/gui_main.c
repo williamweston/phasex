@@ -533,7 +533,7 @@ gui_main_loop_iteration(gpointer data)
 	}
 	else if (counter == 100) {
 		counter = 0;
-		save_session(user_session_dump_dir, visible_sess_num);
+		save_session(user_session_dump_dir, visible_sess_num, 0);
 
 		/* TODO: allow feeding of new patches through
 		   /tmp/patchload-## or /tmp/sessionload */

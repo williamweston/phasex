@@ -64,7 +64,7 @@
 
 /* command line options */
 #define HAS_ARG     1
-#define NUM_OPTS    (25 + 1)
+#define NUM_OPTS    (27 + 1)
 static struct option long_opts[] = {
 	{ "config-file",     HAS_ARG, NULL, 'c' },
 	{ "audio-driver",    HAS_ARG, NULL, 'A' },
@@ -79,6 +79,8 @@ static struct option long_opts[] = {
 	{ "bpm",             HAS_ARG, NULL, 'b' },
 	{ "tuning",          HAS_ARG, NULL, 't' },
 	{ "debug",           HAS_ARG, NULL, 'd' },
+	{ "session-dir",     HAS_ARG, NULL, 'D' },
+	{ "uuid",            HAS_ARG, NULL, 'u' },
 	{ "undersample",     0,       NULL, 'U' },
 	{ "oversample",      0,       NULL, 'O' },
 	{ "fullscreen",      0,       NULL, 'f' },
@@ -154,6 +156,8 @@ showusage(char *argvzero)
 	printf("  -O, --oversample       Use double the sample rate for internal math.\n");
 	printf("  -U, --undersample      Use half the sample rate for internal math.\n");
 	printf("  -G, --no-gui           Run PHASEX without starting the GUI.\n");
+	printf("  -D, --session-dir=     Set directory for loading initial session.\n");
+	printf("  -u, --uuid=            Set UUID for JACK Session handling.\n");
 	printf("  -d, --debug=           Debug class (Can be repeated. See debug.c).\n");
 	printf("  -l, --list             Scan and list audio and MIDI devices.\n");
 	printf("  -v, --version          Display version and exit.\n");
@@ -310,7 +314,7 @@ check_user_data_dirs(void)
 		if (found_old_patches) {
 			snprintf(cmd, sizeof(cmd), "%s/bin/phasex-convert-patch %s %s",
 			         CONFIG_PREFIX, old_patch_dir, user_patch_dir);
-			fprintf(stderr, "Found patch dir for PHASEX <= v0.12.0.  Converting:\n    %s\n", cmd);
+			fprintf(stderr, "Found patch dir for PHASEX <= v0.12.x.  Converting:\n    %s\n", cmd);
 			if (system(cmd) == -1) {
 				fprintf(stderr, "%s/bin/phasex-convert-patch failed.\n", PHASEX_DIR);
 			}
@@ -454,10 +458,12 @@ int
 main(int argc, char **argv)
 {
 	char            opts[NUM_OPTS * 2 + 1];
+	char            filename[PATH_MAX];
 	struct option   *op;
 	char            *cp;
 	char            *p;
 	char            *patch_list             = NULL;
+	char            *init_session_dir       = NULL;
 	int             c;
 	unsigned int    i;
 	int             j;
@@ -493,7 +499,9 @@ main(int argc, char **argv)
 		if ((strcmp(argv[j], "-L") == 0) || (strcmp(argv[j], "--disable-lash") == 0) ||
 		    (strcmp(argv[j], "-h") == 0) || (strcmp(argv[j], "--help") == 0) ||
 		    (strcmp(argv[j], "-l") == 0) || (strcmp(argv[j], "--list") == 0) ||
-		    (strcmp(argv[j], "-v") == 0) || (strcmp(argv[j], "--version") == 0)) {
+		    (strcmp(argv[j], "-v") == 0) || (strcmp(argv[j], "--version") == 0) ||
+		    (strcmp(argv[j], "-D") == 0) || (strcmp(argv[j], "--session-dir") == 0) ||
+		    (strcmp(argv[j], "-u") == 0) || (strcmp(argv[j], "--uuid") == 0)) {
 			lash_disabled = 1;
 			break;
 		}
@@ -544,6 +552,9 @@ main(int argc, char **argv)
 
 		switch (c) {
 		case 'c':   /* config file */
+			if (config_file != NULL) {
+				free(config_file);
+			}
 			config_file = strdup(optarg);
 			break;
 		case 'A':   /* audio driver */
@@ -609,12 +620,7 @@ main(int argc, char **argv)
 			break;
 		case 't':   /* tuning frequency */
 			a4freq = atof(optarg);
-#if (ARCH_BITS == 32)
-			setting_tuning_freq = (float) a4freq;
-#endif
-#if (ARCH_BITS == 64)
-			setting_tuning_freq = atof(optarg);
-#endif
+			setting_tuning_freq = (sample_t) a4freq;
 			if ((a4freq < 220.0) || (a4freq > 880.0)) {
 				a4freq = A4FREQ;
 			}
@@ -628,7 +634,6 @@ main(int argc, char **argv)
 			break;
 		case 'd':   /* debug */
 			debug = 1;
-			debug_level = 2;
 			for (j = 0; debug_class_list[j].name != NULL; j++) {
 				if (strcmp(debug_class_list[j].name, optarg) == 0) {
 					debug_class |= debug_class_list[j].id;
@@ -655,6 +660,17 @@ main(int argc, char **argv)
 		case 'l':   /* list audio / midi devices */
 			scan_audio_and_midi();
 			return 0;
+		case 'D':
+			init_session_dir = strdup(optarg);
+			if (config_file != NULL) {
+				free(config_file);
+			}
+			snprintf(filename, PATH_MAX, "%s/%s", init_session_dir, USER_CONFIG_FILE);
+			config_file = strdup(filename);
+			break;
+		case 'u':
+			jack_session_uuid = strdup(optarg);
+			break;
 		case '?':
 		case 'h':   /* help */
 		default:
@@ -769,11 +785,18 @@ main(int argc, char **argv)
 
 	/* Initialize and load patch bank */
 	init_patch_param_data();
-	init_patch_bank();
-	init_session_patch_bank();
+	if (init_session_dir == NULL) {
+		init_patch_bank(NULL);
+		init_session_bank(NULL);
+	}
+	else {
+		snprintf(filename, PATH_MAX, "%s/%s", init_session_dir, USER_BANK_FILE);
+		init_patch_bank(filename);
+		snprintf(filename, PATH_MAX, "%s/%s", init_session_dir, USER_BANK_FILE);
+		init_session_bank(filename);
+	}
 
-	/* initialize help system (only patch data structures are
-	   fully initialized) */
+	/* initialize help system (only after patch data is fully initialized) */
 	init_help();
 
 	/* handle initial patch(es) from command line */
@@ -786,9 +809,6 @@ main(int argc, char **argv)
 
 	/* override bpm from command line */
 	override_bpm(bpm_override);
-
-	/* run the callbacks for all the parameters */
-	run_param_callbacks(1);
 
 	/* start the gui */
 	if (use_gui) {
@@ -808,12 +828,24 @@ main(int argc, char **argv)
 		read_midimap(setting_midimap_file);
 	}
 
-	/* If we have already received a LASH Restore File event, then load the
-	   patches from the LASH project dir and set the session name. */
+	/* Load JACK session, if necessary. */
+	if (init_session_dir != NULL) {
+		load_session(init_session_dir, 0, 1);
+		p = jack_get_session_name_from_directory(init_session_dir);
+		PHASEX_DEBUG(DEBUG_CLASS_INIT, "Loaded initial JACK Session '%s'\n", p)
+	}
+
 #ifndef WITHOUT_LASH
-	lash_read_patches(lash_project_dir);
-	lash_set_phasex_session_name();
+	/* Load LASH session, if necessary. */
+	else if (lash_project_dir != NULL) {
+		load_session(lash_project_dir, 0, 1);
+		p = lash_set_phasex_session_name(NULL);
+		PHASEX_DEBUG(DEBUG_CLASS_INIT, "Loaded initial LASH Session '%s'\n", p);
+	}
 #endif
+
+	/* run the callbacks for all the parameters */
+	run_param_callbacks(1);
 
 	/* start engine threads */
 	start_engine_threads();
@@ -835,8 +867,8 @@ main(int argc, char **argv)
 	phasex_watchdog();
 
 	/* Save patch and session bank state for next time. */
-	save_patch_bank();
-	save_session_bank();
+	save_patch_bank(NULL);
+	save_session_bank(NULL);
 
 	/* Wait for threads created directly by PHASEX to terminate. */
 	if (use_gui) {

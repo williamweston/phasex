@@ -617,6 +617,7 @@ with a realtime kernel and ALSA and/or JACK.
 
 <b>Requirements:</b>
 
+<tt>
 * 1.6 GHz or better CPU.  Multi-core preferred.
 * 512 MB RAM (more for multi-timbral builds).
 * Relatively modern (within past ~4 years) Linux distribution.
@@ -626,6 +627,7 @@ with a realtime kernel and ALSA and/or JACK.
 * Realtime Linux kernel (-rt patches).
 * Proper configuration of permissions and resource limits for
   memory locking, rt scheduling, and audio device access.
+</tt>
 
 <b>Parameter Help System:</b>
 
@@ -675,6 +677,17 @@ changes.  Left-clicking on the name of a parameter whose update window
 is already visible will result in the update window being closed.
 MIDI controller maps may be opened and saved through the MIDI menu.
 The last opened or saved MIDI map becomes the default.
+
+<b>Session Management:</b>
+
+The native session manager in PHASEX behaves much like the patch
+manager.  Sessions can selected from the session bank with the Session
+# spinbutton, loaded or saved from the filesystem using the Session
+Name entry and the Session Load and Save buttons.  By default, new
+sessions are saved to ~/.phasex/sessions but can be saved anywhere.
+When using LASH or JACK Session for session management, sessions
+include full state information and are saved to a location of the
+session manager's choosing.
 
 <b>Preferences:</b>
 
@@ -919,6 +932,10 @@ PHASEX Options:
  -U, --undersample      Use half the sample rate for internal math.
 
  -G, --no-gui           Run PHASEX without starting the GUI.
+
+ -D, --session-dir=     Set directory for loading initial session.
+
+ -u, --uuid=            Set UUID for JACK Session handling.
 
  -d, --debug=           Debug class (Can be repeated. See debug.c).
 

@@ -925,7 +925,7 @@ queue_test_note(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 	MIDI_EVENT      event;
 	timecalc_t      delta_nsec;
 	struct timespec now;
-	unsigned int    index;
+	unsigned int    m_index;
 	unsigned int    tmp_index;
 	unsigned int    cycle_frame;
 	PART            *part = get_visible_part();
@@ -944,11 +944,11 @@ queue_test_note(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 	/* If index suddenly changes, set cycle frame to the start of
 	   the period.  Since the engine sees the index change, this
 	   is the safe way to do it. */
-	if (tmp_index != (index = get_midi_index())) {
+	if (tmp_index != (m_index = get_midi_index())) {
 		cycle_frame = 0;
 	}
 
-	queue_midi_event(visible_part_num, &event, cycle_frame, index);
+	queue_midi_event(visible_part_num, &event, cycle_frame, m_index);
 
 	if (delta_nsec >= 0.0) {
 		inc_midi_index();

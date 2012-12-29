@@ -42,8 +42,8 @@
 /* base tuning frequency -- can be overridden on command line */
 double      a4freq = A4FREQ;
 
-/* this is _the_ wave table */
-sample_t    wave_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
+/* this is _the_ osc table */
+sample_t    osc_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
 
 /* frequency table for midi notes */
 sample_t    freq_table[128][648];
@@ -132,7 +132,7 @@ build_freq_shift_table(void)
 {
 	double  halfstep;
 	double  tunestep;
-	int     index;
+	int     fs_index;
 	int     octaves;
 	int     halfsteps;
 	int     tunesteps;
@@ -140,26 +140,26 @@ build_freq_shift_table(void)
 	halfstep  = exp(log(2.0) / 12.0);
 	tunestep = exp(log(2.0) / (12.0 * F_TUNING_RESOLUTION));
 
-	for (index = 0; index < FREQ_SHIFT_TABLE_SIZE / 2; index++) {
-		tunesteps = (FREQ_SHIFT_TABLE_SIZE / 2) - index;
+	for (fs_index = 0; fs_index < FREQ_SHIFT_TABLE_SIZE / 2; fs_index++) {
+		tunesteps = (FREQ_SHIFT_TABLE_SIZE / 2) - fs_index;
 		halfsteps = tunesteps / TUNING_RESOLUTION;
 		tunesteps %= TUNING_RESOLUTION;
 		octaves   = halfsteps / 12;
 		halfsteps %= 12;
-		freq_shift_table[index] = (sample_t)
+		freq_shift_table[fs_index] = (sample_t)
 			(1.0 /
 			 (pow(2.0, (double) octaves) *
 			  pow(halfstep, (double) halfsteps) *
 			  pow(tunestep, (double) tunesteps)));
 	}
 	freq_shift_table[(FREQ_SHIFT_TABLE_SIZE / 2)] = 1.0;
-	for (index = (FREQ_SHIFT_TABLE_SIZE / 2) + 1; index < FREQ_SHIFT_TABLE_SIZE; index++) {
-		tunesteps = index - (FREQ_SHIFT_TABLE_SIZE / 2);
+	for (fs_index = (FREQ_SHIFT_TABLE_SIZE / 2) + 1; fs_index < FREQ_SHIFT_TABLE_SIZE; fs_index++) {
+		tunesteps = fs_index - (FREQ_SHIFT_TABLE_SIZE / 2);
 		halfsteps = tunesteps / TUNING_RESOLUTION;
 		tunesteps %= TUNING_RESOLUTION;
 		octaves   = halfsteps / 12;
 		halfsteps %= 12;
-		freq_shift_table[index] = (sample_t)
+		freq_shift_table[fs_index] = (sample_t)
 			(pow(2.0, (double) octaves) *
 			 pow(halfstep, (double) halfsteps) *
 			 pow(tunestep, (double) tunesteps));
@@ -287,14 +287,14 @@ void
 build_mix_table(void)
 {
 	int     j;
-	//sample_t  scale = 1.0 / (sqrtf (0.5));
+	//sample_t  scale = 1.0 / (MATH_SQRT (0.5));
 
 	/* a simple parabolic curve works well, but still isn't perfect */
 	for (j = 0; j < 128; j++) {
 		mix_table[j] = ((sample_t) j) / 127.0;
-		mix_table[j] += sqrtf(((float) j) / 127.0);
+		mix_table[j] += MATH_SQRT(((sample_t) j) / 127.0);
 		mix_table[j] *= 0.5;
-		//mix_table[j] = sqrtf ( ( (float) j) / 127.0) * scale;
+		//mix_table[j] = MATH_SQRT ( ( (sample_t) j) / 127.0) * scale;
 	}
 	mix_table[0]   = 0.0;
 	mix_table[127] = 1.0;
@@ -310,10 +310,10 @@ void
 build_pan_table(void)
 {
 	int         j;
-	sample_t    scale = 1.0 / (sqrtf(0.5));
+	sample_t    scale = 1.0 / (MATH_SQRT(0.5));
 
 	for (j = 0; j < 128; j++) {
-		pan_table[j] = sqrtf(((float) j) / 128.0) * scale;
+		pan_table[j] = MATH_SQRT(((sample_t) j) / 128.0) * scale;
 	}
 	//pan_table[0]   = 0.0;
 	//pan_table[127] = 1.0;
@@ -333,7 +333,7 @@ build_gain_table(void)
 	sample_t    step;
 
 	/* 1/2 dB steps */
-	step = expf(logf(10.0) / 40.0);
+	step = MATH_EXP(MATH_LOG(10.0) / 40.0);
 
 	gain = 1.0;
 	for (j = 119; j >= 0; j--) {
@@ -371,7 +371,8 @@ build_velocity_gain_table(void)
 	for (j = 1; j < 128; j++) {
 
 		/* tiny up to 1/2 dB steps */
-		step = (sample_t) expf(logf(10.0) / (40 * (1.0 + ((127.0 - (float) j) / (float) j))));
+		step = (sample_t) MATH_EXP(MATH_LOG(10.0) /
+		                           (40 * (1.0 + ((127.0 - (sample_t) j) / (sample_t) j))));
 
 		/* calculate gain for this sensitivity, centered at 100 */
 		gain = 1.0;
@@ -395,9 +396,9 @@ build_velocity_gain_table(void)
 
 
 /*****************************************************************************
- * build_wave_tables()
+ * build_osc_tables()
  *
- * Generates high res wave tables for use by all oscillators and lfos
+ * Generates high res osc tables for use by all oscillators and lfos
  *****************************************************************************/
 void
 build_waveform_tables(void)
@@ -417,125 +418,126 @@ build_waveform_tables(void)
 		phase = 2 * M_PI * (sample_t) sample_num / F_WAVEFORM_SIZE;
 		opp_phase = phase + M_PI;
 
-		wave_table[WAVE_SINE][sample_num]          = (sample_t) sin(phase);
+		osc_table[WAVE_SINE][sample_num]          = (sample_t) sin(phase);
 
-		wave_table[WAVE_TRIANGLE][sample_num]      = func_triangle(sample_num);
-		wave_table[WAVE_SAW][sample_num]           = func_saw(sample_num);
-		wave_table[WAVE_REVSAW][sample_num]        = func_revsaw(sample_num);
-		wave_table[WAVE_SQUARE][sample_num]        = func_square(sample_num);
-		wave_table[WAVE_STAIR][sample_num]         = func_stair(sample_num);
-		wave_table[WAVE_SAW_S][sample_num]         = func_saw(sample_num);
-		wave_table[WAVE_REVSAW_S][sample_num]      = func_revsaw(sample_num);
-		wave_table[WAVE_SQUARE_S][sample_num]      = func_square(sample_num);
-		wave_table[WAVE_STAIR_S][sample_num]       = func_stair(sample_num);
+		osc_table[WAVE_TRIANGLE][sample_num]      = func_triangle(sample_num);
+		osc_table[WAVE_SAW][sample_num]           = func_saw(sample_num);
+		osc_table[WAVE_REVSAW][sample_num]        = func_revsaw(sample_num);
+		osc_table[WAVE_SQUARE][sample_num]        = func_square(sample_num);
+		osc_table[WAVE_STAIR][sample_num]         = func_stair(sample_num);
+		osc_table[WAVE_SAW_S][sample_num]         = func_saw(sample_num);
+		osc_table[WAVE_REVSAW_S][sample_num]      = func_revsaw(sample_num);
+		osc_table[WAVE_SQUARE_S][sample_num]      = func_square(sample_num);
+		osc_table[WAVE_STAIR_S][sample_num]       = func_stair(sample_num);
 
-		wave_table[WAVE_IDENTITY][sample_num]      = 1.0;
-		wave_table[WAVE_NULL][sample_num]          = 0.0;
+		osc_table[WAVE_IDENTITY][sample_num]      = 1.0;
+		osc_table[WAVE_NULL][sample_num]          = 0.0;
 
-		wave_table[WAVE_POLY_SINE][sample_num]     = 0.0;
-		wave_table[WAVE_POLY_SAW][sample_num]      = 0.0;
-		wave_table[WAVE_POLY_REVSAW][sample_num]   = 0.0;
-		wave_table[WAVE_POLY_SQUARE_1][sample_num] = 0.0;
-		wave_table[WAVE_POLY_SQUARE_2][sample_num] = 0.0;
-		wave_table[WAVE_POLY_1][sample_num]        = 0.0;
-		wave_table[WAVE_POLY_2][sample_num]        = 0.0;
-		wave_table[WAVE_POLY_3][sample_num]        = 0.0;
-		wave_table[WAVE_POLY_4][sample_num]        = 0.0;
+		osc_table[WAVE_POLY_SINE][sample_num]     = 0.0;
+		osc_table[WAVE_POLY_SAW][sample_num]      = 0.0;
+		osc_table[WAVE_POLY_REVSAW][sample_num]   = 0.0;
+		osc_table[WAVE_POLY_SQUARE_1][sample_num] = 0.0;
+		osc_table[WAVE_POLY_SQUARE_2][sample_num] = 0.0;
+		osc_table[WAVE_POLY_1][sample_num]        = 0.0;
+		osc_table[WAVE_POLY_2][sample_num]        = 0.0;
+		osc_table[WAVE_POLY_3][sample_num]        = 0.0;
+		osc_table[WAVE_POLY_4][sample_num]        = 0.0;
 
 		j = 1.0;
-		wave_j = (sample_t)(sinf((float) phase) * 1.00000 * j);
+		wave_j = (sample_t)(MATH_SIN(phase) * 1.00000 * j);
 
-		wave_table[WAVE_POLY_REVSAW][sample_num]   += wave_j;
-		wave_table[WAVE_POLY_1][sample_num]        += wave_j;
-		wave_table[WAVE_POLY_2][sample_num]        += wave_j;
-		wave_table[WAVE_POLY_3][sample_num]        += wave_j;
+		osc_table[WAVE_POLY_REVSAW][sample_num]   += wave_j;
+		osc_table[WAVE_POLY_1][sample_num]        += wave_j;
+		osc_table[WAVE_POLY_2][sample_num]        += wave_j;
+		osc_table[WAVE_POLY_3][sample_num]        += wave_j;
 
-		wave_table[WAVE_POLY_SQUARE_1][sample_num] += wave_j;
-		wave_table[WAVE_POLY_SINE][sample_num]     += wave_j;
-		wave_table[WAVE_POLY_SQUARE_2][sample_num] += wave_j;
-		wave_table[WAVE_POLY_4][sample_num]        += wave_j;
+		osc_table[WAVE_POLY_SQUARE_1][sample_num] += wave_j;
+		osc_table[WAVE_POLY_SINE][sample_num]     += wave_j;
+		osc_table[WAVE_POLY_SQUARE_2][sample_num] += wave_j;
+		osc_table[WAVE_POLY_4][sample_num]        += wave_j;
 
-		wave_j = (sample_t)(sinf((float) opp_phase) * 1.00000 * j);
-		wave_table[WAVE_POLY_SQUARE_1][sample_num] -= wave_j;
-		wave_table[WAVE_POLY_SINE][sample_num]     -= wave_j;
-		wave_table[WAVE_POLY_SQUARE_2][sample_num] -= wave_j;
-		wave_table[WAVE_POLY_4][sample_num]        -= wave_j;
+		wave_j = (sample_t)(MATH_SIN(opp_phase) * 1.00000 * j);
+		osc_table[WAVE_POLY_SQUARE_1][sample_num] -= wave_j;
+		osc_table[WAVE_POLY_SINE][sample_num]     -= wave_j;
+		osc_table[WAVE_POLY_SQUARE_2][sample_num] -= wave_j;
+		osc_table[WAVE_POLY_4][sample_num]        -= wave_j;
 
 		for (j = 2.0; j <= 19.0; j += 1.0) {    /* j: even/odd harmonics    */
 			k = ((j - 1.0) * 2.0);          /* k: even harmonics        */
 			l = ((j - 1.0) * 2.0) + 1.0;    /* l: odd harmonics         */
 			m = ((j - 1.0) * 3.0);          /* m: partial even/odd      */
-			wave_j = (sample_t)(sinf((float)(j * phase)) * 1.00000 / j);
-			wave_k = (sample_t)(sinf((float)(k * phase)) * 1.00000 / k);
-			wave_l = (sample_t)(sinf((float)(l * phase)) * 1.00000 / l);
-			wave_m = (sample_t)(sinf((float)(m * phase)) * 1.00000 / m);
+			wave_j = (sample_t)(MATH_SIN((j * phase)) * 1.00000 / j);
+			wave_k = (sample_t)(MATH_SIN((k * phase)) * 1.00000 / k);
+			wave_l = (sample_t)(MATH_SIN((l * phase)) * 1.00000 / l);
+			wave_m = (sample_t)(MATH_SIN((m * phase)) * 1.00000 / m);
 			if (j <= 11.0) {
-				wave_table[WAVE_POLY_REVSAW][sample_num] += wave_j;
-				wave_table[WAVE_POLY_1][sample_num]      += wave_k;
-				wave_table[WAVE_POLY_2][sample_num]      += wave_l;
-				wave_table[WAVE_POLY_3][sample_num]      += wave_m;
+				osc_table[WAVE_POLY_REVSAW][sample_num] += wave_j;
+				osc_table[WAVE_POLY_1][sample_num]      += wave_k;
+				osc_table[WAVE_POLY_2][sample_num]      += wave_l;
+				osc_table[WAVE_POLY_3][sample_num]      += wave_m;
 			}
-			wave_table[WAVE_POLY_SQUARE_1][sample_num] += wave_j;
-			wave_table[WAVE_POLY_SINE][sample_num]     += wave_k;
-			wave_table[WAVE_POLY_SQUARE_2][sample_num] += wave_l;
-			wave_table[WAVE_POLY_4][sample_num]        += wave_m;
+			osc_table[WAVE_POLY_SQUARE_1][sample_num] += wave_j;
+			osc_table[WAVE_POLY_SINE][sample_num]     += wave_k;
+			osc_table[WAVE_POLY_SQUARE_2][sample_num] += wave_l;
+			osc_table[WAVE_POLY_4][sample_num]        += wave_m;
 
-			wave_table[WAVE_POLY_SQUARE_1][sample_num] -=
-				(sample_t)(sinf((float)(j * opp_phase)) * 1.00000 / j);
-			wave_table[WAVE_POLY_SINE][sample_num]     -=
-				(sample_t)(sinf((float)(k * opp_phase)) * 1.00000 / k);
-			wave_table[WAVE_POLY_SQUARE_2][sample_num] -=
-				(sample_t)(sinf((float)(l * opp_phase)) * 1.00000 / l);
-			wave_table[WAVE_POLY_4][sample_num]        -=
-				(sample_t)(sinf((float)(m * opp_phase)) * 1.00000 / m);
+			osc_table[WAVE_POLY_SQUARE_1][sample_num] -=
+				(sample_t)(MATH_SIN((j * opp_phase)) * 1.00000 / j);
+			osc_table[WAVE_POLY_SINE][sample_num]     -=
+				(sample_t)(MATH_SIN((k * opp_phase)) * 1.00000 / k);
+			osc_table[WAVE_POLY_SQUARE_2][sample_num] -=
+				(sample_t)(MATH_SIN((l * opp_phase)) * 1.00000 / l);
+			osc_table[WAVE_POLY_4][sample_num]        -=
+				(sample_t)(MATH_SIN((m * opp_phase)) * 1.00000 / m);
 		}
 
-		wave_table[WAVE_POLY_SAW][sample_num] =
-			wave_table[WAVE_POLY_REVSAW][WAVEFORM_SIZE - sample_num];
+		osc_table[WAVE_POLY_SAW][sample_num] =
+			osc_table[WAVE_POLY_REVSAW][WAVEFORM_SIZE - sample_num];
 	}
 
 	/* bandlimit the _S (or BL) and Poly waveshapes */
-	filter_wave_table_24dB(WAVE_SAW_S,         7, 8.0);
-	filter_wave_table_24dB(WAVE_REVSAW_S,      7, 8.0);
-	filter_wave_table_24dB(WAVE_SQUARE_S,      7, 8.0);
-	filter_wave_table_24dB(WAVE_STAIR_S,       7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_SINE,     7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_SAW,      7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_REVSAW,   7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_SQUARE_1, 7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_SQUARE_2, 7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_1,        7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_2,        7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_3,        7, 8.0);
-	filter_wave_table_24dB(WAVE_POLY_4,        7, 8.0);
+	filter_osc_table_24dB(WAVE_SAW_S,         7, 8.0, 0.88);
+	filter_osc_table_24dB(WAVE_REVSAW_S,      7, 8.0, 0.88);
+	filter_osc_table_24dB(WAVE_SQUARE_S,      7, 8.0, 0.88);
+	filter_osc_table_24dB(WAVE_STAIR_S,       7, 8.0, 0.88);
+	filter_osc_table_24dB(WAVE_POLY_SINE,     7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_SAW,      7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_REVSAW,   7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_SQUARE_1, 7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_SQUARE_2, 7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_1,        7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_2,        7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_3,        7, 8.0, 0.75);
+	filter_osc_table_24dB(WAVE_POLY_4,        7, 8.0, 0.88);
 
 	/* load and bandlimit sampled waveforms */
 #ifdef ENABLE_SAMPLE_LOADING
-	load_waveform_sample(WAVE_JUNO_OSC,       7, 6.0);
-	load_waveform_sample(WAVE_JUNO_SAW,       7, 8.0);
-	load_waveform_sample(WAVE_JUNO_SQUARE,    7, 8.0);
-	load_waveform_sample(WAVE_JUNO_POLY,      7, 7.0);
-	load_waveform_sample(WAVE_ANALOG_SQUARE,  7, 8.0);
-	load_waveform_sample(WAVE_VOX_1,          7, 6.0);
-	load_waveform_sample(WAVE_VOX_2,          7, 6.0);
+	load_waveform_sample(WAVE_JUNO_OSC,       7, 6.0, 0.88);
+	load_waveform_sample(WAVE_JUNO_SAW,       7, 8.0, 0.88);
+	load_waveform_sample(WAVE_JUNO_SQUARE,    7, 8.0, 0.88);
+	load_waveform_sample(WAVE_JUNO_POLY,      7, 7.0, 0.88);
+	load_waveform_sample(WAVE_ANALOG_SQUARE,  7, 8.0, 0.88);
+	load_waveform_sample(WAVE_VOX_1,          7, 6.0, 1.0);
+	load_waveform_sample(WAVE_VOX_2,          7, 6.0, 1.0);
+	load_waveform_sample(-1, -1, -1, -1);
 #else
 	for (sample_num = 0; sample_num < WAVEFORM_SIZE; sample_num++) {
-		j = wave_table[WAVE_SINE][sample_num];
+		j = osc_table[WAVE_SINE][sample_num];
 
-		wave_table[WAVE_JUNO_OSC][sample_num]       = j;
-		wave_table[WAVE_JUNO_SAW][sample_num]       = j;
-		wave_table[WAVE_JUNO_SQUARE][sample_num]    = j;
-		wave_table[WAVE_JUNO_POLY][sample_num]      = j;
-		wave_table[WAVE_ANALOG_SQUARE][sample_num]  = j;
-		wave_table[WAVE_VOX_1][sample_num]          = j;
-		wave_table[WAVE_VOX_2][sample_num]          = j;
+		osc_table[WAVE_JUNO_OSC][sample_num]       = j;
+		osc_table[WAVE_JUNO_SAW][sample_num]       = j;
+		osc_table[WAVE_JUNO_SQUARE][sample_num]    = j;
+		osc_table[WAVE_JUNO_POLY][sample_num]      = j;
+		osc_table[WAVE_ANALOG_SQUARE][sample_num]  = j;
+		osc_table[WAVE_VOX_1][sample_num]          = j;
+		osc_table[WAVE_VOX_2][sample_num]          = j;
 	}
 #endif
 
 	/* wrap first four samples to end of each waveform table for hermite optimization */
 	for (wave_num = 0; wave_num < NUM_WAVEFORMS; wave_num++) {
 		for (sample_num = 0; sample_num < 4; sample_num++) {
-			wave_table[wave_num][WAVEFORM_SIZE + sample_num] = wave_table[wave_num][sample_num];
+			osc_table[wave_num][WAVEFORM_SIZE + sample_num] = osc_table[wave_num][sample_num];
 		}
 	}
 }
@@ -548,10 +550,11 @@ build_waveform_tables(void)
  *****************************************************************************/
 #ifdef ENABLE_SAMPLE_LOADING
 int
-load_waveform_sample(int wavenum, int num_cycles, double octaves)
+load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale)
 {
-	float           *in_buf;
-	float           *out_buf;
+	static int      once                = 1;
+	static float    *in_buf             = NULL;
+	static float    *out_buf            = NULL;
 	char            filename[PATH_MAX];
 	struct stat     statbuf;
 	SRC_DATA        src_data;
@@ -564,11 +567,27 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves)
 	float           scalar;
 	size_t          sample_t_size = sizeof(sample_t);
 
-	if ((in_buf = malloc(2 * WAVEFORM_SIZE * sizeof(float))) == NULL) {
-		phasex_shutdown("Out of Memory!\n");
+	if (wavenum == -1) {
+		if (in_buf != NULL) {
+			free(in_buf);
+			in_buf = NULL;
+		}
+		if (out_buf != NULL) {
+			free(out_buf);
+			out_buf = NULL;
+		}
+		once = 1;
+		return -1;
 	}
-	if ((out_buf = malloc(WAVEFORM_SIZE * sizeof(float))) == NULL) {
-		phasex_shutdown("Out of Memory!\n");
+
+	if (once) {
+		if ((in_buf = malloc(2 * WAVEFORM_SIZE * sizeof(float))) == NULL) {
+			phasex_shutdown("Out of Memory!\n");
+		}
+		if ((out_buf = malloc(WAVEFORM_SIZE * sizeof(sample_t))) == NULL) {
+			phasex_shutdown("Out of Memory!\n");
+		}
+		once = 0;
 	}
 
 	/* get file size */
@@ -609,18 +628,18 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves)
 			src_data.src_ratio     = F_WAVEFORM_SIZE / (double) input_len;
 			src_data.data_in       = in_buf;
 			src_data.data_out      =
-				(sample_t_size == 4) ? (float *) & (wave_table[wavenum][0]) : & (out_buf[0]);
+				(sample_t_size == 4) ? (float *) & (osc_table[wavenum][0]) : & (out_buf[0]);
 
 			src_simple(&src_data, SRC_SINC_BEST_QUALITY, 1);
 
 			if (sample_t_size != 4) {
 				for (sample = 0; sample < input_len; sample++) {
-					wave_table[wavenum][sample] = (sample_t)(out_buf[sample]);
+					osc_table[wavenum][sample] = (sample_t)(out_buf[sample]);
 				}
 			}
 
 			/* filter resampled data */
-			filter_wave_table_24dB(wavenum, num_cycles, octaves);
+			filter_osc_table_24dB(wavenum, num_cycles, octaves, scale);
 
 			/* all done */
 			return 0;
@@ -631,7 +650,7 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves)
 	/* copy sine data on failure */
 	PHASEX_ERROR("Error reading '%s'!\n", filename);
 	for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
-		wave_table[wavenum][sample] = wave_table[WAVE_SINE][sample];
+		osc_table[wavenum][sample] = osc_table[WAVE_SINE][sample];
 	}
 
 	return -1;
@@ -648,7 +667,7 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves)
  *****************************************************************************/
 #if NEED_GENERIC_HERMITE
 sample_t
-hermite(sample_t *buf, unsigned int max, sample_t index)
+hermite(sample_t *buf, unsigned int max, sample_t sample_index)
 {
 	sample_t        mu;
 	sample_t        mu2;
@@ -667,11 +686,11 @@ hermite(sample_t *buf, unsigned int max, sample_t index)
 	unsigned int    index_int;
 
 	/* integer value of index */
-	index_floor = (sample_t) floorf((float) index);
+	index_floor = (sample_t) MATH_FLOOR(sample_index);
 	index_int = (((unsigned int) index_floor) + max + max - 1) % max;
 
 	/* fractional portion of index */
-	mu = index - index_floor;
+	mu = sample_index - index_floor;
 	mu2 = mu * mu;
 	mu3 = mu2 * mu;
 
@@ -705,7 +724,7 @@ hermite(sample_t *buf, unsigned int max, sample_t index)
  * TODO:  vector optimizations.
  *****************************************************************************/
 sample_t
-chorus_hermite(sample_t *buf, sample_t index)
+chorus_hermite(sample_t *buf, sample_t sample_index)
 {
 	sample_t        mu;
 	sample_t        mu2;
@@ -724,11 +743,12 @@ chorus_hermite(sample_t *buf, sample_t index)
 	unsigned int    index_int;
 
 	/* integer value of index */
-	index_floor = (sample_t) floorf((float) index);
-	index_int = (((unsigned int) index_floor) + CHORUS_MAX + CHORUS_MAX - 1) % CHORUS_MAX;
+	index_floor = (sample_t) MATH_FLOOR(sample_index);
+	index_int = ((unsigned int) ((int) index_floor +
+	                             CHORUS_MAX + CHORUS_MAX - 1)) & CHORUS_MASK;
 
 	/* fractional portion of index */
-	mu = index - index_floor;
+	mu = sample_index - index_floor;
 	mu2 = mu * mu;
 	mu3 = mu2 * mu;
 
@@ -754,7 +774,7 @@ chorus_hermite(sample_t *buf, sample_t index)
 
 
 /*****************************************************************************
- * wave_table_hermite()
+ * osc_table_hermite()
  *
  * Read from oscillator wavetable using hermite interpolation.
  *
@@ -767,7 +787,7 @@ chorus_hermite(sample_t *buf, sample_t index)
  * TODO:  vector optimizations.
  *****************************************************************************/
 sample_t
-wave_table_hermite(int wave_num, sample_t index)
+osc_table_hermite(int wave_num, sample_t sample_index)
 {
 	sample_t        mu;
 	sample_t        mu2;
@@ -786,21 +806,22 @@ wave_table_hermite(int wave_num, sample_t index)
 	unsigned int    index_int;
 
 	/* integer value of index */
-	index_floor = (sample_t) floorf((float) index);
-	index_int = (((unsigned int) index_floor) + WAVEFORM_SIZE + WAVEFORM_SIZE - 1) % WAVEFORM_SIZE;
+	index_floor = (sample_t) MATH_FLOOR(sample_index);
+	index_int = (unsigned int)((int) index_floor +
+	                           WAVEFORM_SIZE + WAVEFORM_SIZE - 1) % WAVEFORM_SIZE;
 
 	/* fractional portion of index */
-	mu = index - index_floor;
+	mu = sample_index - index_floor;
 	mu2 = mu * mu;
 	mu3 = mu2 * mu;
 
 	/* Four adjacent samples, with higher precision index in the
 	   middle first four samples of wavetables are duplicated at
 	   the end to make this part modulus free. */
-	y0 = wave_table[wave_num][index_int];
-	y1 = wave_table[wave_num][index_int + 1];
-	y2 = wave_table[wave_num][index_int + 2];
-	y3 = wave_table[wave_num][index_int + 3];
+	y0 = osc_table[wave_num][index_int];
+	y1 = osc_table[wave_num][index_int + 1];
+	y2 = osc_table[wave_num][index_int + 2];
+	y3 = osc_table[wave_num][index_int + 3];
 
 	/* slope of first and second segments */
 	m0 = ((y1 - y0 + y2 - y1) * 0.75);
@@ -818,25 +839,25 @@ wave_table_hermite(int wave_num, sample_t index)
 
 
 /*****************************************************************************
- * wave_table_linear()
+ * osc_table_linear()
  *
  * Read from oscillator wavetable using linear interpolation.
  *****************************************************************************/
 sample_t
-wave_table_linear(int wave_num, sample_t index)
+osc_table_linear(int wave_num, sample_t sample_index)
 {
 	sample_t    y0;
 	sample_t    y1;
 	sample_t    index_floor;
 	int         index_int;
 
-	index_floor = (sample_t) floorf((float) index);
+	index_floor = (sample_t) MATH_FLOOR(sample_index);
 	index_int = (((int) index_floor) + WAVEFORM_SIZE + WAVEFORM_SIZE) % WAVEFORM_SIZE;
 
-	y0 = wave_table[wave_num][index_int];
-	y1 = wave_table[wave_num][index_int + 1];
+	y0 = osc_table[wave_num][index_int];
+	y1 = osc_table[wave_num][index_int + 1];
 
-	return (y0 + (y1 - y0) * (index - index_floor));
+	return (y0 + (y1 - y0) * (sample_index - index_floor));
 }
 
 
@@ -844,7 +865,7 @@ wave_table_linear(int wave_num, sample_t index)
  *
  * Functions for the generating the waveform samples
  * The synth engine should never use these directly due to overhead.
- * Use the wave table instead!
+ * Use the osc table instead!
  *
  * This should most definitely change in the future.  With today's fast
  * processors and relatively slower memory busses, optimized oscillator
@@ -859,7 +880,7 @@ wave_table_linear(int wave_num, sample_t index)
 /*****************************************************************************
  * func_square()
  *
- * Square function for building wave table
+ * Square function for building osc table
  *****************************************************************************/
 sample_t
 func_square(unsigned int sample_num)
@@ -874,7 +895,7 @@ func_square(unsigned int sample_num)
 /*****************************************************************************
  * func_saw()
  *
- * Saw function for building wave table
+ * Saw function for building osc table
  *****************************************************************************/
 sample_t
 func_saw(unsigned int sample_num)
@@ -886,7 +907,7 @@ func_saw(unsigned int sample_num)
 /*****************************************************************************
  * func_revsaw()
  *
- * Reverse saw wave function for building wave table.
+ * Reverse saw wave function for building osc table.
  *****************************************************************************/
 sample_t
 func_revsaw(unsigned int sample_num)
@@ -898,7 +919,7 @@ func_revsaw(unsigned int sample_num)
 /*****************************************************************************
  * func_triangle()
  *
- * Triangle wave function for building wave table
+ * Triangle wave function for building osc table
  *****************************************************************************/
 sample_t
 func_triangle(unsigned int sample_num)
@@ -922,7 +943,7 @@ func_triangle(unsigned int sample_num)
 /*****************************************************************************
  * func_stair()
  *
- * Stairstep wave function for building wave table
+ * Stairstep wave function for building osc table
  *****************************************************************************/
 sample_t
 func_stair(unsigned int sample_num)

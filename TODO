@@ -209,7 +209,7 @@ JACK improvements:
 
 * Add JACK connection tracking to save session state.
 
-* Add JACK Session / server selection support.
+* Add JACK server selection support.
 
 
 ------------------------------------------------------------------------------

@@ -31,6 +31,7 @@
 #include "midi_process.h"
 #include "midimap.h"
 #include "engine.h"
+#include "buffer.h"
 #include "patch.h"
 #include "param.h"
 #include "filter.h"
@@ -44,13 +45,6 @@
 
 
 int             vnum[MAX_PARTS];    /* round robin voice selectors */
-
-unsigned char   all_notes_off[MAX_PARTS];
-
-
-#ifdef MIDI_CLOCK_SYNC
-MIDI            *midi;
-#endif
 
 
 /*****************************************************************************
@@ -208,6 +202,8 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 		/* assign midi note */
 		voice->midi_key   = part->midi_key;
 		voice->keypressed = part->midi_key;
+		PHASEX_DEBUG(DEBUG_CLASS_MIDI_NOTE, "  *** keypressed = %d  Allocating voice %d ***\n",
+		             voice->keypressed, vnum[part_num]);
 		voice->age        = 0;
 
 		/* keep velocity for this note event */
@@ -534,19 +530,34 @@ process_all_notes_off(MIDI_EVENT *event, unsigned int part_num)
 /*****************************************************************************
  * broadcast_notes_off()
  *
- * Called from threads that need to turn off notes but shouldn't be messing
- * with the single-reader single-writer MIDI event queue.  Here we broadcast
- * a notes off condition that can be checked once per cycle for all engines.
- * Each engine will generate its own all notes off event, process it, and
- * reset the per-part condition variable.
+ * Called from any threads that needs to shut off all notes.  Queues a
+ * notes-off event for all engine threads.
  *****************************************************************************/
 void
 broadcast_notes_off(void)
 {
-	int     part_num;
+	PART                *part;
+	MIDI_EVENT          queue_event;
+	struct timespec     now;
+	timecalc_t          delta_nsec;
+	unsigned int        cycle_frame;
+	unsigned int        m_index;
+	unsigned int        part_num;
+
+	delta_nsec  = get_time_delta(&now);
+	cycle_frame = get_midi_cycle_frame(delta_nsec);
+	m_index = get_midi_index();
+	PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
+	             DEBUG_COLOR_CYAN "[%d] " DEBUG_COLOR_DEFAULT,
+	             (m_index / buffer_period_size));
+
+	queue_event.type      = MIDI_EVENT_NOTES_OFF;
+	queue_event.state     = EVENT_STATE_ALLOCATED;
 
 	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-		all_notes_off[part_num] = 1;
+		part = get_part(part_num);
+		queue_event.channel = (unsigned char)(part->midi_channel);
+		queue_midi_event(part_num, &queue_event, cycle_frame, m_index);
 	}
 }
 
@@ -1056,6 +1067,11 @@ process_controller(MIDI_EVENT *event, unsigned int part_num)
 
 			param = get_param(part_num, (unsigned int) id);
 
+			/* clamp controller to range for parameter */
+			if (event->value > param->info->cc_limit) {
+				event->value = (unsigned char)(param->info->cc_limit);
+			}
+
 			/* set value for parameter */
 			param_midi_update(param, event->value & 0x7F);
 
@@ -1068,6 +1084,24 @@ process_controller(MIDI_EVENT *event, unsigned int part_num)
 	if (!cc_edit_ignore_midi && cc_edit_active) {
 		cc_edit_cc_num = cc;
 	}
+}
+
+
+/*****************************************************************************
+ * process_parameter()
+ *****************************************************************************/
+void
+process_parameter(MIDI_EVENT *event, unsigned int part_num)
+{
+	int             id      = event->parameter;
+	PARAM           *param  = get_param(part_num, (unsigned int)id);
+
+	PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
+	             DEBUG_COLOR_GREEN "ppppp %d:%d=%d ppppp " DEBUG_COLOR_DEFAULT,
+	             (part_num + 1), id, event->value);
+
+	/* set parameter value and run callback */
+	param_midi_update(param, event->value & 0x7F);
 }
 
 
@@ -1342,6 +1376,7 @@ process_midi_event(MIDI_EVENT *event, unsigned int part_num)
 	case MIDI_EVENT_AFTERTOUCH:
 		process_aftertouch(event, part_num);
 		break;
+	case MIDI_EVENT_NOTES_OFF:
 	case MIDI_EVENT_STOP:
 	case MIDI_EVENT_SYSTEM_RESET:
 		process_all_notes_off(event, part_num);
@@ -1369,6 +1404,9 @@ process_midi_event(MIDI_EVENT *event, unsigned int part_num)
 	case MIDI_EVENT_PHASE_SYNC:
 		process_phase_sync(event, part_num);
 		break;
+	case MIDI_EVENT_PARAMETER:
+		process_parameter(event, part_num);
+		break;
 	default:
 		PHASEX_DEBUG(DEBUG_CLASS_MIDI_EVENT,
 		             "+++ process_midi_event():  part %d:  "
@@ -1386,7 +1424,24 @@ process_midi_event(MIDI_EVENT *event, unsigned int part_num)
 	event->byte2   = 0;
 	event->byte3   = 0;
 	event->next    = NULL;
-	set_midi_event_state(event, EVENT_STATE_FREE);
+	event->state   = EVENT_STATE_FREE;
 
 	return next;
+}
+
+
+/*****************************************************************************
+ * process_midi_events()
+ *****************************************************************************/
+void
+process_midi_events(unsigned int m_index, unsigned int cycle_frame, unsigned int part_num)
+{
+	PART            *part   = get_part(part_num);
+	MIDI_EVENT      *event;
+
+	event = & (part->event_queue[m_index + cycle_frame]);
+
+	while ((event != NULL) && (event->state != EVENT_STATE_FREE)) {
+		event = process_midi_event(event, part_num);
+	}
 }

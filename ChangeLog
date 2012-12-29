@@ -2,11 +2,34 @@
 
 Changelog:
 
+2012-12-28 William Weston <whw@linuxmail.org> - 0.14.96
+	* Added initial JACK Session support.
+	* Added sess dump dir skipping for Load Session dialog.
+	* Modified MIDI event queue to allow multiple writers.
+	* Removed get_/set_midi_event_state().
+	* Replaced all_notes_off[] flags with queued events.
+	* Implemented event queuing for GUI param changes.
+	* Renamed all variables simply named 'index'.
+	* Renamed wave_table to more appropriate osc_table.
+	* Fixed JACK MIDI port connection tracking.
+	* Fixed JACK latency callback calculations.
+	* Added managed mode w/ arg to load_/save_session().
+	* Cleaned up LASH session load/restore w/ new session mods.
+	* Updated configure.ac with new x86 CPU optimizations.
+	* Changed autosave sess name from _current_ to _autosave_.
+	* Enabled notes off on transport stop when JACK Transport is off.
+	* Removed redundant poll() call from rawmidi thread.
+	* Fixed MIDI controllers above max bug.
+	* Fixed oscillator scaling in osc_table.
+	* Completed work for pure 64-bit math (cpu power level 4).
+	* More cleanups and depracated code removal.
+
+
 2012-12-20 William Weston <whw@linuxmail.org> - 0.14.95
 	* Fixed initial patch / default patch issues.
 	* Updated GPL msg on exit to reference GPLv3 instead of v2.
 	* Added 16 new patches.
-	* Applied Anton's steal-oldest-note fix.
+	* Applied Anton Kormakov's steal-oldest-note fix.
 
 
 2012-12-20 William Weston <whw@linuxmail.org> - 0.14.94

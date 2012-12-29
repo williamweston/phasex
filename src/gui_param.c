@@ -38,6 +38,9 @@
 #include "param.h"
 #include "param_parse.h"
 #include "engine.h"
+#include "buffer.h"
+#include "timekeeping.h"
+#include "midi_event.h"
 #include "gui_main.h"
 #include "gui_param.h"
 #include "gui_patch.h"
@@ -60,7 +63,7 @@ int periodic_update_in_progress = 0;
  * upadate_gui_param()
  *
  * To be called by gui code only.  This is the function that actually
- * updates parameter widgets.  Necessary callbacks are disabled.
+ * updates parameter widgets.  Widget callbacks are disabled when necessary.
  *****************************************************************************/
 void
 update_gui_param(PARAM *param)
@@ -73,6 +76,8 @@ update_gui_param(PARAM *param)
 	if (param->patch == gp) {
 		PHASEX_ERROR("WARNING:  update_gui_param() called with param->patch == gp !\n");
 	}
+
+	update_param_child_sensitivities(param->patch->part_num, gui_param->info->id);
 
 	switch (gui_param->info->type) {
 	case PARAM_TYPE_INT:
@@ -91,18 +96,18 @@ update_gui_param(PARAM *param)
 		gtk_widget_set_state(gui_param->info->text, state);
 
 		gtk_label_set_text(GTK_LABEL(gui_param->info->text),
-		                   (gui_param->info->list_labels[param->value.cc_val]));
+		                   (gui_param->info->list_labels[gui_param->value.cc_val]));
 
 		g_signal_handlers_block_by_func(GTK_OBJECT(gui_param->info->adj),
 		                                GTK_SIGNAL_FUNC(on_gui_param_update),
 		                                (gpointer) gui_param);
-		gtk_adjustment_set_value(GTK_ADJUSTMENT(gui_param->info->adj), param->value.int_val);
+		gtk_adjustment_set_value(GTK_ADJUSTMENT(gui_param->info->adj), gui_param->value.int_val);
 		g_signal_handlers_unblock_by_func(GTK_OBJECT(gui_param->info->adj),
 		                                  GTK_SIGNAL_FUNC(on_gui_param_update),
 		                                  (gpointer) gui_param);
 		break;
 	case PARAM_TYPE_BOOL:
-		if ((param->value.cc_val == 0) &&
+		if ((gui_param->value.cc_val == 0) &&
 		    (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui_param->info->button[0])))) {
 			g_signal_handlers_block_by_func(GTK_OBJECT(gui_param->info->button[0]),
 			                                GTK_SIGNAL_FUNC(on_gui_param_update),
@@ -120,7 +125,7 @@ update_gui_param(PARAM *param)
 			                                  GTK_SIGNAL_FUNC(on_gui_param_update),
 			                                  (gpointer) gui_param);
 		}
-		else if ((param->value.cc_val == 1) &&
+		else if ((gui_param->value.cc_val == 1) &&
 		         (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui_param->info->button[1])))) {
 			g_signal_handlers_block_by_func(GTK_OBJECT(gui_param->info->button[1]),
 			                                GTK_SIGNAL_FUNC(on_gui_param_update),
@@ -152,7 +157,7 @@ update_gui_param(PARAM *param)
 		break;
 	case PARAM_TYPE_BBOX:
 		if (!gtk_toggle_button_get_active
-		    (GTK_TOGGLE_BUTTON(gui_param->info->button[param->value.cc_val]))) {
+		    (GTK_TOGGLE_BUTTON(gui_param->info->button[gui_param->value.cc_val]))) {
 			for (button_num = 0; gui_param->info->button[button_num] != NULL; button_num++) {
 				g_signal_handlers_block_by_func
 					(GTK_OBJECT(gui_param->info->button[button_num]),
@@ -161,7 +166,7 @@ update_gui_param(PARAM *param)
 			}
 
 			gtk_toggle_button_set_active
-				(GTK_TOGGLE_BUTTON(gui_param->info->button[param->value.cc_val]), TRUE);
+				(GTK_TOGGLE_BUTTON(gui_param->info->button[gui_param->value.cc_val]), TRUE);
 
 			for (button_num = 0; gui_param->info->button[button_num] != NULL; button_num++) {
 				g_signal_handlers_unblock_by_func
@@ -184,7 +189,6 @@ update_gui_param(PARAM *param)
 		break;
 	}
 
-	update_param_child_sensitivities(param->patch->part_num, gui_param->info->id);
 	if (param->updated > 0) {
 		param->updated--;
 	}
@@ -197,8 +201,7 @@ update_gui_param(PARAM *param)
 /*****************************************************************************
  * gui_param_midi_update()
  *
- * Handle synth engine updates and gui updates for parameter changes
- * received via midi.
+ * Handle gui updates for parameter changes * received via midi.
  *****************************************************************************/
 void
 gui_param_midi_update(PARAM *param, int cc_val)
@@ -233,7 +236,7 @@ gui_param_midi_update(PARAM *param, int cc_val)
 /*****************************************************************************
  * get_param_widget_val()
  *
- * Return the current value of a widget, cast to int.
+ * Return the current integer value of a widget.
  *****************************************************************************/
 int
 get_param_widget_val(GtkWidget *widget, PARAM *param)
@@ -248,7 +251,7 @@ get_param_widget_val(GtkWidget *widget, PARAM *param)
 	case PARAM_TYPE_INT:
 	case PARAM_TYPE_REAL:
 		/* get the adjustment value used for both knob and spin */
-		val = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(widget));
+		val = (int) (gtk_adjustment_get_value(GTK_ADJUSTMENT(widget)) + 0.0);
 		/* while we're here, set the value label next to the knob */
 		gtk_label_set_text(GTK_LABEL(param->info->text),
 		                   param->info->list_labels[val - param->info->cc_offset]);
@@ -257,7 +260,7 @@ get_param_widget_val(GtkWidget *widget, PARAM *param)
 	case PARAM_TYPE_DTNT:
 		/* get value from adjustment for knob widget that was modified */
 		if (GTK_OBJECT(widget) == param->info->adj) {
-			val = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(widget));
+			val = (int) (gtk_adjustment_get_value(GTK_ADJUSTMENT(widget)) + 0.0);
 		}
 		/* while we're here, set the value label next to the knob */
 		gtk_label_set_text(GTK_LABEL(param->info->text), param->info->list_labels[val]);
@@ -301,46 +304,23 @@ get_param_widget_val(GtkWidget *widget, PARAM *param)
 void
 on_gui_param_update(GtkWidget *widget, gpointer *data)
 {
-	SESSION         *session     = get_current_session();
-	PARAM           *gui_param   = ((PARAM *)(data));
-	unsigned int    id           = gui_param->info->id;
-	PATCH           *patch       = get_visible_patch();
-	PARAM           *param       = & (patch->param[id]);
-	int             val;
+	SESSION             *session     = get_current_session();
+	PARAM               *gui_param   = ((PARAM *)(data));
+	unsigned int        id           = gui_param->info->id;
+	PATCH               *patch       = get_visible_patch();
+	PARAM               *param       = & (patch->param[id]);
+	int                 val;
 
-	PHASEX_DEBUG(DEBUG_CLASS_GUI,
-	             "  GUI Param Update Callback ---- Part %d -- [%1d] "
-	             "-- old ( cc_val = %03d ) "
-	             "-- new ( cc_val = %03d ) -- <%s>\n",
-	             (param->patch->part_num + 1),
-	             param->info->id,
-	             param->value.cc_prev,
-	             param->value.cc_val,
-	             param->info->name);
-
-	if ((val = get_param_widget_val(widget, ((PARAM *)(data)))) != PARAM_VAL_IGNORE) {
-		param->value.int_val = val;
-		param->value.cc_prev = param->value.cc_val;
-		param->value.cc_val  = param->value.int_val - param->info->cc_offset;
-
+	if ((val = get_param_widget_val(widget, gui_param)) != PARAM_VAL_IGNORE) {
 		gui_param->value.int_val = val;
 		gui_param->value.cc_prev = gui_param->value.cc_val;
 		gui_param->value.cc_val  = gui_param->value.int_val - gui_param->info->cc_offset;
 
 		/* ignore when value doesn't change */
-		if (param->value.cc_val != param->value.cc_prev) {
-
-			PHASEX_DEBUG(DEBUG_CLASS_GUI,
-			             "  GUI Param Update (value changed) ---- Part %d -- [%1d] "
-			             "-- old ( cc_val = %03d ) "
-			             "-- new ( cc_val = %03d ) -- <%s>\n",
-			             (param->patch->part_num + 1),
-			             param->info->id,
-			             param->value.cc_prev,
-			             param->value.cc_val,
-			             param->info->name);
-
-			param->updated = 1;
+		val = 0;
+		if (gui_param->value.cc_val != gui_param->value.cc_prev) {
+			val = 1;
+			gui_param->updated = 1;
 
 			/* changing non-locked paramaters show the patch as being modified */
 			if (!param->info->locked) {
@@ -348,12 +328,22 @@ on_gui_param_update(GtkWidget *widget, gpointer *data)
 				session->modified = 1;
 			}
 
-			/* update synth engine state with new param value */
-			cb_info[id].update_patch_state(param);
-
-			/* handle remaining necessary gui changes */
-			update_param_child_sensitivities(visible_part_num, param->info->id);
+			/* timestamp and queue event for engine */
+			queue_midi_param_event(patch->part_num, id, gui_param->value.cc_val);
 		}
+
+		/* handle remaining necessary gui changes */
+		update_param_child_sensitivities(visible_part_num, param->info->id);
+
+		PHASEX_DEBUG(DEBUG_CLASS_GUI,
+		             "on_gui_param_update(): %s Part %d -- [%1d] "
+		             "-- old = %03d  -- new = %03d  -- <%s>\n",
+		             (val ? "(value changed)" : "---------------"),
+		             (param->patch->part_num + 1),
+		             gui_param->info->id,
+		             gui_param->value.cc_prev,
+		             gui_param->value.cc_val,
+		             gui_param->info->name);
 	}
 }
 
@@ -534,25 +524,21 @@ new_param_value(PARAM *gui_param, PARAM *param, int cc_val)
 	gui_param->value.cc_prev = gui_param->value.cc_val;
 	gui_param->value.cc_val  = cc_val;
 	gui_param->value.int_val = cc_val + gui_param->info->cc_offset;
-	if (gui_param->value.cc_val != param->value.cc_val) {
-		param->value.cc_prev = param->value.cc_val;
-		param->value.cc_val  = cc_val;
-		param->value.int_val = cc_val + gui_param->info->cc_offset;
-		param->updated       = 1;
-		gui_param->updated   = 1;
-		cb_info[gui_param->info->id].update_patch_state(param);
+	if (gui_param->value.cc_val != gui_param->value.cc_prev) {
+		queue_midi_param_event(visible_part_num, param->info->id, gui_param->value.cc_val);
+		gui_param->updated     = 1;
 		param->patch->modified = 1;
 		session->modified      = 1;
+		PHASEX_DEBUG(DEBUG_CLASS_GUI,
+		             "  GUI Param Update ---- Part %d -- [%1d] "
+		             "-- old ( cc_val = %03d ) "
+		             "-- new ( cc_val = %03d ) -- <%s>\n",
+		             (param->patch->part_num + 1),
+		             gui_param->info->id,
+		             gui_param->value.cc_prev,
+		             gui_param->value.cc_val,
+		             gui_param->info->name);
 	}
-	PHASEX_DEBUG(DEBUG_CLASS_GUI,
-	             "  GUI Param Update ---- Part %d -- [%1d] "
-	             "-- old ( cc_val = %03d ) "
-	             "-- new ( cc_val = %03d ) -- <%s>\n",
-	             (param->patch->part_num + 1),
-	             param->info->id,
-	             param->value.cc_prev,
-	             param->value.cc_val,
-	             param->info->name);
 }
 
 
@@ -1473,6 +1459,8 @@ update_param_sensitivities(void)
 
 	for (param_num = PARAM_CHORUS_AMOUNT; param_num < NUM_PARAMS; param_num++) {
 		update_param_sensitivity(visible_part_num, param_num);
+		update_param_sensitivity(visible_part_num, param_num);
+		get_param(visible_part_num, param_num)->updated = 1;
 	}
 }
 

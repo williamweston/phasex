@@ -42,10 +42,7 @@ extern char             *lash_project_name;
 int  lash_client_init(int *argc, char ***argv);
 void lash_client_set_jack_name(jack_client_t *client);
 void lash_client_set_alsa_id(snd_seq_t *seq);
-void lash_read_patches(char *lash_path);
-void lash_save_patches(char *lash_path);
-void lash_set_project_info(char *lash_dir);
-void lash_set_phasex_session_name(void);
+char *lash_set_phasex_session_name(char *lash_dir);
 int  lash_poll_event(void);
 
 

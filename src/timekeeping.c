@@ -217,7 +217,7 @@ get_time_delta(struct timespec *now)
 	struct timeval      walltime;
 #endif
 #if (ARCH_BITS == 32)
-	int                 index;
+	int                 c_index;
 #endif
 
 	if (
@@ -232,9 +232,9 @@ get_time_delta(struct timespec *now)
 		now->tv_nsec = walltime.tv_usec * 1000;
 #endif
 #if (ARCH_BITS == 32)
-		index = g_atomic_int_get(&midi_clock_time_index);
-		last_timeref.timestamp.sec  = midi_clock_time[index].timestamp.sec;
-		last_timeref.timestamp.nsec = midi_clock_time[index].timestamp.nsec;
+		c_index = g_atomic_int_get(&midi_clock_time_index);
+		last_timeref.timestamp.sec  = midi_clock_time[c_index].timestamp.sec;
+		last_timeref.timestamp.nsec = midi_clock_time[c_index].timestamp.nsec;
 #endif
 #if (ARCH_BITS == 64)
 		last_timeref.gptr = g_atomic_pointer_get(& (midi_timeref.gptr));
@@ -311,7 +311,7 @@ set_midi_cycle_time(void)
 	static int              cycle_frame;
 	static int              last_cycle_frame;
 #if (ARCH_BITS == 32)
-	int                     index;
+	int                     c_index;
 #endif
 
 	last.sec  = (int) audio_start_time.tv_sec;
@@ -362,9 +362,9 @@ set_midi_cycle_time(void)
 		nsec_per_frame  = (nsec_per_period / f_buffer_period_size);
 	}
 #if (ARCH_BITS == 32)
-	index = g_atomic_int_get(&midi_clock_time_index);
-	timeref.timestamp.sec   = midi_clock_time[index].timestamp.sec;
-	timeref.timestamp.nsec  = midi_clock_time[index].timestamp.nsec;
+	c_index = g_atomic_int_get(&midi_clock_time_index);
+	timeref.timestamp.sec   = midi_clock_time[c_index].timestamp.sec;
+	timeref.timestamp.nsec  = midi_clock_time[c_index].timestamp.nsec;
 	next_timeref.timestamp.sec  = timeref.timestamp.sec;
 	next_timeref.timestamp.nsec = timeref.timestamp.nsec;
 #endif
@@ -441,11 +441,11 @@ set_midi_cycle_time(void)
 		next_timeref.timestamp.sec  = (next_timeref.timestamp.sec - 1);
 	}
 #if (ARCH_BITS == 32)
-	index = (index + 1) & 0x7;
-	midi_clock_time[index].timestamp.sec  = next_timeref.timestamp.sec;
-	midi_clock_time[index].timestamp.nsec = next_timeref.timestamp.nsec;
+	c_index = (c_index + 1) & 0x7;
+	midi_clock_time[c_index].timestamp.sec  = next_timeref.timestamp.sec;
+	midi_clock_time[c_index].timestamp.nsec = next_timeref.timestamp.nsec;
 	g_atomic_int_add(&need_increment, 1);
-	g_atomic_int_set(&midi_clock_time_index, index);
+	g_atomic_int_set(&midi_clock_time_index, c_index);
 #endif
 #if (ARCH_BITS == 64)
 	g_atomic_int_add(&need_increment, 1);
@@ -520,8 +520,8 @@ set_active_sensing_timeout(void)
 #endif
 	struct timespec     now;
 #if (ARCH_BITS == 32)
-	int                 index       = g_atomic_int_get(&active_sensing_timeout_index);
-	int                 next_index  = (index + 1) & 0x7;
+	int                 t_index     = g_atomic_int_get(&active_sensing_timeout_index);
+	int                 next_index  = (t_index + 1) & 0x7;
 #endif
 
 	if (
@@ -565,20 +565,20 @@ check_active_sensing_timeout(void)
 	ATOMIC_TIMESTAMP    timeout;
 	ATOMIC_TIMESTAMP    midi_clock;
 #if (ARCH_BITS == 32)
-	int                 index = g_atomic_int_get(&active_sensing_timeout_index);
-	int                 next_index = (index + 1) & 0x7;
+	int                 t_index = g_atomic_int_get(&active_sensing_timeout_index);
+	int                 next_index = (t_index + 1) & 0x7;
 
-	timeout.timestamp.sec  = active_sensing_timeout[index].timestamp.sec;
-	timeout.timestamp.nsec = active_sensing_timeout[index].timestamp.nsec;
+	timeout.timestamp.sec  = active_sensing_timeout[t_index].timestamp.sec;
+	timeout.timestamp.nsec = active_sensing_timeout[t_index].timestamp.nsec;
 #endif
 #if (ARCH_BITS == 64)
 	timeout.gptr = g_atomic_pointer_get(& (active_sensing_timeout.gptr));
 #endif
 	if ((timeout.timestamp.sec != 0) && (timeout.timestamp.nsec != 0)) {
 #if (ARCH_BITS == 32)
-		index = g_atomic_int_get(&midi_clock_time_index);
-		midi_clock.timestamp.sec  = midi_clock_time[index].timestamp.sec;
-		midi_clock.timestamp.nsec = midi_clock_time[index].timestamp.nsec;
+		t_index = g_atomic_int_get(&midi_clock_time_index);
+		midi_clock.timestamp.sec  = midi_clock_time[t_index].timestamp.sec;
+		midi_clock.timestamp.nsec = midi_clock_time[t_index].timestamp.nsec;
 #endif
 #if (ARCH_BITS == 64)
 		midi_clock.gptr = g_atomic_pointer_get(& (midi_timeref.gptr));

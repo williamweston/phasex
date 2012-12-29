@@ -287,7 +287,7 @@ typedef struct phasex_param {
 	PARAM_INFO      *info;
 	PARAM_VAL       value;
 	struct patch    *patch;     /* container for this param     */
-	int             updated;    /* Flag set by non-gui threads  */
+	int             updated;    /* dirty flag for gui           */
 	char            _padding[24];
 } PARAM;
 

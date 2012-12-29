@@ -18,7 +18,7 @@ dnl #
 dnl # You should have received a copy of the GNU General Public License
 dnl # along with PHASEX.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT(PHASEX, 0.14.95)
+AC_INIT(PHASEX, 0.14.96)
 
 AC_CONFIG_AUX_DIR(scripts)
 AM_INIT_AUTOMAKE(0.10.0)
@@ -456,6 +456,26 @@ case "$OPT_ARCH" in
 		ARCH_MATH_CFLAGS="-msse4a -mfpmath=sse"
 		ARCH_BITS=64
 		;;
+	"bdver1"|"bdver2")
+		CPU_POWER_LEVEL=3
+		if test "x$gccver" \< "x4.6.0"; then
+			ARCH_OPT_CFLAGS="-mtune=amdfam10 -march=amdfam10"
+		else
+			ARCH_OPT_CFLAGS="-mtune=$OPT_ARCH -march=$OPT_ARCH"
+		fi
+		ARCH_MATH_CFLAGS="-msse2 -msse3 -mssse3 -msse4a -msse4.1 -msse4.2 -mfpmath=sse"
+		ARCH_BITS=64
+		;;
+    "btver1")
+		CPU_POWER_LEVEL=3
+		if test "x$gccver" \< "x4.6.0"; then
+			ARCH_OPT_CFLAGS="-mtune=amdfam10 -march=amdfam10"
+		else
+			ARCH_OPT_CFLAGS="-mtune=$OPT_ARCH -march=$OPT_ARCH"
+		fi
+		ARCH_MATH_CFLAGS="-msse2 -msse3 -mssse3 -msse4a -mfpmath=sse"
+		ARCH_BITS=64
+		;;
 	"x86_64")
 		CPU_POWER_LEVEL=3
 		ARCH_OPT_CFLAGS="-mtune=generic"
@@ -482,6 +502,36 @@ case "$OPT_ARCH" in
 			ARCH_OPT_CFLAGS="-mtune=core2 -march=core2"
 		fi
 		ARCH_MATH_CFLAGS="-msse -msse2 -mssse3 -mfpmath=sse"
+		ARCH_BITS=64
+		;;
+	"corei7")
+		CPU_POWER_LEVEL=3
+		if test "x$gccver" \< "x4.6.0"; then
+			ARCH_OPT_CFLAGS="-mtune=core2 -march=core2"
+		else
+			ARCH_OPT_CFLAGS="-mtune=corei7 -march=corei7"
+		fi
+		ARCH_MATH_CFLAGS="-msse -msse2 -mssse3 -mssse3 -msse4.1 -msse4.2 -mfpmath=sse"
+		ARCH_BITS=64
+		;;
+	"corei7-avx")
+		CPU_POWER_LEVEL=3
+		if test "x$gccver" \< "x4.6.0"; then
+			ARCH_OPT_CFLAGS="-mtune=core2 -march=core2"
+		else
+			ARCH_OPT_CFLAGS="-mtune=corei7 -march=corei7"
+		fi
+		ARCH_MATH_CFLAGS="-msse -msse2 -mssse3 -mssse3 -msse4.1 -msse4.2 -mfpmath=sse"
+		ARCH_BITS=64
+		;;
+	"corei7-avx-i")
+		CPU_POWER_LEVEL=3
+		if test "x$gccver" \< "x4.6.0"; then
+			ARCH_OPT_CFLAGS="-mtune=core2 -march=core2"
+		else
+			ARCH_OPT_CFLAGS="-mtune=corei7 -march=corei7"
+		fi
+		ARCH_MATH_CFLAGS="-msse -msse2 -mssse3 -mssse3 -msse4.1 -msse4.2 -mfpmath=sse"
 		ARCH_BITS=64
 		;;
 	"amd64")
@@ -573,7 +623,7 @@ fi
 # Apply user-overridden PHASEX_CPU_POWER flag
 FORCE_CPU_POWER=0
 AC_ARG_ENABLE(cpu-power,
-	AC_HELP_STRING([--enable-cpu-power], [optimize sound quality for (1) low-, (2) medium-, or (3) high- powered CPU.]),
+	AC_HELP_STRING([--enable-cpu-power], [optimize sound quality for (1) low-, (2) medium-, (3) high- , or (4) over- powered CPU.]),
 	[FORCE_CPU_POWER="$enableval"])
 
 if test "x$FORCE_CPU_POWER" = "x1" || test "x$FORCE_CPU_POWER" = "x2" || test "x$FORCE_CPU_POWER" = "x3" || test "x$FORCE_CPU_POWER" = "x4"; then
@@ -585,7 +635,7 @@ fi
 case "$DEBUG_CFLAGS" in
 	"none")
 		DEBUG_CFLAGS=""
-		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O3 -ffast-math -fomit-frame-pointer -fsingle-precision-constant"
+		OPT_CFLAGS="-pipe -Wall $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O3 -ffast-math -fomit-frame-pointer -fsingle-precision-constant"
 		;;
 	"yes")
 		DEBUG_CFLAGS="-g"

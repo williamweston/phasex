@@ -46,9 +46,9 @@ extern unsigned int visible_prog_num[MAX_PARTS];
 PATCH *get_patch_from_bank(unsigned int part_num, unsigned int prog_num);
 PATCH *set_patch_from_bank(unsigned int part_num, unsigned int prog_num);
 
-void init_patch_bank(void);
-void load_patch_bank(void);
-void save_patch_bank(void);
+void init_patch_bank(char *filename);
+void load_patch_bank(char *filename);
+void save_patch_bank(char *filename);
 
 void load_patch_list(char *patch_list);
 

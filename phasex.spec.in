@@ -76,7 +76,7 @@ CFLAGS="$RPM_OPT_FLAGS" %configure \
 	--enable-arch=%{_target_cpu} \
 	--enable-cpu-power=3 \
 	--enable-parts=1 \
-    --without-lash
+	--without-lash
 
 %{__make} %{?_smp_mflags}
 

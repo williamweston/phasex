@@ -38,6 +38,7 @@
 #include "session.h"
 #include "settings.h"
 #include "engine.h"
+#include "midimap.h"
 #include "gui_main.h"
 #include "gui_patch.h"
 #include "string_util.h"
@@ -97,7 +98,7 @@ set_patch_from_session_bank(unsigned int sess_num, unsigned int part_num)
  * init_session_patch_bank()
  *****************************************************************************/
 void
-init_session_patch_bank(void)
+init_session_bank(char *filename)
 {
 	SESSION         *session;
 	PATCH           *patch;
@@ -129,7 +130,7 @@ init_session_patch_bank(void)
 	}
 
 	/* load the session_bank for all parts */
-	load_session_bank();
+	load_session_bank(filename);
 }
 
 
@@ -137,7 +138,7 @@ init_session_patch_bank(void)
  * load_session()
  *****************************************************************************/
 int
-load_session(char *directory, unsigned int sess_num)
+load_session(char *directory, unsigned int sess_num, int managed)
 {
 	SESSION         *session        = get_session(sess_num);
 	PATCH           *patch;
@@ -153,12 +154,14 @@ load_session(char *directory, unsigned int sess_num)
 	if (session->directory != NULL) {
 		free(session->directory);
 	}
-	session->directory = strdup(directory);
 
-	tmpname = session->name;
-	session->name = get_session_name_from_directory(directory);
-	if (tmpname != NULL) {
-		free(tmpname);
+	if (!managed) {
+		session->directory = strdup(directory);
+		tmpname = session->name;
+		session->name = get_session_name_from_directory(directory);
+		if (tmpname != NULL) {
+			free(tmpname);
+		}
 	}
 
 	/* read session patches */
@@ -187,50 +190,53 @@ load_session(char *directory, unsigned int sess_num)
 		}
 	}
 
-	if (return_code == 0) {
-		tmpname = session->name;
-		session->name = strdup(basename(directory));
-		if (tmpname != NULL) {
-			free(tmpname);
-		}
-		save_session_bank();
-	}
-
-	if (session->name == NULL) {
-		sprintf(filename, "Untitled-%04d", sess_num);
-		session->name = strdup(filename);
-	}
-	update_gui_session_name();
-
-	/* keep track of session container directory list */
-	strncpy(filename, directory, PATH_MAX);
-	directory = dirname(filename);
-	session->parent_dir = strdup(directory);
-	if (strcmp(session->directory, user_session_dump_dir) != 0) {
-		if ((directory != NULL) && (* (directory) != '\0') &&
-		    (strcmp(directory, user_session_dir) != 0)) {
-			while ((pdir != NULL) && (!dir_found)) {
-				if (strcmp(pdir->name, directory) == 0) {
-					dir_found = 1;
-				}
-				else {
-					ldir = pdir;
-					pdir = pdir->next;
-				}
+	if (!managed) {
+		if (return_code == 0) {
+			tmpname = session->name;
+			session->name = strdup(basename(directory));
+			if (tmpname != NULL) {
+				free(tmpname);
 			}
-			if (!dir_found) {
-				if ((pdir = malloc(sizeof(DIR_LIST))) == NULL) {
-					phasex_shutdown("Out of Memory!\n");
+			save_session_bank(NULL);
+		}
+
+		if (session->name == NULL) {
+			sprintf(filename, "Untitled-%04d", sess_num);
+			session->name = strdup(filename);
+		}
+		update_gui_session_name();
+
+		/* keep track of session container directory list */
+		strncpy(filename, directory, PATH_MAX);
+		directory = dirname(filename);
+		session->parent_dir = strdup(directory);
+		if ((session->directory != NULL) &&
+		    strcmp(session->directory, user_session_dump_dir) != 0) {
+			if ((directory != NULL) && (* (directory) != '\0') &&
+			    (strcmp(directory, user_session_dir) != 0)) {
+				while ((pdir != NULL) && (!dir_found)) {
+					if (strcmp(pdir->name, directory) == 0) {
+						dir_found = 1;
+					}
+					else {
+						ldir = pdir;
+						pdir = pdir->next;
+					}
 				}
-				pdir->name = strdup(directory);
-				pdir->load_shortcut = pdir->save_shortcut = 0;
-				if (ldir == NULL) {
-					pdir->next = NULL;
-					session_dir_list = pdir;
-				}
-				else {
-					pdir->next = ldir->next;
-					ldir->next = pdir;
+				if (!dir_found) {
+					if ((pdir = malloc(sizeof(DIR_LIST))) == NULL) {
+						phasex_shutdown("Out of Memory!\n");
+					}
+					pdir->name = strdup(directory);
+					pdir->load_shortcut = pdir->save_shortcut = 0;
+					if (ldir == NULL) {
+						pdir->next = NULL;
+						session_dir_list = pdir;
+					}
+					else {
+						pdir->next = ldir->next;
+						ldir->next = pdir;
+					}
 				}
 			}
 		}
@@ -246,11 +252,12 @@ load_session(char *directory, unsigned int sess_num)
  * load_session_bank()
  *****************************************************************************/
 void
-load_session_bank(void)
+load_session_bank(char *filename)
 {
 	SESSION         *session;
 	PATCH           *patch;
 	FILE            *session_bank_f;
+	char            *session_bank_file;
 	char            *p;
 	char            directory[PATH_MAX];
 	char            *tmpname;
@@ -261,6 +268,13 @@ load_session_bank(void)
 	int             line        = 0;
 	int             result;
 	char            loaded[SESSION_BANK_SIZE];
+
+	if (filename == NULL) {
+		session_bank_file = user_session_bank_file;
+	}
+	else {
+		session_bank_file = filename;
+	}
 
 	memset(loaded, 0, sizeof(loaded));
 
@@ -273,8 +287,10 @@ load_session_bank(void)
 	}
 
 	/* open the session_bank file */
-	if ((session_bank_f = fopen(user_session_bank_file, "r")) == NULL) {
-		return;
+	if ((session_bank_f = fopen(session_bank_file, "r")) == NULL) {
+		if ((session_bank_f = fopen(user_session_bank_file, "r")) == NULL) {
+			return;
+		}
 	}
 	setvbuf(session_bank_f, streambuf, _IOFBF, (1024 * 1024));
 
@@ -337,7 +353,7 @@ load_session_bank(void)
 		while (get_next_token(buffer) != NULL);
 
 		/* load session patches into session_bank */
-		result = load_session(directory, sess_num);
+		result = load_session(directory, sess_num, 0);
 
 		/* initialize on failure and set name based on session number */
 		if (result == 0) {
@@ -402,7 +418,7 @@ load_session_bank(void)
  * save_session()
  *****************************************************************************/
 int
-save_session(char *directory, unsigned int sess_num)
+save_session(char *directory, unsigned int sess_num, int managed)
 {
 	SESSION         *session        = get_current_session();
 	SESSION         *new_session    = get_session(sess_num);
@@ -422,7 +438,7 @@ save_session(char *directory, unsigned int sess_num)
 	if (directory == user_session_dump_dir) {
 		dump = 1;
 	}
-	else {
+	else if (!managed) {
 		if (session->directory != NULL) {
 			free(session->directory);
 		}
@@ -441,6 +457,15 @@ save_session(char *directory, unsigned int sess_num)
 	}
 	closedir(dir);
 
+	snprintf(filename, sizeof(filename), "%s/phasex.map", directory);
+	save_midimap(filename);
+	snprintf(filename, sizeof(filename), "%s/phasex.cfg", directory);
+	save_settings(filename);
+	snprintf(filename, sizeof(filename), "%s/%s", directory, USER_BANK_FILE);
+	save_patch_bank(filename);
+	snprintf(filename, sizeof(filename), "%s/%s", directory, USER_SESSION_BANK_FILE);
+	save_session_bank(filename);
+
 	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
 		patch = get_patch(sess_num, part_num, session_bank[sess_num].prog_num[part_num]);
 		if (dump) {
@@ -454,59 +479,61 @@ save_session(char *directory, unsigned int sess_num)
 
 	if (!dump && (return_code == 0)) {
 		session->modified = 0;
-		tmpname = session->name;
-		session->name = get_session_name_from_directory(directory);
-		if (tmpname != NULL) {
-			free(tmpname);
-		}
-		if (session->parent_dir != NULL) {
-			free(session->parent_dir);
-		}
-		strncpy(filename, session->directory, PATH_MAX);
-		tmpdir = dirname(filename);
-		session->parent_dir = strdup(tmpdir);
-		if (sess_num == visible_sess_num) {
-			update_gui_session_name();
-		}
-		else {
-			new_session = get_session(sess_num);
-			tmpname = new_session->name;
-			new_session->name = strdup(session->name);
+		if (!managed) {
+			tmpname = session->name;
+			session->name = get_session_name_from_directory(directory);
 			if (tmpname != NULL) {
 				free(tmpname);
 			}
-			if (new_session->directory != NULL) {
-				free(new_session->directory);
+			if (session->parent_dir != NULL) {
+				free(session->parent_dir);
 			}
-			new_session->directory = strdup(session->directory);
-			if (new_session->parent_dir != NULL) {
-				free(new_session->parent_dir);
+			strncpy(filename, session->directory, PATH_MAX);
+			tmpdir = dirname(filename);
+			session->parent_dir = strdup(tmpdir);
+			if (sess_num == visible_sess_num) {
+				update_gui_session_name();
 			}
-			new_session->parent_dir = strdup(session->parent_dir);
-			for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-				if (new_session->patch[part_num].name != NULL) {
-					free(new_session->patch[part_num].name);
+			else {
+				new_session = get_session(sess_num);
+				tmpname = new_session->name;
+				new_session->name = strdup(session->name);
+				if (tmpname != NULL) {
+					free(tmpname);
 				}
-				if (new_session->patch[part_num].filename != NULL) {
-					free(new_session->patch[part_num].filename);
+				if (new_session->directory != NULL) {
+					free(new_session->directory);
 				}
-				if (new_session->patch[part_num].directory != NULL) {
-					free(new_session->patch[part_num].directory);
+				new_session->directory = strdup(session->directory);
+				if (new_session->parent_dir != NULL) {
+					free(new_session->parent_dir);
 				}
-				patch = get_active_patch(part_num);
-				bcopy(patch, & (new_session->patch[part_num]), sizeof(PATCH));
-				if (patch->name != NULL) {
-					new_session->patch[part_num].name      = strdup(patch->name);
+				new_session->parent_dir = strdup(session->parent_dir);
+				for (part_num = 0; part_num < MAX_PARTS; part_num++) {
+					if (new_session->patch[part_num].name != NULL) {
+						free(new_session->patch[part_num].name);
+					}
+					if (new_session->patch[part_num].filename != NULL) {
+						free(new_session->patch[part_num].filename);
+					}
+					if (new_session->patch[part_num].directory != NULL) {
+						free(new_session->patch[part_num].directory);
+					}
+					patch = get_active_patch(part_num);
+					bcopy(patch, & (new_session->patch[part_num]), sizeof(PATCH));
+					if (patch->name != NULL) {
+						new_session->patch[part_num].name      = strdup(patch->name);
+					}
+					if (patch->filename != NULL) {
+						new_session->patch[part_num].filename  = strdup(patch->filename);
+					}
+					if (patch->directory != NULL) {
+						new_session->patch[part_num].directory = strdup(patch->directory);
+					}
+					new_session->prog_num[part_num] = 0;
 				}
-				if (patch->filename != NULL) {
-					new_session->patch[part_num].filename  = strdup(patch->filename);
-				}
-				if (patch->directory != NULL) {
-					new_session->patch[part_num].directory = strdup(patch->directory);
-				}
-				new_session->prog_num[part_num] = 0;
+				new_session->modified = 0;
 			}
-			new_session->modified = 0;
 		}
 	}
 
@@ -518,16 +545,24 @@ save_session(char *directory, unsigned int sess_num)
  * save_session_bank()
  *****************************************************************************/
 void
-save_session_bank(void)
+save_session_bank(char *filename)
 {
 	SESSION         *session;
 	FILE            *session_bank_f;
+	char            *session_bank_file;
 	unsigned int    sess_num;
 
+	if (filename == NULL) {
+		session_bank_file = user_session_bank_file;
+	}
+	else {
+		session_bank_file = filename;
+	}
+
 	/* open the session_bank file */
-	if ((session_bank_f = fopen(user_session_bank_file, "wt")) == NULL) {
+	if ((session_bank_f = fopen(session_bank_file, "wt")) == NULL) {
 		PHASEX_ERROR("Error opening session bank file %s for write: %s\n",
-		             user_session_bank_file, strerror(errno));
+		             session_bank_file, strerror(errno));
 		return;
 	}
 

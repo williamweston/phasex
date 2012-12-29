@@ -8,7 +8,7 @@
  *
  * Modifications by Sean Bolton:     Copyright (C) 2004, 2008-2010
  * Modifications by Pete Shorthose:  Copyright (C) 2007
- * Modifications by William Weston:  Copyright (C) 2007-2008, 2012
+ * Modifications by William Weston:  Copyright (C) 2007-2009, 2012
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

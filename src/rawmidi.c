@@ -548,9 +548,9 @@ rawmidi_read(RAWMIDI_INFO *rawmidi, unsigned char *buf, int len)
 				buf[output_index++] = read_buf[buf_index++];
 			}
 		}
-		if (output_index < len) {
+		if (!midi_stopped && !pending_shutdown && (output_index < len)) {
 #  if defined(RAWMIDI_ALSA_NONBLOCK) || defined(RAWMIDI_USE_POLL)
-			if (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 10) > 0)
+			if (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 1) > 0)
 #  endif
 				{
 					if ((buf_available = snd_rawmidi_read(rawmidi->handle, read_buf, 256)) < 1) {
@@ -570,20 +570,22 @@ rawmidi_read(RAWMIDI_INFO *rawmidi, unsigned char *buf, int len)
 #  endif /* RAWMIDI_DEBUG */
 		bytes_read = output_index;
 # else /* !RAWMIDI_ALSA_MULTI_BYTE_IO */
+		bytes_read = 0;
+		while (!midi_stopped && !pending_shutdown && (bytes_read < len)) {
 #  if defined(RAWMIDI_ALSA_NONBLOCK) || defined(RAWMIDI_USE_POLL)
-		if (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 10) > 0)
+			if (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 1) > 0)
 #  endif
 			{
-				for (bytes_read = 0; bytes_read < len; bytes_read++) {
-					if (snd_rawmidi_read(rawmidi->handle, & (buf[bytes_read]), 1) != 1) {
-						PHASEX_ERROR("Unable to read from ALSA MIDI device '%s'!\n", rawmidi->device);
-						break;
-					}
-#  ifdef RAWMIDI_DEBUG
-					PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "%02X ", buf[bytes_read]);
-#  endif /* RAWMIDI_DEBUG */
+				if (snd_rawmidi_read(rawmidi->handle, & (buf[bytes_read]), 1) != 1) {
+					PHASEX_ERROR("Unable to read from ALSA MIDI device '%s'!\n", rawmidi->device);
+					break;
 				}
+#  ifdef RAWMIDI_DEBUG
+				PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "%02X ", buf[bytes_read]);
+#  endif /* RAWMIDI_DEBUG */
 			}
+			bytes_read++;
+		}
 # endif /* RAWMIDI_ALSA_MULTI_BYTE_IO */
 		break;
 #endif /* ENABLE_RAWMIDI_ALSA_RAW */
@@ -592,17 +594,30 @@ rawmidi_read(RAWMIDI_INFO *rawmidi, unsigned char *buf, int len)
 #ifdef ENABLE_RAWMIDI_GENERIC
 	case MIDI_DRIVER_RAW_GENERIC:
 		/* read one byte at a time to make some interfaces happy */
-		for (bytes_read = 0; bytes_read < len; bytes_read++) {
+		bytes_read = 0;
+		while (!midi_stopped && !pending_shutdown && (bytes_read < len)) {
 # ifdef RAWMIDI_GENERIC_NONBLOCK
-			while (!pending_shutdown && (read(rawmidi->fd, &buf[bytes_read], 1) != 1)) {
-#  ifdef HAVE_CLOCK_NANOSLEEP
-				clock_nanosleep(CLOCK_MONOTONIC, 0, &rawmidi_sleep_time, NULL);
-#  else
-				usleep(rawmidi_sleep_time);
+#  ifdef RAWMIDI_USE_POLL
+			if (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 1) > 0)
 #  endif
+			{
+				if (read(rawmidi->fd, &buf[bytes_read], 1) == 1) {
+					bytes_read++;
+				}
+				else {
+#  ifdef HAVE_CLOCK_NANOSLEEP
+					clock_nanosleep(CLOCK_MONOTONIC, 0, &rawmidi_sleep_time, NULL);
+#  else
+					usleep(rawmidi_sleep_time);
+#  endif
+				}
 			}
 # else /* !RAWMIDI_GENERIC_NONBLOCK */
-			if (!pending_shutdown && (read(rawmidi->fd, &buf[bytes_read], 1) != 1)) {
+			if (!midi_stopped && !pending_shutdown &&
+			    (read(rawmidi->fd, &buf[bytes_read], 1) == 1)) {
+				bytes_read++;
+			}
+			else {
 				PHASEX_ERROR("Unable to read from Raw MIDI device '%s' -- %s!\n",
 				             rawmidi->device, strerror(errno));
 				break;
@@ -688,7 +703,6 @@ rawmidi_flush(RAWMIDI_INFO *rawmidi)
 		while (snd_rawmidi_read(rawmidi->handle, buf, 1) == 1) {
 			usleep(100);
 		}
-		//              snd_rawmidi_drop(rawmidi->handle);
 # endif /* RAWMIDI_ALSA_NONBLOCK */
 		return 0;
 #endif /* ENABLE_RAWMIDI_ALSA_RAW */
@@ -707,8 +721,6 @@ rawmidi_watchdog_cycle(void)
 	ALSA_RAWMIDI_HW_INFO    *cur;
 	ALSA_RAWMIDI_HW_INFO    *old_rawmidi_hw;
 	ALSA_RAWMIDI_HW_INFO    *new_rawmidi_hw;
-
-	//    PHASEX_DEBUG (DEBUG_CLASS_MIDI, "--- rawmidi watchdog ---\n");
 
 	if ((midi_driver == MIDI_DRIVER_RAW_ALSA) && (rawmidi_info != NULL)) {
 		old_rawmidi_hw = alsa_rawmidi_hw;
@@ -857,7 +869,7 @@ rawmidi_read_sysex(void)
 			PHASEX_ERROR("*** MIDI Read Error! *** ");
 		}
 	}
-	while (midi_byte != 0xF7);
+	while (!midi_stopped && !pending_shutdown && (midi_byte != 0xF7));
 }
 
 
@@ -884,7 +896,7 @@ rawmidi_read_byte(void)
 			PHASEX_ERROR("*** MIDI Read Error! *** ");
 		}
 	}
-	while (midi_byte >= 0xF0);
+	while (!midi_stopped && !pending_shutdown && (midi_byte >= 0xF0));
 
 	return midi_byte;
 }
@@ -946,148 +958,141 @@ rawmidi_thread(void *UNUSED(arg))
 		/* set thread cancelation point */
 		pthread_testcancel();
 
-		/* poll for new MIDI input */
-#if defined(RAWMIDI_ALSA_NONBLOCK) || defined(RAWMIDI_USE_POLL)
-		if ((midi_driver != MIDI_DRIVER_RAW_ALSA) ||
-		    (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 100) > 0))
-#endif
-			{
-				/* start with first byte */
-				if (rawmidi_read(rawmidi_info, (unsigned char *) &midi_byte, 1) == 1) {
+		/* Read new MIDI input, starting with first byte. */
+		if (rawmidi_read(rawmidi_info, (unsigned char *) &midi_byte, 1) == 1) {
 
-					/* To determine message type, assuming no running status until
-					   we learn otherwise. */
-					running_status = 0;
+			/* To determine message type, assuming no running status until
+			   we learn otherwise. */
+			running_status = 0;
 
-					/* No status byte.  Use running status.  Set runing_status
-					   flag so we don't try to read the second byte again. */
-					if (midi_byte < 0x80) {
-						running_status = 1;
+			/* No status byte.  Use running status.  Set runing_status
+			   flag so we don't try to read the second byte again. */
+			if (midi_byte < 0x80) {
+				running_status = 1;
+			}
+			/* status byte was found so keep track of message type and
+			   channel. */
+			else {
+				type    = midi_byte & MIDI_TYPE_MASK;     // & 0xF0
+				channel = midi_byte & MIDI_CHANNEL_MASK;  // & 0x0F
+			}
+			/* handle channel events (with or without status byte). */
+			if (type < 0xF0) {
+				out_event->type    = type;
+				out_event->channel = channel;
+				/* read second byte if we haven't already */
+				if (running_status) {
+					out_event->byte2 = midi_byte;
+				}
+				else {
+					out_event->byte2 = rawmidi_read_byte();
+				}
+				/* all channel specific messages except program change and
+				   polypressure have 2 bytes following status byte */
+				if ((type == MIDI_EVENT_PROGRAM_CHANGE) ||
+				    (type == MIDI_EVENT_POLYPRESSURE)) {
+					out_event->byte3 = 0x00;
+				}
+				else {
+					out_event->byte3 = rawmidi_read_byte();
+				}
+				/* get timestamp and determine index / frame position of
+				   this event. */
+				delta_nsec  = get_time_delta(&now);
+				cycle_frame = get_midi_cycle_frame(delta_nsec);
+				index = get_midi_index();
+				PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
+				             DEBUG_COLOR_CYAN "[%d] " DEBUG_COLOR_DEFAULT,
+				             (index / buffer_period_size));
+				/* queue for all parts that want it. */
+				for (part_num = 0; part_num < MAX_PARTS; part_num++) {
+					part = get_part(part_num);
+					if ((channel == part->midi_channel) || (part->midi_channel == 16)) {
+						queue_midi_event(part_num, out_event, cycle_frame, index);
 					}
-					/* status byte was found so keep track of message type and
-					   channel. */
-					else {
-						type    = midi_byte & MIDI_TYPE_MASK;     // & 0xF0
-						channel = midi_byte & MIDI_CHANNEL_MASK;  // & 0x0F
-					}
-					/* handle channel events (with or without status byte). */
-					if (type < 0xF0) {
-						out_event->type    = type;
-						out_event->channel = channel;
-						/* read second byte if we haven't already */
-						if (running_status) {
-							out_event->byte2 = midi_byte;
-						}
-						else {
-							out_event->byte2 = rawmidi_read_byte();
-						}
-						/* all channel specific messages except program change and
-						   polypressure have 2 bytes following status byte */
-						if ((type == MIDI_EVENT_PROGRAM_CHANGE) ||
-						    (type == MIDI_EVENT_POLYPRESSURE)) {
-							out_event->byte3 = 0x00;
-						}
-						else {
-							out_event->byte3 = rawmidi_read_byte();
-						}
-						/* get timestamp and determine index / frame position of
-						   this event. */
-						delta_nsec  = get_time_delta(&now);
-						cycle_frame = get_midi_cycle_frame(delta_nsec);
-						index = get_midi_index();
-						PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
-						             DEBUG_COLOR_CYAN "[%d] " DEBUG_COLOR_DEFAULT,
-						             (index / buffer_period_size));
-						/* queue for all parts that want it. */
-						for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-							part = get_part(part_num);
-							if ((channel == part->midi_channel) || (part->midi_channel == 16)) {
-								queue_midi_event(part_num, out_event, cycle_frame, index);
-							}
-						}
-					}
-					/* handle system and realtime messages */
-					else {
-						PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "---<Sys Msg 0x%x>--- ", midi_byte);
-						/* clear running status (by setting type) when we see
-						   system (but not realtime) messages. */
-						/* clock tick and realtime msgs (0xF8 and above) do not
-						   clear running status. */
-						if (midi_byte < 0xF8) {
-							type           = midi_byte;
-							channel        = 0x7F;
-						}
-						/* switch on midi_byte instead of type, since type could
-						   have been masked for channel messages */
-						switch (midi_byte) {
-							/* variable length system messages */
-						case MIDI_EVENT_SYSEX:          // 0xF0
-							/* ignore sysex messages for now */
-							PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<sysex>--- ");
-							rawmidi_read_sysex();
-							break;
-							/* 3 byte system messages */
-						case MIDI_EVENT_SONGPOS:        // 0xF2
-							/* read 2 more bytes (watching out for interleaved
-							   realtime msgs). */
-							PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
-							out_event->byte2 = rawmidi_read_byte();
-							out_event->byte3 = rawmidi_read_byte();
-							break;
-							/* 2 byte system messages */
-						case MIDI_EVENT_MTC_QFRAME:     // 0xF1
-						case MIDI_EVENT_SONG_SELECT:    // 0xF3
-							/* read 1 more byte (watching out for interleaved
-							   realtime msgs). */
-							PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
-							out_event->byte2 = rawmidi_read_byte();
-							out_event->byte3 = 0;
-							break;
-							/* 1 byte realtime messages */
-						case MIDI_EVENT_STOP:           // 0xFC
-						case MIDI_EVENT_SYSTEM_RESET:   // 0xFF
-							/* send stop and reset events to all queues */
-							PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
-							/* get timestamp and determine index / frame position
-							   of this event. */
-							delta_nsec  = get_time_delta(&now);
-							cycle_frame = get_midi_cycle_frame(delta_nsec);
-							index = get_midi_index();
-							PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
-							             DEBUG_COLOR_CYAN "[%d] "
-							             DEBUG_COLOR_DEFAULT,
-							             (index / buffer_period_size));
-							queue_midi_realtime_event(ALL_PARTS, midi_byte, cycle_frame, index);
-							break;
-						case MIDI_EVENT_ACTIVE_SENSING: // 0xFE
-							set_active_sensing_timeout();
-							break;
-							/* ignored 1-byte system and realtime messages */
-						case MIDI_EVENT_BUS_SELECT:     // 0xF5
-						case MIDI_EVENT_TUNE_REQUEST:   // 0xF6
-						case MIDI_EVENT_END_SYSEX:      // 0xF7
-						case MIDI_EVENT_TICK:           // 0xF8
-						case MIDI_EVENT_START:          // 0xFA
-						case MIDI_EVENT_CONTINUE:       // 0xFB
-							PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
-							break;
-						default:
-							break;
-						}
-					}
-
-					/* Interleaved realtime events can only be queued _after_ the
-					   event that the realtime event was interleaved in.  Queuing
-					   interleaved events for the same cycle frame as the initial
-					   event alleviates this problem completely. */
-					for (q = 0; q < realtime_event_count; q++) {
-						queue_midi_realtime_event(ALL_PARTS, midi_realtime_type[q],
-						                          cycle_frame, index);
-						midi_realtime_type[q] = 0;
-					}
-					realtime_event_count = 0;
 				}
 			}
+			/* handle system and realtime messages */
+			else {
+				PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "---<Sys Msg 0x%x>--- ", midi_byte);
+				/* clear running status (by setting type) when we see
+				   system (but not realtime) messages. */
+				/* clock tick and realtime msgs (0xF8 and above) do not
+				   clear running status. */
+				if (midi_byte < 0xF8) {
+					type           = midi_byte;
+					channel        = 0x7F;
+				}
+				/* switch on midi_byte instead of type, since type could
+				   have been masked for channel messages */
+				switch (midi_byte) {
+					/* variable length system messages */
+				case MIDI_EVENT_SYSEX:          // 0xF0
+					/* ignore sysex messages for now */
+					PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<sysex>--- ");
+					rawmidi_read_sysex();
+					break;
+					/* 3 byte system messages */
+				case MIDI_EVENT_SONGPOS:        // 0xF2
+					/* read 2 more bytes (watching out for interleaved
+					   realtime msgs). */
+					PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
+					out_event->byte2 = rawmidi_read_byte();
+					out_event->byte3 = rawmidi_read_byte();
+					break;
+					/* 2 byte system messages */
+				case MIDI_EVENT_MTC_QFRAME:     // 0xF1
+				case MIDI_EVENT_SONG_SELECT:    // 0xF3
+					/* read 1 more byte (watching out for interleaved
+					   realtime msgs). */
+					PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
+					out_event->byte2 = rawmidi_read_byte();
+					out_event->byte3 = 0;
+					break;
+					/* 1 byte realtime messages */
+				case MIDI_EVENT_STOP:           // 0xFC
+				case MIDI_EVENT_SYSTEM_RESET:   // 0xFF
+					/* send stop and reset events to all queues */
+					PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
+					/* get timestamp and determine index / frame position
+					   of this event. */
+					delta_nsec  = get_time_delta(&now);
+					cycle_frame = get_midi_cycle_frame(delta_nsec);
+					index = get_midi_index();
+					PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
+					             DEBUG_COLOR_CYAN "[%d] "
+					             DEBUG_COLOR_DEFAULT,
+					             (index / buffer_period_size));
+					queue_midi_realtime_event(ALL_PARTS, midi_byte, cycle_frame, index);
+					break;
+				case MIDI_EVENT_ACTIVE_SENSING: // 0xFE
+					set_active_sensing_timeout();
+					break;
+					/* ignored 1-byte system and realtime messages */
+				case MIDI_EVENT_BUS_SELECT:     // 0xF5
+				case MIDI_EVENT_TUNE_REQUEST:   // 0xF6
+				case MIDI_EVENT_END_SYSEX:      // 0xF7
+				case MIDI_EVENT_TICK:           // 0xF8
+				case MIDI_EVENT_START:          // 0xFA
+				case MIDI_EVENT_CONTINUE:       // 0xFB
+					PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "---<0x%x>--- ", midi_byte);
+					break;
+				default:
+					break;
+				}
+			}
+
+			/* Interleaved realtime events can only be queued _after_ the
+			   event that the realtime event was interleaved in.  Queuing
+			   interleaved events for the same cycle frame as the initial
+			   event alleviates this problem completely. */
+			for (q = 0; q < realtime_event_count; q++) {
+				queue_midi_realtime_event(ALL_PARTS, midi_realtime_type[q],
+				                          cycle_frame, index);
+				midi_realtime_type[q] = 0;
+			}
+			realtime_event_count = 0;
+		}
 	}
 
 	/* execute cleanup handler and remove it */

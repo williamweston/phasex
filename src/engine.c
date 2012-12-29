@@ -164,8 +164,8 @@ init_engine_internals(void)
 #ifdef ENABLE_INPUTS
 		/* initialize input envelope follower */
 		part->input_env_raw     = 0.0;
-		part->input_env_attack  = expf(logf(0.01) / (12));
-		part->input_env_release = expf(logf(0.01) / (24000));
+		part->input_env_attack  = MATH_EXP(MATH_LOG(0.01) / (12));
+		part->input_env_release = MATH_EXP(MATH_LOG(0.01) / (24000));
 #endif
 
 		/* calculate mask for chorus and delay buffer sizes */
@@ -192,7 +192,7 @@ init_engine_internals(void)
 	pitch_bend_smooth_factor = 1.0 / (pitch_bend_smooth_len + 1.0);
 
 	/* (-3dB @ 20Hz) DC blocking filter */
-	/* 1.0 - (M_PI * 2 * freq / (float)f_sample_rate) */
+	/* 1.0 - (M_PI * 2 * freq / (sample_t) f_sample_rate) */
 #ifdef ENABLE_DC_REJECTION_FILTER
 	global.dcR_const = 1.0 - (125.6 / (sample_t) f_sample_rate);
 #endif
@@ -273,16 +273,16 @@ init_engine_parameters(void)
 		}
 
 		/* set mix weights for the 90 degree offset chorus lfo positions */
-		chorus->phase_amount_a = (1.0 + wave_table[WAVE_SINE][(int) chorus->phase_index_a])
+		chorus->phase_amount_a = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_a])
 			* 0.5 * (mix_table[127 - state->chorus_phase_balance_cc]);
 
-		chorus->phase_amount_b = (1.0 + wave_table[WAVE_SINE][(int) chorus->phase_index_b])
+		chorus->phase_amount_b = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_b])
 			* 0.5 * (mix_table[state->chorus_phase_balance_cc]);
 
-		chorus->phase_amount_c = (1.0 + wave_table[WAVE_SINE][(int) chorus->phase_index_c])
+		chorus->phase_amount_c = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_c])
 			* 0.5 * (mix_table[127 - state->chorus_phase_balance_cc]);
 
-		chorus->phase_amount_d = (1.0 + wave_table[WAVE_SINE][(int) chorus->phase_index_d])
+		chorus->phase_amount_d = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_d])
 			* 0.5 * (mix_table[state->chorus_phase_balance_cc]);
 
 		/* set chorus lfo indices */
@@ -312,23 +312,6 @@ init_engine_parameters(void)
 		part->filter_cutoff_target = state->filter_cutoff;
 		part->filter_env_offset    = (state->filter_env_sign_cc == 0) ?
 			state->filter_env_amount : 0.0;
-
-		part->env_buffer[0]  = 0.0;
-		part->env_buffer[1]  = 0.0;
-		part->env_buffer[2]  = 0.5;
-		part->env_buffer[3]  = 1.0;
-		part->env_buffer[4]  = (1.0 - state->amp_sustain) * 0.5;
-		part->env_buffer[5]  = state->amp_sustain;
-		part->env_buffer[6]  = state->amp_sustain;
-		part->env_buffer[7]  = state->amp_sustain;
-		part->env_buffer[8]  = state->amp_sustain;
-		part->env_buffer[9]  = state->amp_sustain;
-		part->env_buffer[10] = state->amp_sustain * 0.5;
-		part->env_buffer[11] = 1.0 / ((sample_t)(1 << 16));
-		part->env_buffer[12] = 1.0 / ((sample_t)(1 << 17));
-		part->env_buffer[13] = 0.0;
-		part->env_buffer[14] = 0.0;
-		part->env_buffer[15] = 0.0;
 
 		/* init velocity */
 		part->velocity        = 0;
@@ -544,15 +527,13 @@ engine_thread(void *arg)
 	unsigned int        part_num        = ((unsigned int)((long int) arg % MAX_PARTS));
 	PART                *part           = get_part(part_num);
 	PATCH_STATE         *state          = get_active_state(part_num);
-	MIDI_EVENT          *midi_event     = & (part->event_queue[0]);
-	MIDI_EVENT          *next_event     = NULL;
 	struct sched_param  schedparam;
 	pthread_t           thread_id;
 #ifdef ENABLE_INPUTS
 	sample_t            tmp;
 #endif
-	unsigned int        index           = get_engine_index();
-	unsigned int        midi_read_index = index;
+	unsigned int        e_index         = get_engine_index();
+	unsigned int        m_index         = e_index;
 	int                 cycle_frame     = (int) buffer_period_size;
 	sample_t            last_out1       = 0;
 	sample_t            last_out2       = 0;
@@ -591,9 +572,9 @@ engine_thread(void *arg)
 			if (delta_nsec >= 0.0) {
 				inc_midi_index();
 			}
-			while (!engine_stopped && !pending_shutdown && (test_midi_index(index))) {
+			while (!engine_stopped && !pending_shutdown && (test_midi_index(e_index))) {
 				if (need_index_resync[part_num]) {
-					index = get_engine_index();
+					e_index = get_engine_index();
 					need_index_resync[part_num] = 0;
 					delta_nsec = get_time_delta(&now);
 					if (delta_nsec >= 0.0) {
@@ -644,44 +625,26 @@ engine_thread(void *arg)
 					inc_midi_index();
 				}
 			}
-			/* Check for forced index resync.  This happens when
-			   (re)starting audio and midi subsystems. */
-			if (need_index_resync[part_num]) {
-				index = get_engine_index();
-				need_index_resync[part_num] = 0;
-			}
-
-			midi_read_index  = index;
-			midi_event       = & (part->event_queue[midi_read_index]);
-
-			/* Handle all notes off global broadcast for this
-			   voice. this can only be done after events are
-			   processed for previous cycle. */
-			if (all_notes_off[part_num]) {
-				while ((get_midi_event_state(midi_event = & (part->event_queue[midi_read_index]))
-				        ) != EVENT_STATE_FREE) {
-					midi_read_index = (midi_read_index + 1) & buffer_size_mask;
-				}
-				midi_event->type    = MIDI_EVENT_STOP;
-				midi_event->frame   = 0;
-				midi_event->channel = 0xFF;
-				midi_event->byte2   = 0;
-				midi_event->byte3   = 0;
-				/* shut broadcast variable off for this voice only */
-				all_notes_off[part_num]    = 0;
-			}
-
 			//if (part_num == 0) {
 			PHASEX_DEBUG(DEBUG_CLASS_ENGINE_TIMING,
 			             DEBUG_COLOR_RED "[%c:%d] " DEBUG_COLOR_DEFAULT,
-			             ('a' + part_num), (index / buffer_period_size));
+			             ('a' + part_num), (e_index / buffer_period_size));
 			//}
+
+			/* Check for forced index resync.  This happens when
+			   (re)starting audio and midi subsystems. */
+			if (need_index_resync[part_num]) {
+				e_index = get_engine_index();
+				need_index_resync[part_num] = 0;
+			}
+
+			m_index = e_index;
 		}
 
 #ifdef ENABLE_INPUTS
 		/* Handle input envelope follower (boost is handled
 		   while copying from ringbuffer). */
-		tmp = (sample_t)(fabsf((float) part->in1) + fabsf((float) part->in2));
+		tmp = (sample_t)(MATH_ABS(part->in1) + MATH_ABS(part->in2));
 		if (tmp > 2.0) {
 			tmp = 1.0;
 		}
@@ -699,16 +662,7 @@ engine_thread(void *arg)
 #endif
 
 		/* get any new midi events for this part */
-		while (get_midi_event_state(midi_event) == cycle_frame) {
-			next_event = process_midi_event(midi_event, part_num);
-			if (next_event == NULL) {
-				midi_read_index = (midi_read_index + 1) & buffer_size_mask;
-				midi_event = & (part->event_queue[midi_read_index]);
-			}
-			else {
-				midi_event = next_event;
-			}
-		}
+		process_midi_events(m_index, (unsigned int)cycle_frame, part_num);
 
 		/* generate sample for this part */
 		run_part(part, state, part_num);
@@ -731,16 +685,7 @@ engine_thread(void *arg)
 		/* undersample needs to check to second frame's
 		   position in the midi event queue */
 		else if (sample_rate_mode == SAMPLE_RATE_UNDERSAMPLE) {
-			while (get_midi_event_state(midi_event) == (cycle_frame + 1)) {
-				next_event = process_midi_event(midi_event, part_num);
-				if (next_event == NULL) {
-					midi_read_index = (midi_read_index + 1) & buffer_size_mask;
-					midi_event = & (part->event_queue[midi_read_index]);
-				}
-				else {
-					midi_event = next_event;
-				}
-			}
+			process_midi_events(m_index, (unsigned int)(cycle_frame + 1), part_num);
 		}
 
 		/* flip sign of denormal offset */
@@ -751,24 +696,24 @@ engine_thread(void *arg)
 
 #ifdef ENABLE_INPUTS
 		/* get current input sample from buffer */
-		part->in1 = (sample_t) input_buffer1[index] * state->input_boost;
-		part->in2 = (sample_t) input_buffer2[index] * state->input_boost;
+		part->in1 = (sample_t) input_buffer1[e_index] * state->input_boost;
+		part->in2 = (sample_t) input_buffer2[e_index] * state->input_boost;
 #endif
 
 		/* for undersampling, use linear interpolation on
 		   input and output */
 		if (sample_rate_mode == SAMPLE_RATE_UNDERSAMPLE) {
 #ifdef ENABLE_INPUTS
-			part->in1 += ((sample_t) input_buffer1[index] * state->input_boost);
+			part->in1 += ((sample_t) input_buffer1[e_index] * state->input_boost);
 			part->in1 *= 0.5;
 
-			part->in2 += ((sample_t) input_buffer2[index] * state->input_boost);
+			part->in2 += ((sample_t) input_buffer2[e_index] * state->input_boost);
 			part->in2 *= 0.5;
 #endif
-			part->output_buffer1[index] = (sample_t)((part->out1 + last_out1) * 0.5);
-			part->output_buffer2[index] = (sample_t)((part->out2 + last_out2) * 0.5);
+			part->output_buffer1[e_index] = (sample_t)((part->out1 + last_out1) * 0.5);
+			part->output_buffer2[e_index] = (sample_t)((part->out2 + last_out2) * 0.5);
 
-			index = (index + 1) & buffer_size_mask;
+			e_index = (e_index + 1) & buffer_size_mask;
 			cycle_frame++;
 
 			last_out1 = part->out1;
@@ -776,11 +721,11 @@ engine_thread(void *arg)
 		}
 
 		/* output this sample to the buffer */
-		part->output_buffer1[index] = part->out1;
-		part->output_buffer2[index] = part->out2;
+		part->output_buffer1[e_index] = part->out1;
+		part->output_buffer2[e_index] = part->out2;
 
 		/* update buffer position */
-		index = (index + 1) & buffer_size_mask;
+		e_index = (e_index + 1) & buffer_size_mask;
 		cycle_frame++;
 	}
 
@@ -1202,11 +1147,11 @@ void run_lfo(PART         *part,
 			                       (part->lfo_freq_lfo_mod[lfo] *
 			                        part->lfo_out[1])) * wave_period;
 
-		/* grab LFO output from wave table */
+		/* grab LFO output from osc table */
 #ifdef INTERPOLATE_WAVETABLE_LOOKUPS
-		part->lfo_out[lfo]   = wave_table_hermite(state->lfo_wave[lfo], part->lfo_index[lfo]);
+		part->lfo_out[lfo]   = osc_table_hermite(state->lfo_wave[lfo], part->lfo_index[lfo]);
 #else
-		part->lfo_out[lfo]   = wave_table[state->lfo_wave[lfo]][(int) part->lfo_index[lfo]];
+		part->lfo_out[lfo]   = osc_table[state->lfo_wave[lfo]][(int) part->lfo_index[lfo]];
 #endif
 		part->lfo_index[lfo] += part->lfo_adjust[lfo];
 		while (part->lfo_index[lfo] < 0.0) {
@@ -1421,7 +1366,7 @@ run_osc(VOICE *voice, PART *part, PATCH_STATE *state, unsigned int osc)
 			j = part->osc_freq_mod[osc];
 			tmp_1 = (voice->osc_out1[j] + voice->osc_out2[j]) * 0.5;
 			/* saturation / soft clipping */
-			tmp_2 = (sample_t) fabsf((float) tmp_1);
+			tmp_2 = (sample_t) MATH_ABS(tmp_1);
 			tmp_1 *= (tmp_2 + 1.1) / ((tmp_2 * tmp_2) + (1.1 - 1.0) * tmp_2 + 1.0);
 			break;
 		case MOD_TYPE_VELOCITY:
@@ -1493,19 +1438,19 @@ run_osc(VOICE *voice, PART *part, PATCH_STATE *state, unsigned int osc)
 		phase_adjust1 = tmp_1 * state->phase_lfo_amount[osc] * F_WAVEFORM_SIZE;
 		phase_adjust2 = tmp_2 * state->phase_lfo_amount[osc] * F_WAVEFORM_SIZE;
 
-		/* grab osc output from wave table, applying phase adjustments
+		/* grab osc output from osc table, applying phase adjustments
 		   to right and left */
 #ifdef INTERPOLATE_WAVETABLE_LOOKUPS
-		voice->osc_out1[osc] = wave_table_hermite(part->osc_wave[osc],
+		voice->osc_out1[osc] = osc_table_hermite(part->osc_wave[osc],
 		                                          (voice->index[osc] - phase_adjust1));
-		voice->osc_out2[osc] = wave_table_hermite(part->osc_wave[osc],
+		voice->osc_out2[osc] = osc_table_hermite(part->osc_wave[osc],
 		                                          (voice->index[osc] + phase_adjust2));
 #else
 		voice->osc_out1[osc] =
-			(wave_table[part->osc_wave[osc]][(((int)(voice->index[osc] - phase_adjust1)
+			(osc_table[part->osc_wave[osc]][(((int)(voice->index[osc] - phase_adjust1)
 			                                   + WAVEFORM_SIZE) % WAVEFORM_SIZE)]);
 		voice->osc_out2[osc] =
-			(wave_table[part->osc_wave[osc]][(((int)(voice->index[osc] + phase_adjust2)
+			(osc_table[part->osc_wave[osc]][(((int)(voice->index[osc] + phase_adjust2)
 			                                   + WAVEFORM_SIZE) % WAVEFORM_SIZE)]);
 #endif
 		break;
@@ -1670,22 +1615,22 @@ run_chorus(CHORUS *chorus, PART *part, PATCH_STATE *state)
 	/* set phase offset read indices into chorus delay buffer */
 	chorus->read_index_a =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((wave_table[state->chorus_lfo_wave][(int) chorus->lfo_index_a] + 1.0) *
+		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_a] + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	chorus->read_index_b =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((wave_table[state->chorus_lfo_wave][(int) chorus->lfo_index_b] + 1.0) *
+		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_b] + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	chorus->read_index_c =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((wave_table[state->chorus_lfo_wave][(int) chorus->lfo_index_c] + 1.0) *
+		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_c] + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	chorus->read_index_d =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((wave_table[state->chorus_lfo_wave][(int) chorus->lfo_index_d] + 1.0) *
+		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_d] + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	/* grab values from phase offset positions within chorus delay buffer */
@@ -1705,25 +1650,25 @@ run_chorus(CHORUS *chorus, PART *part, PATCH_STATE *state)
 	   Set phase offset read indices into chorus delay buffer */
 	chorus->read_index_a =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((wave_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_a)] + 1.0) *
+		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_a)] + 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
 	chorus->read_index_b =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((wave_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_b)] + 1.0) *
+		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_b)] + 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
 	chorus->read_index_c =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((wave_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_c)] * 1.0) *
+		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_c)] * 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
 	chorus->read_index_d =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((wave_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_d)] * 1.0) *
+		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_d)] * 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
@@ -1806,12 +1751,12 @@ run_chorus(CHORUS *chorus, PART *part, PATCH_STATE *state)
 	}
 
 	/* set amount used for mix weight for the LFO positions at right angles */
-	chorus->phase_amount_a = (1.0 + wave_table[WAVE_SINE][(int)(chorus->phase_index_a)])
+	chorus->phase_amount_a = (1.0 + osc_table[WAVE_SINE][(int)(chorus->phase_index_a)])
 		* 0.5 * (mix_table[127 - state->chorus_phase_balance_cc]);
 
 	chorus->phase_amount_c = 1.0 - chorus->phase_amount_a;
 
-	chorus->phase_amount_b = (1.0 + wave_table[WAVE_SINE][(int)(chorus->phase_index_b)])
+	chorus->phase_amount_b = (1.0 + osc_table[WAVE_SINE][(int)(chorus->phase_index_b)])
 		* 0.5 * (mix_table[state->chorus_phase_balance_cc]);
 
 	chorus->phase_amount_d = 1.0 - chorus->phase_amount_b;

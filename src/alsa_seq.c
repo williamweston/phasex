@@ -574,35 +574,6 @@ open_alsa_seq_in(char *alsa_port)
 		PHASEX_DEBUG(DEBUG_CLASS_MIDI, "\n");
 	}
 
-	/* get list of playback ports */
-	/* leave disabled until MIDI output is needed. */
-	/* if ((new_seq_info->playback_ports = */
-	/*      alsa_seq_get_port_list (new_seq_info, */
-	/*                           (SND_SEQ_PORT_CAP_WRITE | */
-	/*                            SND_SEQ_PORT_CAP_SUBS_WRITE) */
-	/*                           new_seq_info->playback_ports)) */
-	/*     == NULL) { */
-	/*      PHASEX_DEBUG (DEBUG_CLASS_MIDI, */
-	/*                    "Unable to get ALSA sequencer port list.\n"); */
-	/* } */
-	/* if (debug & (DEBUG_CLASS_INIT | DEBUG_CLASS_MIDI)) { */
-	/*      cur = new_seq_info->playback_ports; */
-	/*      if (cur != NULL) { */
-	/*              PHASEX_DEBUG (DEBUG_CLASS_MIDI, */
-	/*                            "Found ALSA sequencer playback ports:\n"); */
-	/*      } */
-	/*      while (cur != NULL) { */
-	/*              PHASEX_DEBUG (DEBUG_CLASS_MIDI, */
-	/*                            "  [%s] (type %d) %s: %s\n", */
-	/*                            cur->alsa_name, */
-	/*                            cur->type, */
-	/*                            cur->client_name, */
-	/*                            cur->port_name); */
-	/*              cur = cur->next; */
-	/*      } */
-	/*      PHASEX_DEBUG (DEBUG_CLASS_MIDI, "\n"); */
-	/* } */
-
 	/* subscribe to ports if any capture ports are available */
 	if (new_seq_info->capture_ports != NULL) {
 		/* subscribe to hardware ports. */
@@ -768,7 +739,7 @@ alsa_seq_thread(void *UNUSED(arg))
 	snd_seq_event_t     *ev         = NULL;
 	unsigned int        part_num;
 	unsigned int        cycle_frame = 0;
-	unsigned int        index;
+	unsigned int        m_index;
 
 	/* clear outgoing event buffer */
 	memset(event, 0, sizeof(MIDI_EVENT));
@@ -810,10 +781,10 @@ alsa_seq_thread(void *UNUSED(arg))
 				   this event. */
 				delta_nsec  = get_time_delta(&now);
 				cycle_frame = get_midi_cycle_frame(delta_nsec);
-				index = get_midi_index();
+				m_index = get_midi_index();
 				PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
 				             DEBUG_COLOR_CYAN "[%d] " DEBUG_COLOR_DEFAULT,
-				             (index / buffer_period_size));
+				             (m_index / buffer_period_size));
 
 				event->type  = MIDI_EVENT_NO_EVENT;
 				event->state = EVENT_STATE_ALLOCATED;
@@ -869,7 +840,7 @@ alsa_seq_thread(void *UNUSED(arg))
 							break;
 						case SND_SEQ_EVENT_STOP:
 							queue_midi_realtime_event(ALL_PARTS, MIDI_EVENT_STOP,
-							                          cycle_frame, index);
+							                          cycle_frame, m_index);
 							event->type = MIDI_EVENT_NO_EVENT;
 							break;
 #ifdef MIDI_CLOCK_SYNC
@@ -919,7 +890,7 @@ alsa_seq_thread(void *UNUSED(arg))
 
 						/* queue event for engine thread */
 						if (event->type != MIDI_EVENT_NO_EVENT) {
-							queue_midi_event(part_num, event, cycle_frame, index);
+							queue_midi_event(part_num, event, cycle_frame, m_index);
 						}
 					}
 				}

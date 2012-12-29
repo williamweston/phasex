@@ -50,16 +50,19 @@
 
 /* Type to use for (almost) all floating point math. */
 #if (PHASEX_CPU_POWER == 4)
-# if (ARCH_BITS == 64))
+# if (ARCH_BITS == 64)
+#  define MATH_64_BIT
 typedef double sample_t;
 # else
 #  warn ***** Only 64-bit builds are supported with PHASEX_CPU_POWER == 4
 #  warn ***** Reverting to PHASEX_CPU_POWER == 3
 #  undef PHASEX_CPU_POWER
 #  define PHASEX_CPU_POWER 3
+#  define MATH_32_BIT
 typedef float sample_t;
 # endif
 #else
+#  define MATH_32_BIT
 typedef float sample_t;
 #endif
 
@@ -116,7 +119,7 @@ typedef float sample_t;
 # define F_FILTER_OVERSAMPLE            6.0
 #endif
 
-/* Number of samples for a single wave period in the osc wave table.
+/* Number of samples for a single wave period in the osc table.
    Larger values sound cleaner, but burn more memory.  Smaller values
    sound grittier, but burn less memory. On some CPUs, performance
    degrades with larger lookup tables.  Values with more small prime
@@ -210,7 +213,7 @@ typedef float sample_t;
 #define USER_SESSION_BANK_FILE          "sessionbank"
 #define USER_PATCHDUMP_FILE             "patchdump"
 #define USER_MIDIMAP_DUMP_FILE          "midimapdump"
-#define USER_SESSION_DUMP_DIR           "_current_"
+#define USER_SESSION_DUMP_DIR           "_autosave_"
 #define USER_CONFIG_FILE                "phasex.cfg"
 #define SYS_DEFAULT_PATCH               "phasex-default.phx"
 
@@ -398,6 +401,34 @@ typedef float sample_t;
 /* Number of elements in an array */
 #define NELEM(a)            ( sizeof(a) / sizeof((a)[0]) )
 
+/* 32-/64-bit math */
+#ifdef MATH_32_BIT
+# ifdef MATH_64_BIT
+#  undef MATH_64_BIT
+# endif
+# define MATH_SIN(x) sinf(x)
+# define MATH_COS(x) cosf(x)
+# define MATH_ABS(x) fabsf(x)
+# define MATH_EXP(x) expf(x)
+# define MATH_LOG(x) logf(x)
+# define MATH_SQRT(x) sqrtf(x)
+# define MATH_FLOOR(x) floorf(x)
+# define MATH_ATAN2(x) atan2f(x)
+#endif
+#ifdef MATH_64_BIT
+# ifdef MATH_32_BIT
+#  undef MATH_32_BIT
+# endif
+# define MATH_SIN(x) sin(x)
+# define MATH_COS(x) cos(x)
+# define MATH_ABS(x) fabs(x)
+# define MATH_EXP(x) exp(x)
+# define MATH_LOG(x) log(x)
+# define MATH_SQRT(x) sqrt(x)
+# define MATH_FLOOR(x) floor(x)
+# define MATH_ATAN2(x) atan2(x)
+#endif
+
 
 /*****************************************************************************
  *
@@ -405,9 +436,6 @@ typedef float sample_t;
  *
  *****************************************************************************/
 
-extern int debug;
-extern int debug_level;
-extern int phasex_instance;
 extern int pending_shutdown;
 
 extern pthread_t debug_thread_p;

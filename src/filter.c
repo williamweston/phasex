@@ -105,13 +105,13 @@ build_filter_tables(void)
 
 
 /*****************************************************************************
- * filter_wave_table_12dB()
+ * filter_osc_table_12dB()
  *
  * Apply lowpass filter to wavetable for bandlimiting oscillators.
  *****************************************************************************/
 #ifdef FILTER_WAVETABLE_12DB
 void
-filter_wave_table_12dB(int wave_num, int num_cycles, double octaves)
+filter_osc_table_12dB(int wave_num, int num_cycles, double octaves)
 {
 	int         j;
 	int         cycle;
@@ -131,7 +131,7 @@ filter_wave_table_12dB(int wave_num, int num_cycles, double octaves)
 	q = 1.0;
 
 	/* run seven cycles of the waveform through the filter. */
-	/* dump the output of the filter into the wave table on seventh run */
+	/* dump the output of the filter into the osc table on seventh run */
 	for (cycle = 1; cycle <= num_cycles; cycle++) {
 		for (sample = 0; sample < F_WAVEFORM_SIZE; sample++) {
 
@@ -139,7 +139,7 @@ filter_wave_table_12dB(int wave_num, int num_cycles, double octaves)
 			for (j = 0; j < oversample; j++) {
 
 				/* highpass */
-				hp = wave_table[wave_num][sample] - lp - (bp * q);
+				hp = osc_table[wave_num][sample] - lp - (bp * q);
 
 				/* bandpass */
 				bp += (f * hp);
@@ -151,7 +151,7 @@ filter_wave_table_12dB(int wave_num, int num_cycles, double octaves)
 			/* ignore filter output on all but last cycle */
 			if (cycle == num_cycles) {
 				/* take the lowpass tap */
-				wave_table[wave_num][sample] = lp;
+				osc_table[wave_num][sample] = lp;
 			}
 		}
 	}
@@ -160,12 +160,12 @@ filter_wave_table_12dB(int wave_num, int num_cycles, double octaves)
 
 
 /*****************************************************************************
- * filter_wave_table_24dB()
+ * filter_osc_table_24dB()
  *
  * Apply lowpass filter to wavetable for bandlimiting oscillators.
  *****************************************************************************/
 void
-filter_wave_table_24dB(int wave_num, int num_cycles, double octaves)
+filter_osc_table_24dB(int wave_num, int num_cycles, double octaves, sample_t scale)
 {
 	int         j;
 	int         cycle;
@@ -197,7 +197,7 @@ filter_wave_table_24dB(int wave_num, int num_cycles, double octaves)
 			for (j = 0; j < oversample; j++) {
 				a += 2.0;
 				d = (a - f) / a;
-				x = wave_table[wave_num][sample] - (4.0 * p * y4);
+				x = osc_table[wave_num][sample] - (4.0 * p * y4);
 				y1 = ((x  + oldx)  * p) - (k * y1);
 				y2 = ((y1 + oldy1) * p) - (k * y2);
 				y3 = ((y2 + oldy2) * p) - (k * y3);
@@ -209,7 +209,7 @@ filter_wave_table_24dB(int wave_num, int num_cycles, double octaves)
 				oldy3 = y3;
 			}
 			if (cycle == num_cycles) {
-				wave_table[wave_num][sample] = 3.0 * y4;
+				osc_table[wave_num][sample] = 4.0 * scale * y4;
 			}
 		}
 	}
@@ -277,15 +277,15 @@ run_experimental_filter(VOICE *voice, PART *part, PATCH_STATE *state)
 	}
 
 	filter_k = (2.0 * filter_f) - 1.0;
-	filter_r = (sample_t)(((1.0 + (sample_t) sinf((float) filter_q * M_PI_2)) *
+	filter_r = (sample_t)(((1.0 + (sample_t) MATH_SIN(filter_q * M_PI_2)) *
 	                       (1.0 - filter_f)) - 1.0) * 4.0;
 
 	switch (state->filter_type) {
 	case FILTER_TYPE_EXPERIMENTAL_DIST:
 		/* waveshaper saturation/distortion (fixed at a = 0.9) */
-		tmp = (sample_t) fabsf((float) voice->out1);
+		tmp = (sample_t) MATH_ABS(voice->out1);
 		voice->out1 *= (tmp + 0.9) / ((tmp * tmp) + (0.9 - 1.0) * tmp + 1.0);
-		tmp = (sample_t) fabsf((float) voice->out2);
+		tmp = (sample_t) MATH_ABS(voice->out2);
 		voice->out2 *= (tmp + 0.9) / ((tmp * tmp) + (0.9 - 1.0) * tmp + 1.0);
 
 		for (j = 0; j < FILTER_OVERSAMPLE; j++) {
@@ -305,11 +305,9 @@ run_experimental_filter(VOICE *voice, PART *part, PATCH_STATE *state)
 			                      filter_f) - (filter_k * voice->filter_y3_2);
 
 			voice->filter_y4_1 = (((voice->filter_y3_1 + voice->filter_oldy3_1) *
-			                       filter_f) - (filter_k * voice->filter_y4_1)) *
-				filter_d;
+			                       filter_f) - (filter_k * voice->filter_y4_1)) * filter_d;
 			voice->filter_y4_2 = (((voice->filter_y3_2 + voice->filter_oldy3_2) *
-			                       filter_f) - (filter_k * voice->filter_y4_2)) *
-				filter_d;
+			                       filter_f) - (filter_k * voice->filter_y4_2)) * filter_d;
 
 			voice->filter_y4_1 -= ((voice->filter_y4_1 * voice->filter_y4_1 *
 			                        voice->filter_y4_1) * 0.1666666666666666);
@@ -436,9 +434,9 @@ run_moog_filter(VOICE *voice, PART *part, PATCH_STATE *state)
 	voice->out2 *= tmp;
 
 	/* waveshaper saturation/distortion */
-	tmp = (sample_t) fabsf((float) voice->out1);
+	tmp = (sample_t) MATH_ABS(voice->out1);
 	voice->out1 *= (tmp + 0.9) / ((tmp * tmp) + (0.9 - 1.0) * tmp + 1.0);
-	tmp = (sample_t) fabsf((float) voice->out2);
+	tmp = (sample_t) MATH_ABS(voice->out2);
 	voice->out2 *= (tmp + 0.9) / ((tmp * tmp) + (0.9 - 1.0) * tmp + 1.0);
 
 	/* assignable lfo/velocity controls */
@@ -475,7 +473,7 @@ run_moog_filter(VOICE *voice, PART *part, PATCH_STATE *state)
 	}
 
 	filter_k = (2.0 * filter_f) - 1.0;
-	filter_r = (sample_t)(((1.0 + (sample_t) sinf((float) filter_q * M_PI_2)) *
+	filter_r = (sample_t)(((1.0 + (sample_t) MATH_SIN(filter_q * M_PI_2)) *
 	                       (1.0 - filter_f)) - 1.0) * 4.0;
 
 	switch (state->filter_type) {
@@ -502,11 +500,9 @@ run_moog_filter(VOICE *voice, PART *part, PATCH_STATE *state)
 			                      filter_f) - (filter_k * voice->filter_y3_2);
 
 			voice->filter_y4_1 = (((voice->filter_y3_1 + voice->filter_oldy3_1) *
-			                       filter_f) - (filter_k * voice->filter_y4_1)) *
-				filter_d;
+			                       filter_f) - (filter_k * voice->filter_y4_1)) * filter_d;
 			voice->filter_y4_2 = (((voice->filter_y3_2 + voice->filter_oldy3_2) *
-			                       filter_f) - (filter_k * voice->filter_y4_2)) *
-				filter_d;
+			                       filter_f) - (filter_k * voice->filter_y4_2)) * filter_d;
 
 			voice->filter_y4_1 -= ((voice->filter_y4_1 * voice->filter_y4_1 *
 			                        voice->filter_y4_1) * 0.1666666666666666);

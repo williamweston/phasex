@@ -36,8 +36,8 @@
 
 
 jack_position_t         jack_pos;
-jack_transport_state_t  jack_state         = -1;
-jack_transport_state_t  jack_prev_state    = -1;
+jack_transport_state_t  jack_state         = JackTransportStopped;
+jack_transport_state_t  jack_prev_state    = JackTransportStopped;
 
 int                     current_frame      = 0;
 jack_nframes_t          prev_frame         = 0;
@@ -66,21 +66,22 @@ jack_process_transport(jack_nframes_t nframes)
 	unsigned int    index               = get_midi_index();
 	static int      bpm_adjust_counter  = 256;
 
+	/* get current jack transport state */
+	jack_prev_state = jack_state;
+	jack_state = jack_transport_query(jack_audio_client, &jack_pos);
+
+	/* if transport has stopped, queue up an all notes off. */
+	if ((jack_state == JackTransportStopped) &&
+	    (jack_prev_state != JackTransportStopped)) {
+		PHASEX_DEBUG(DEBUG_CLASS_JACK_TRANSPORT, "+++ Transport Stopped! +++\n");
+		queue_midi_realtime_event(ALL_PARTS, MIDI_EVENT_STOP, 0, index);
+	}
+
 	if (!pending_shutdown && (jack_audio_client != NULL) &&
 	    (setting_jack_transport_mode != JACK_TRANSPORT_OFF)) {
 
-		/* get current jack transport state */
-		jack_state = jack_transport_query(jack_audio_client, &jack_pos);
-
-		/* if transport has stopped, queue up an all notes off. */
-		if ((jack_state == JackTransportStopped) &&
-		    (jack_prev_state != JackTransportStopped)) {
-			PHASEX_DEBUG(DEBUG_CLASS_JACK_TRANSPORT, "+++ Transport Stopped! +++\n");
-			queue_midi_realtime_event(ALL_PARTS, MIDI_EVENT_STOP, 0, index);
-		}
-
 		/* reinit sync vars if transport is just started */
-		else if ((jack_prev_state == JackTransportStopped) &&
+		if ((jack_prev_state == JackTransportStopped) &&
 		         (jack_state == JackTransportStarting)) {
 			PHASEX_DEBUG(DEBUG_CLASS_JACK_TRANSPORT, "+++ Transport Starting! +++\n");
 			need_resync = 1;
@@ -109,9 +110,9 @@ jack_process_transport(jack_nframes_t nframes)
 					PHASEX_DEBUG(DEBUG_CLASS_JACK_TRANSPORT,
 					             "+++ Transport adjusting PHASEX tempo:  "
 					             "old BPS = %lf  new BPM = %lf  "
-					             "(last 255 msgs suppressed).\n",
+					             "(last 999 msgs suppressed).\n",
 					             global.bps, event->float_value);
-					bpm_adjust_counter = 256;
+					bpm_adjust_counter = 1000;
 				}
 
 				for (part_num = 0; part_num < MAX_PARTS; part_num++) {
@@ -150,8 +151,5 @@ jack_process_transport(jack_nframes_t nframes)
 				phase_correction = 0;
 			}
 		}
-
-		/* keep previous state around for tracking transport changes */
-		jack_prev_state = jack_state;
 	}
 }
