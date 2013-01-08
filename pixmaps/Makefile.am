@@ -153,7 +153,7 @@ uninstall-local: uninstall-pixmaps uninstall-splash uninstall-icons update-icon-
 
 
 install-data-hook:
-	@mkdir -p $(DESTDIR)$(pxkdatadir)/pixmaps
+	@mkdir -p $(DESTDIR)$(pkgdatadir)/pixmaps
 
 
 uninstall-hook:

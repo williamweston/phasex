@@ -57,7 +57,7 @@ volatile ATOMIC_TIMESTAMP   active_sensing_timeout;
 #endif /* (ARCH_BITS == 64) */
 
 
-clockid_t                   midi_clockid          = CLOCK_MONOTONIC_RAW;
+clockid_t                   midi_clockid          = -1;
 
 timecalc_t                  nsec_per_frame        = (1000000000.0 / 44100.0);
 timecalc_t                  nsec_per_period       = (1000000000.0 / 44100.0) * 256.0;
