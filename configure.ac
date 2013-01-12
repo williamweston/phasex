@@ -18,8 +18,7 @@ dnl #
 dnl # You should have received a copy of the GNU General Public License
 dnl # along with PHASEX.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([PHASEX], m4_esyscmd_s([scripts/version-sh]))
-
+AC_INIT([PHASEX], m4_esyscmd_s([sh scripts/version-sh]))
 AC_CONFIG_AUX_DIR(scripts)
 AM_INIT_AUTOMAKE(0.10.0)
 
@@ -701,6 +700,7 @@ AC_CONFIG_FILES([
 	samples/Makefile
 	midimaps/Makefile
 	misc/Makefile
+	scripts/Makefile
 	phasex.spec
 	misc/phasex.desktop
 ])

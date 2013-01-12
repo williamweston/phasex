@@ -138,12 +138,11 @@ uninstall-pixmaps:
 
 install-splash:
 	@mkdir -p $(DESTDIR)$(pkgdatadir)/pixmaps; \
-	$(INSTALL_DATA) $(srcdir)/$(splash_image_file) $(DESTDIR)$(datadir)/pixmaps/$(splash_image_file)
+	$(INSTALL_DATA) $(srcdir)/$(splash_image_file) $(DESTDIR)$(pkgdatadir)/pixmaps/$(splash_image_file)
 
 
 uninstall-splash:
-	@rm -f $(DESTDIR)$(datadir)/pixmaps/$(splash_image_file); \
-	rm -f $(DESTDIR)$(pkgdatadir)/pixmaps/$(splash_image_file)
+	@rm -f $(DESTDIR)$(pkgdatadir)/pixmaps/$(splash_image_file)
 
 
 install-data-local: install-pixmaps install-splash install-icons update-icon-cache

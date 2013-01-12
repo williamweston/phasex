@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = src help pixmaps themes patches samples midimaps misc
+SUBDIRS = src help pixmaps themes patches samples midimaps misc scripts
 
 dist_doc_DATA = \
 	README \
@@ -10,7 +10,13 @@ dist_doc_DATA = \
 	ChangeLog \
 	TODO \
 	doc/ROADMAP \
-	doc/signal-diagram.txt
+	doc/signal-diagram.txt \
+	doc/release-checklist.txt
+
+#scriptsdir = scripts
+#
+#dist_scripts_SCRIPTS = \
+#	scripts/version-sh
 
 EXTRA_DIST = \
 	aclocal.m4 \
