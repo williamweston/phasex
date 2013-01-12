@@ -391,7 +391,7 @@ phasex_shutdown(const char *msg)
 {
 	/* output message from caller */
 	if (msg != NULL) {
-		fprintf(stderr, msg);
+		fprintf(stderr, "%s", msg);
 	}
 
 	/* keep current midi port settings. */

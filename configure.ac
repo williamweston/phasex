@@ -650,11 +650,11 @@ case "$DEBUG_CFLAGS" in
 		;;
 	"yes")
 		DEBUG_CFLAGS="-g"
-		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O2 -ffast-math -fsingle-precision-constant"
+		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O2 -ffast-math -fsingle-precision-constant"
 		;;
 	*)
 		DEBUG_CFLAGS="-g"
-		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -fsingle-precision-constant"
+		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -fsingle-precision-constant"
 		;;
 esac
 

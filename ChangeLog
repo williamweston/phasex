@@ -30,6 +30,7 @@ Changelog:
 	* Fixed GUI param update race condition on updated flag.
 	* Fixed sporadic GUI param sensitivity update issue.
 	* Updated system synth-patches.
+	* Fixed FTBS with hardening flags enabled.  (Alessio Treglia)
 
 
 2012-12-28 William Weston <whw@linuxmail.org> - 0.14.96

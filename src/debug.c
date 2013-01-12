@@ -92,8 +92,8 @@ phasex_debug_thread(void *UNUSED(arg))
 		usleep(16000 >> PHASEX_CPU_POWER);
 		while (main_debug_queue.read_index !=
 		       g_atomic_int_get(& (main_debug_queue.write_index))) {
-			fprintf(stderr, (char *)(main_debug_queue.msgs
-			                         [main_debug_queue.read_index].msg));
+			fprintf(stderr, "%s",
+			        main_debug_queue.msgs[main_debug_queue.read_index].msg);
 			main_debug_queue.read_index =
 				(main_debug_queue.read_index + 1) & DEBUG_BUFFER_MASK;
 		}

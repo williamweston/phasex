@@ -65,7 +65,7 @@ alsa_error_handler(const char *file, int line, const char *func, int err, const 
 {
 	PHASEX_ERROR("Unhandled ALSA error %d in function %s from file %s line %d:\n",
 	             err, func, file, line);
-	PHASEX_ERROR(fmt);
+	PHASEX_ERROR("%s", fmt);
 }
 
 
