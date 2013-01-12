@@ -5,7 +5,7 @@
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,10 +41,7 @@
 
 lash_client_t   *lash_client;
 char            *lash_buffer;
-
 char            *lash_jackname;
-snd_seq_t       *lash_alsa_id;
-
 char            *lash_project_dir;
 char            *lash_project_name;
 
@@ -66,22 +63,14 @@ lash_client_init(int *argc, char ***argv)
 	lash_client = lash_init(lash_extract_args(argc, argv),
 	                        lash_name, LASH_Config_File, LASH_PROTOCOL(2, 0));
 	if (lash_enabled(lash_client)) {
-
 		event = lash_event_new_with_type(LASH_Client_Name);
 		lash_event_set_string(event, lash_name);
 		lash_send_event(lash_client, event);
 
-		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_SESSION), "LASH client initialized.\n");
 		fprintf(stderr, "LASH client initialized.  (LASH_Client_Name='%s').\n", lash_name);
 		return 0;
 	}
-	if (debug_thread_p) {
-		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_SESSION),
-		             "LASH client initialization failed.\n");
-	}
-	else {
-		fprintf(stderr, "LASH client initialization failed.\n");
-	}
+	fprintf(stderr, "LASH client initialization failed.\n");
 	return -1;
 }
 
@@ -105,8 +94,7 @@ lash_client_set_jack_name(jack_client_t *client)
 void
 lash_client_set_alsa_id(snd_seq_t *seq)
 {
-	if ((midi_driver < MIDI_DRIVER_JACK) && (lash_enabled(lash_client))) {
-		lash_alsa_id = seq;
+	if ((midi_driver == MIDI_DRIVER_ALSA_SEQ) && lash_enabled(lash_client)) {
 		lash_alsa_client_id(lash_client, (unsigned char) snd_seq_client_id(seq));
 	}
 }
@@ -133,9 +121,7 @@ lash_set_phasex_session_name(char *lash_dir)
 		}
 	}
 	else {
-
 		dir = strdup(lash_dir);
-
 		p = dir + strlen(dir) - 1;
 		slashes = 2;
 		while (slashes > 0) {

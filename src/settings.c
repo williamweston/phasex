@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2007-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -72,6 +72,7 @@
 #include "settings.h"
 #include "driver.h"
 #include "string_util.h"
+#include "midimap.h"
 #include "debug.h"
 
 
@@ -978,8 +979,6 @@ save_settings(char *filename)
 void
 set_midi_channel(GtkWidget *widget, gpointer data, GtkWidget *UNUSED(widget2))
 {
-	PART    *part       = get_visible_part();
-	PATCH   *patch      = get_visible_patch();
 	int     new_channel = (int)((long int) data);
 
 	if (widget != NULL) {
@@ -990,22 +989,7 @@ set_midi_channel(GtkWidget *widget, gpointer data, GtkWidget *UNUSED(widget2))
 		gtk_widget_grab_focus(midi_channel_event_box);
 	}
 
-	/* only deal with real changes */
-	if (part->midi_channel != new_channel) {
-		/* set new channel for current part */
-		part->midi_channel = new_channel;
-
-		gp->param[PARAM_MIDI_CHANNEL].value.cc_prev = gp->param[PARAM_MIDI_CHANNEL].value.cc_val;
-		gp->param[PARAM_MIDI_CHANNEL].value.cc_val  = new_channel;
-		gp->param[PARAM_MIDI_CHANNEL].value.int_val = new_channel + gp->param[PARAM_MIDI_CHANNEL].info->cc_offset;
-		gp->param[PARAM_MIDI_CHANNEL].updated = 1;
-		patch->param[PARAM_MIDI_CHANNEL].value.cc_prev = patch->param[PARAM_MIDI_CHANNEL].value.cc_val;
-		patch->param[PARAM_MIDI_CHANNEL].value.cc_val  = new_channel;
-		patch->param[PARAM_MIDI_CHANNEL].value.int_val = new_channel + patch->param[PARAM_MIDI_CHANNEL].info->cc_offset;
-		patch->param[PARAM_MIDI_CHANNEL].updated = 1;
-		/* set adjustment for spin button */
-		gtk_adjustment_set_value(GTK_ADJUSTMENT(midi_channel_adj), new_channel);
-	}
+	set_midi_channel_for_part(visible_part_num, new_channel);
 }
 
 
@@ -2232,15 +2216,21 @@ set_theme_env(void)
 #ifdef GTK_ENGINE_DIR
 	/* if GTK supports engines, make sure our engine is on the system */
 	else if ((g_file_test(gtk_engine_path, G_FILE_TEST_EXISTS))) {
-		snprintf(rc_file_string, sizeof(rc_file_string), "%s:%s", PHASEX_GTK_ENGINE_RC, theme_selection);
+		snprintf(rc_file_string, sizeof(rc_file_string), "%s:%s",
+		         PHASEX_GTK_ENGINE_RC, theme_selection);
 		rc_file_list[rc_file_num] = PHASEX_GTK_ENGINE_RC;
 		rc_file_num++;
 		rc_file_list[rc_file_num] = theme_selection;
 		rc_file_num++;
+		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_GUI),
+		             "Found GTK engine path '%s'.\n", gtk_engine_path);
 	}
 #endif
 	/* no engine available, so just load the main theme rc */
 	else {
+		PHASEX_DEBUG((DEBUG_CLASS_INIT | DEBUG_CLASS_GUI),
+		             "GTK engine path '%s' not found.\n  Using default radiobutton colors.\n",
+		             gtk_engine_path);
 		snprintf(rc_file_string, sizeof(rc_file_string), "%s", theme_selection);
 		rc_file_list[rc_file_num] = theme_selection;
 		rc_file_num++;
@@ -4720,4 +4710,3 @@ create_config_dialog(void)
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(config_notebook), page_num);
 }
 #endif /* ENABLE_CONFIG_DIALOG */
-

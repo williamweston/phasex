@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,10 +66,10 @@ override_bpm(unsigned int new_bpm)
 
 
 /*****************************************************************************
- * update_bpm()
+ * set_bpm()
  *****************************************************************************/
 void
-update_bpm(PARAM *param)
+set_bpm(PARAM *param, sample_t float_bpm)
 {
 	PATCH_STATE     *state   = param->patch->state;
 	PART            *part    = param->patch->part;
@@ -84,6 +84,12 @@ update_bpm(PARAM *param)
 	unsigned int    osc;
 	unsigned int    voice_num;
 
+	/* use supplied floating point value, if non-zero. */
+	if (float_bpm > 0.0) {
+		int_val = (int) float_bpm;
+		cc_val  = int_val - 64;
+	}
+
 	/* initialize all variables based on bpm */
 	state->bpm_cc = cc_val & 0x7F;
 	state->bpm    = (sample_t) int_val;
@@ -91,13 +97,9 @@ update_bpm(PARAM *param)
 	global.bpm    = (sample_t)(state->bpm);
 	global.bps    = (sample_t)(state->bpm) / 60.0;
 
-	/* For now, keep bpm as a per part param, and update all parts at once to
-	   make it appear as a global.  this way, bpm can still be saved with
-	   patches. */
+	/* For now, keep bpm per part, and update all parts at once to make it
+	   appear as global.  This way, bpm can still be saved with patches. */
 	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-
-		/* Update what the gui thinks for all parts.  When gui/midi callbacks
-		   are separated, this needs to move. */
 		param  = get_param(part_num, id);
 		state  = get_active_state(part_num);
 		part   = get_part(part_num);
@@ -146,4 +148,3 @@ update_bpm(PARAM *param)
 		}
 	}
 }
-

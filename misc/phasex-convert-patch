@@ -107,7 +107,18 @@ if ((-d "${in_arg}/") && (-d "${out_arg}/")) {
 
 	@in_files = <${in_dir}*.phx>;
 }
-elsif ((-f $in_arg) && (-f $out_arg)) {
+elsif ((-d "${in_arg}/") && !(-e "${out_arg}/")) {
+	$in_dir   = $in_arg;
+	$in_dir   =~ s|/*$|/|g;
+
+	$out_dir  = $out_arg;
+	$out_dir  =~ s|/*$|/|g;
+
+	@in_files = <${in_dir}*.phx>;
+
+	mkdir $out_dir;
+}
+elsif ((-f $in_arg) && ((-w $out_arg) || !(-e $out_arg))) {
 	@in_files = ( $in_arg );
 }
 else {
@@ -121,6 +132,9 @@ foreach $in_file (@in_files) {
 	}
 
 	print "Converting patch.  New file:  ${out_file}\n";
+
+	$osc_index = 0;
+	$lfo_index = 0;
 
 	open (in_f,  "<", $in_file)  || die "Unable to open $in_file for read.\n";
 	open (out_f, ">", $out_file) || die "Unable to open $out_file for write.\n";

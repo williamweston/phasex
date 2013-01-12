@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * Shamelessly adapded from test/pcm.c in alsa-lib-1.0.24.
  *   Copyright (C) Free Software Foundation, Inc.
@@ -796,7 +796,7 @@ alsa_pcm_init(void)
 		}
 	}
 
-	init_buffer_indices();
+	init_buffer_indices(0);
 	g_atomic_int_set(&need_increment, 0);
 
 	if (!alsa_pcm_can_mmap) {
@@ -1204,7 +1204,6 @@ alsa_pcm_write_and_poll_loop(ALSA_PCM_INFO *pcminfo)
 	int             result;
 	int             nframes;
 	int             init;
-	unsigned int    part_num;
 #ifdef ENABLE_INPUTS__
 	struct pollfd   *capture_ufds;
 	int             capture_count;
@@ -1307,10 +1306,7 @@ alsa_pcm_write_and_poll_loop(ALSA_PCM_INFO *pcminfo)
 				   within the audio cycle, so make sure we catch this after an
 				   xrun when we know that a cycle is being skipped. */
 				g_atomic_int_add(&need_increment, -1);
-				init_buffer_indices();
-				for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-					need_index_resync[part_num] = 1;
-				}
+				init_buffer_indices(1);
 				break;  /* skip one period */
 			}
 			if (snd_pcm_state(pcminfo->capture_handle) == SND_PCM_STATE_RUNNING) {
@@ -1418,10 +1414,7 @@ alsa_pcm_write_and_poll_loop(ALSA_PCM_INFO *pcminfo)
 				   within the audio cycle, so make sure we catch this after an
 				   xrun when we know that a cycle is being skipped. */
 				g_atomic_int_add(&need_increment, -1);
-				init_buffer_indices();
-				for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-					need_index_resync[part_num] = 1;
-				}
+				init_buffer_indices(1);
 				break;  /* skip one period */
 			}
 			if (snd_pcm_state(pcminfo->playback_handle) == SND_PCM_STATE_RUNNING) {
@@ -1671,8 +1664,6 @@ alsa_pcm_mmap_loop(ALSA_PCM_INFO *pcminfo)
 void
 alsa_pcm_cleanup(void *UNUSED(arg))
 {
-	int                 part_num;
-
 	if (alsa_pcm_info != NULL) {
 #ifdef ENABLE_INPUTS
 		if (alsa_pcm_info->capture_handle != NULL) {
@@ -1719,11 +1710,7 @@ alsa_pcm_cleanup(void *UNUSED(arg))
 	}
 
 	init_engine_buffers();
-
-	init_buffer_indices();
-	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-		need_index_resync[part_num] = 1;
-	}
+	init_buffer_indices(1);
 
 	audio_stopped  = 1;
 	audio_thread_p = 0;
@@ -1738,7 +1725,6 @@ alsa_pcm_thread(void *UNUSED(arg))
 {
 	struct sched_param  schedparam;
 	pthread_t           thread_id;
-	int                 part_num;
 
 	/* set realtime scheduling and priority */
 	thread_id = pthread_self();
@@ -1758,10 +1744,7 @@ alsa_pcm_thread(void *UNUSED(arg))
 	pthread_mutex_unlock(&audio_ready_mutex);
 
 	/* initialize buffer indices and set reference clock. */
-	init_buffer_indices();
-	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-		need_index_resync[part_num] = 1;
-	}
+	init_buffer_indices(1);
 	start_midi_clock();
 
 	/* MAIN LOOP: poll for audio and copy buffers */

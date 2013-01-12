@@ -3,7 +3,7 @@ dnl # configure.ac
 dnl #
 dnl # PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
 dnl #
-dnl # Copyright (C) 2007-2012 William Weston <whw@linuxmail.org>
+dnl # Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
 dnl #
 dnl # PHASEX is free software: you can redistribute it and/or modify
 dnl # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ dnl #
 dnl # You should have received a copy of the GNU General Public License
 dnl # along with PHASEX.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT(PHASEX, 0.14.96)
+AC_INIT([PHASEX], m4_esyscmd_s([scripts/version-sh]))
 
 AC_CONFIG_AUX_DIR(scripts)
 AM_INIT_AUTOMAKE(0.10.0)
@@ -186,6 +186,17 @@ PKG_CHECK_MODULES(JACK,
   AC_MSG_ERROR([need JACK >= 0.99.0])
 )
 AC_SUBST(JACK_CFLAGS)
+AC_CHECK_HEADERS([jack/session.h])
+AC_CHECK_HEADERS([jack/weakjack.h])
+AC_CHECK_LIB(jack, jack_set_port_rename_callback,
+  [AC_DEFINE_UNQUOTED(HAVE_JACK_SET_PORT_RENAME_CALLBACK, [1],
+  [libjack has jack_set_port_rename_callback().])])
+AC_CHECK_LIB(jack, jack_set_session_callback,
+  [AC_DEFINE_UNQUOTED(HAVE_JACK_SET_SESSION_CALLBACK, [1],
+  [libjack has jack_set_session_callback().])])
+AC_CHECK_LIB(jack, jack_set_latency_callback,
+  [AC_DEFINE_UNQUOTED(HAVE_JACK_SET_LATENCY_CALLBACK, [1],
+  [libjack has jack_set_latency_callback().])])
 
 # libsamplerate
 PKG_CHECK_MODULES(SAMPLERATE,
@@ -229,7 +240,7 @@ fi
 
 AM_CONDITIONAL(WITH_LASH, test x$without_lash != x1)
 
-# librt (for clock_gettime)
+# librt (for clock_gettime and clock_nanosleep)
 have_librt="no"
 found_librt="no"
 AC_ARG_WITH(librt,
@@ -334,7 +345,8 @@ AC_DEFINE_UNQUOTED(PHASEX_GCC_MINOR, [$gccminor], [Built with gcc minor version]
 CPU_POWER_LEVEL=2
 ARCH_OPT_CFLAGS=""
 ARCH_MATH_CFLAGS=""
-ARCH_BITS=`( file /bin/true | grep 'ELF 64-bit' > /dev/null && echo 64 ) || echo 32`
+ARCH_TRUE=`which true`
+ARCH_BITS=`( file $ARCH_TRUE | grep 'ELF 64-bit' > /dev/null && echo 64 ) || echo 32`
 
 WARNING=`echo "*"`
 case "$OPT_ARCH" in
@@ -692,7 +704,7 @@ AC_CONFIG_FILES([
 	phasex.spec
 	misc/phasex.desktop
 ])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 AC_OUTPUT
 
@@ -700,6 +712,8 @@ AC_OUTPUT
 # Display build info
 AC_MSG_NOTICE([
 ******************************************************************************
+*
+* Build configuration for phasex-$PACKAGE_VERSION:
 *
 * Optimized for arch: ... $OPT_ARCH (${ARCH_BITS}-bit)
 * CPU power level: ...... $CPU_POWER_LEVEL / 4
@@ -731,6 +745,5 @@ AC_MSG_NOTICE([
 *    make clean
 *    make
 *    make install
-*
 $WARNING
 ******************************************************************************])

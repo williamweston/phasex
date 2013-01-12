@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -219,7 +219,7 @@ init_engine_parameters(void)
 	unsigned int    part_num;
 	unsigned int    voice_num;
 
-	init_buffer_indices();
+	init_buffer_indices(0);
 
 	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
 		part   = get_part(part_num);
@@ -561,7 +561,7 @@ engine_thread(void *arg)
 	/* MAIN LOOP: one time through for each sample */
 	while (!engine_stopped && !pending_shutdown) {
 
-		if (cycle_frame == (int) buffer_period_size) {
+		if (cycle_frame >= (int) buffer_period_size) {
 			cycle_frame = 0;
 
 			/* At period boundry, set patch state in case of program change. */

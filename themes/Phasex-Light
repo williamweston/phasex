@@ -1,4 +1,4 @@
-# Phasex-New theme
+# Phasex-Light theme
 
 gtk-color-scheme = "bg1:#8090e0\nbg1_shade:#6a78ba\nbg1_dark:#556095\nbg2:#0000a0\nbg2_shade:#000080\nbg2_dark:#000060\nbg3:#5050a0\nbg3_shade:#404080\nbg3_dark:#303060\nhighlight1:#f09311\nhighlight2:#ff7744\nhighlight3:#930000\nhighlight4:#000093\nspecial1:#ff5533\nspecial2:#0000c0\nspecial3:#00d000\ntext1:#000000\ntext2:#f09311\ngrey1:#404040\ngrey2:#202020"
 

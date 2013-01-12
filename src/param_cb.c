@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,8 +32,18 @@
 #include "param.h"
 #include "param_parse.h"
 #include "bank.h"
+#include "bpm.h"
 #include "debug.h"
 
+
+/*****************************************************************************
+ * update_bpm()
+ *****************************************************************************/
+void
+update_bpm(PARAM *param)
+{
+	set_bpm(param, 0.0);
+}
 
 /*****************************************************************************
  * update_midi_channel()

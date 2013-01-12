@@ -5,7 +5,7 @@
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,6 +65,10 @@ jack_process_transport(jack_nframes_t nframes)
 	unsigned int    part_num;
 	unsigned int    index               = get_midi_index();
 	static int      bpm_adjust_counter  = 256;
+
+	if (jack_audio_client == NULL) {
+		return;
+	}
 
 	/* get current jack transport state */
 	jack_prev_state = jack_state;

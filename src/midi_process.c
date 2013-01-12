@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -34,6 +34,7 @@
 #include "buffer.h"
 #include "patch.h"
 #include "param.h"
+#include "bpm.h"
 #include "filter.h"
 #include "bank.h"
 #include "session.h"
@@ -113,10 +114,11 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 			old_voice->keypressed = -1;
 			/* allocate new voice for staccato in mid-release only. */
 			if (old_voice->allocated &&
-			    ((old_voice->cur_amp_interval == ENV_INTERVAL_RELEASE) ||
+			    ((old_voice->cur_amp_interval == ENV_INTERVAL_DECAY) ||
+			     (old_voice->cur_amp_interval == ENV_INTERVAL_RELEASE) ||
 			     (old_voice->cur_amp_interval == ENV_INTERVAL_FADE))) {
 				old_voice->keypressed = -1;
-				old_voice->cur_amp_interval = ENV_INTERVAL_RELEASE;
+				old_voice->cur_amp_interval = ENV_INTERVAL_SUSTAIN;
 				old_voice->cur_amp_sample = -1;
 				PHASEX_DEBUG(DEBUG_CLASS_MIDI_NOTE,
 				             "voice %2d:  ^^^^^^^  Mono-Smooth:  "
@@ -126,12 +128,12 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 			}
 			break;
 		case KEYMODE_MONO_MULTIKEY:
-			vnum[part_num] = 0;
+			old_voice = get_voice(part_num, vnum[part_num]);
 			break;
 		case KEYMODE_MONO_RETRIGGER:
 			for (voice_num = 0; voice_num < setting_polyphony; voice_num++) {
 				loop_voice = get_voice(part_num, voice_num);
-				if (loop_voice->allocated) {
+				if (loop_voice->allocated > 0) {
 					loop_voice->keypressed = -1;
 					loop_voice->cur_amp_interval = ENV_INTERVAL_RELEASE;
 					loop_voice->cur_amp_sample = -1;
@@ -268,6 +270,16 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 				part->prev->next = part->cur;
 			}
 			part->cur->next = NULL;
+			if ( (state->keymode == KEYMODE_MONO_MULTIKEY) &&
+			     (old_voice->allocated > 0) &&
+			     (old_voice->keypressed == -1) &&
+			     (old_voice->cur_amp_interval < ENV_INTERVAL_DONE) ) {
+				old_voice->cur_amp_sample   = -1;
+				old_voice->cur_amp_interval = ENV_INTERVAL_RELEASE;
+				vnum[part_num] = (vnum[part_num] + 1) % setting_polyphony;
+				voice = get_voice(part_num, vnum[part_num]);
+				voice->id = vnum[part_num];
+			}
 		}
 
 		if (event->velocity > 0) {
@@ -314,7 +326,9 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 		for (voice_num = 0; voice_num < setting_polyphony; voice_num++) {
 			loop_voice = get_voice(part_num, voice_num);
 			if (loop_voice->midi_key == event->note) {
-				loop_voice->keypressed = -1;
+				loop_voice->keypressed       = -1;
+				loop_voice->cur_amp_sample   = -1;
+				loop_voice->cur_amp_interval = ENV_INTERVAL_SUSTAIN;
 				vnum[part_num] = voice_num;
 			}
 		}
@@ -330,7 +344,9 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 		for (voice_num = 0; voice_num < setting_polyphony; voice_num++) {
 			loop_voice = get_voice(part_num, voice_num);
 			if (loop_voice->keypressed == event->note) {
-				loop_voice->keypressed = -1;
+				loop_voice->keypressed       = -1;
+				loop_voice->cur_amp_sample   = -1;
+				loop_voice->cur_amp_interval = ENV_INTERVAL_SUSTAIN;
 				if (event->note == part->midi_key) {
 					old_voice = loop_voice;
 				}
@@ -348,7 +364,9 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 				free_voice = loop_voice->id;
 			}
 			else if (loop_voice->midi_key == event->note) {
-				loop_voice->keypressed = -1;
+				loop_voice->keypressed       = -1;
+				loop_voice->cur_amp_sample   = -1;
+				loop_voice->cur_amp_interval = ENV_INTERVAL_RELEASE;
 				vnum[part_num] = (voice_num + 1) % setting_polyphony;
 				if (event->note == part->midi_key) {
 					old_voice = loop_voice;
@@ -361,13 +379,7 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 		break;
 
 	case KEYMODE_MONO_MULTIKEY:
-		/* mono multikey needs keytrigger activities on note off for
-		   resetting oscillator frequencies. */
-		vnum[part_num] = 0;
-		if (part->midi_key == event->note) {
-			keytrigger = 1;
-			old_voice = get_voice(part_num, vnum[part_num]);
-		}
+		old_voice = get_voice(part_num, vnum[part_num]);
 		break;
 	}
 
@@ -437,8 +449,7 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 	}
 	/* check for keys left on the list */
 	if (part->prev != NULL) {
-		/* set last and current keys in play respective of notes
-		   still held */
+		/* set last/current keys in play respective of notes still held */
 		part->last_key = part->prev->midi_key;
 		part->midi_key = part->prev->midi_key;
 		part->prev->next = NULL;
@@ -462,7 +473,7 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 			/* use previous velocity for this generated note event */
 			voice->velocity               = part->velocity;
 			voice->velocity_target_linear = voice->velocity_coef_linear =
-				part->velocity_target   = part->velocity_coef =
+				part->velocity_target     = part->velocity_coef =
 				((sample_t) part->velocity) * 0.01;
 			voice->velocity_target_log    = voice->velocity_coef_log =
 				velocity_gain_table[state->amp_velocity_cc][part->velocity];
@@ -475,11 +486,22 @@ process_note_off(MIDI_EVENT *event, unsigned int part_num)
 	}
 	/* re-init list if no keys */
 	else {
-		voice->midi_key   = -1;
-		voice->keypressed = -1;
-		part->head           = NULL;
+		voice->midi_key         = -1;
+		voice->keypressed       = -1;
+		part->head              = NULL;
 		if (!part->hold_pedal) {
-			part->midi_key       = -1;
+			part->midi_key      = -1;
+		}
+		if ( (state->keymode == KEYMODE_MONO_MULTIKEY) &&
+		     (old_voice->allocated > 0) &&
+		     (old_voice->keypressed == -1) &&
+		     (old_voice->cur_amp_interval < ENV_INTERVAL_DONE) ) {
+			old_voice->cur_amp_sample   = -1;
+			old_voice->cur_amp_interval = ENV_INTERVAL_SUSTAIN;
+			vnum[part_num] = (vnum[part_num] + 1) % setting_polyphony;
+			voice = get_voice(part_num, vnum[part_num]);
+			//voice->id = vnum[part_num];
+			keytrigger = 0;
 		}
 	}
 
@@ -546,7 +568,7 @@ broadcast_notes_off(void)
 
 	delta_nsec  = get_time_delta(&now);
 	cycle_frame = get_midi_cycle_frame(delta_nsec);
-	m_index = get_midi_index();
+	m_index     = get_midi_index();
 	PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
 	             DEBUG_COLOR_CYAN "[%d] " DEBUG_COLOR_DEFAULT,
 	             (m_index / buffer_period_size));
@@ -816,21 +838,18 @@ process_keytrigger(MIDI_EVENT   *UNUSED(event),
 			   value, and optional portamento.  state->osc_transpose[osc] is
 			   taken into account every sample in the engine. */
 			if ((state->portamento > 0)) {
-				/* Portamento always starts from previous key hit, no matter
-				   which voice.  Mono multikey always uses same voice. */
-				if (state->keymode != KEYMODE_MONO_MULTIKEY) {
-					if (part->prev_key == -1) {
-						voice->osc_freq[osc] =
-							freq_table[state->patch_tune_cc]
-							[256 + part->last_key + state->transpose +
-							 state->osc_transpose_cc[osc] - 64];
-					}
-					else {
-						voice->osc_freq[osc] =
-							freq_table[state->patch_tune_cc]
-							[256 + part->prev_key + state->transpose +
-							 state->osc_transpose_cc[osc] - 64];
-					}
+				/* Portamento starts from previous key, no matter which voice. */
+				if (part->prev_key == -1) {
+					voice->osc_freq[osc] =
+						freq_table[state->patch_tune_cc]
+						[256 + part->last_key + state->transpose +
+						 state->osc_transpose_cc[osc] - 64];
+				}
+				else {
+					voice->osc_freq[osc] =
+						freq_table[state->patch_tune_cc]
+						[256 + part->prev_key + state->transpose +
+						 state->osc_transpose_cc[osc] - 64];
 				}
 				/* Portamento slide calculation works the same for all
 				   keymodes.  Start portamento now that frequency adjustment
@@ -1021,10 +1040,6 @@ param_midi_update(PARAM *param, int cc_val)
 
 /*****************************************************************************
  * process_controller()
- *
- * TODO:  Before the if-else (or even switch-case) logic gets too much
- * bigger, it would be better to use a lookup table with processing function
- * pointers.
  *****************************************************************************/
 void
 process_controller(MIDI_EVENT *event, unsigned int part_num)
@@ -1260,80 +1275,17 @@ process_phase_sync(MIDI_EVENT *event, unsigned int part_num)
 /*****************************************************************************
  * process_bpm_change()
  *
- * Process a BPM change pseudo MIDI message.  Currently used when syncing
- * JACK Transport, this adjust BPM, independent of controller assignment.
- *
- * TODO:  Rework _all_ phasex BPM code, since this is almost identical to
- * update_bpm() in bpm.c.
+ * Process a BPM change event.  Currently used for JACK Transport sync.
  *****************************************************************************/
 void
 process_bpm_change(MIDI_EVENT *event, unsigned int part_num)
 {
-	PART        *part   = get_part(part_num);
-	PATCH_STATE *state  = get_active_state(part_num);
 	PARAM       *param  = get_param(part_num, PARAM_BPM);
-	DELAY       *delay  = get_delay(part_num);
-	CHORUS      *chorus = get_chorus(part_num);
-	VOICE       *voice;
-	int         int_val = (int)(event->float_value);
-	int         cc_val  = int_val - 64;
-	int         voice_num;
-	int         lfo;
-	int         osc;
 
 	PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING, "+++ Processing BPM change.  New BPM = %lf +++\n",
 	             event->float_value);
 
-	param->value.cc_val  = cc_val;
-	param->value.int_val = int_val;
-
-	/* For now, this is handled much like the normal param
-	   callback for BPM, execpt that here we use floating point
-	   values instead of integer. */
-
-	global.bpm = event->float_value;
-	global.bps = event->float_value / 60.0;
-
-	if (param->value.cc_val != cc_val) {
-		param->value.cc_prev = param->value.cc_val;
-		param->value.cc_val  = cc_val;
-		param->value.int_val = int_val;
-		param->updated        = 1;
-	}
-
-	/* initialize all variables based on bpm */
-	state->bpm     = event->float_value;
-	state->bpm_cc  = (short)(param->value.cc_val & 0x7F);
-
-	/* re-initialize delay size */
-	delay->size   = state->delay_time * f_sample_rate / global.bps;
-	delay->length = (int)(delay->size);
-
-	/* re-initialize chorus lfos */
-	chorus->lfo_freq     = global.bps * state->chorus_lfo_rate;
-	chorus->lfo_adjust   = chorus->lfo_freq * wave_period;
-	chorus->phase_freq   = global.bps * state->chorus_phase_rate;
-	chorus->phase_adjust = chorus->phase_freq * wave_period;
-
-	/* per-lfo setup */
-	for (lfo = 0; lfo < NUM_LFOS; lfo++) {
-		/* re-calculate frequency and corresponding index adjustment */
-		if (state->lfo_freq_base[lfo] >= FREQ_BASE_TEMPO) {
-			part->lfo_freq[lfo]    = global.bps * state->lfo_rate[lfo];
-			part->lfo_adjust[lfo]  = part->lfo_freq[lfo] * wave_period;
-		}
-	}
-
-	/* per-oscillator setup */
-	for (osc = 0; osc < NUM_OSCS; osc++) {
-		/* re-calculate tempo based osc freq */
-		if (state->osc_freq_base[osc] >= FREQ_BASE_TEMPO) {
-			for (voice_num = 0; voice_num < setting_polyphony; voice_num++) {
-				voice = get_voice(part_num, voice_num);
-				voice->osc_freq[osc] = global.bps * state->osc_rate[osc];
-			}
-		}
-	}
+	set_bpm(param, event->float_value);
 }
 
 

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ typedef struct jack_port_info {
 	jack_port_t             *port;
 	char                    *name;
 	char                    *type;
-	jack_port_type_id_t     type_id;
 	int                     connected;
 	short                   connect_request;
 	short                   disconnect_request;

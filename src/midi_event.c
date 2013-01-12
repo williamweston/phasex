@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@
 
 MIDI_EVENT              realtime_events[MAX_PARTS];
 
-volatile unsigned int   bulk_event_index = 0;
+volatile gint           bulk_event_index = 0;
 
 
 /*****************************************************************************
@@ -134,7 +134,7 @@ queue_midi_event(unsigned int part_num,
 			bulk_event  = bulk_event->next;
 		}
 		do {
-			old_bulk_index = bulk_event_index;
+			old_bulk_index = (guint)bulk_event_index;
 			new_bulk_index = (old_bulk_index + 1) & MIDI_EVENT_POOL_MASK;
 		} while (!g_atomic_int_compare_and_exchange(&bulk_event_index,
 		                                            (gint)old_bulk_index, (gint)new_bulk_index));
@@ -216,15 +216,19 @@ queue_midi_param_event(unsigned int part_num, unsigned int id, int cc_val)
 	/* timestamp and queue event for engine */
 	delta_nsec  = get_time_delta(&now);
 	cycle_frame = get_midi_cycle_frame(delta_nsec);
-	m_index = get_midi_index();
+	m_index     = get_midi_index();
+	if (id == PARAM_BPM) {
+		queue_event.type        = MIDI_EVENT_BPM_CHANGE;
+		queue_event.float_value = (sample_t)(cc_val + 64);
+	}
+	else {
+		queue_event.type        = MIDI_EVENT_PARAMETER;
+		queue_event.state       = EVENT_STATE_ALLOCATED;
+		queue_event.parameter   = (unsigned char)id;
+		queue_event.value       = (unsigned char)cc_val;
+	}
+	queue_midi_event(part_num, &queue_event, cycle_frame, m_index);
 	PHASEX_DEBUG(DEBUG_CLASS_MIDI_TIMING,
 	             DEBUG_COLOR_CYAN "[%d] " DEBUG_COLOR_DEFAULT,
 	             (m_index / buffer_period_size));
-
-	queue_event.type      = MIDI_EVENT_PARAMETER;
-	queue_event.state     = EVENT_STATE_ALLOCATED;
-	queue_event.parameter = (unsigned char)id;
-	queue_event.value     = (unsigned char)cc_val;
-
-	queue_midi_event(part_num, &queue_event, cycle_frame, m_index);
 }

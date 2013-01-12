@@ -8,7 +8,7 @@
  *
  * Modifications by Sean Bolton:     Copyright (C) 2004, 2008-2010
  * Modifications by Pete Shorthose:  Copyright (C) 2007
- * Modifications by William Weston:  Copyright (C) 2007-2009, 2012
+ * Modifications by William Weston:  Copyright (C) 2007-2009, 2012-2013
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ extern "C" {
 
 
 #define GTK_KNOB(obj)           GTK_CHECK_CAST(obj, gtk_knob_get_type(), GtkKnob)
-#define GTK_KNOB_CLASS(klass)   GTK_CHECK_CLASS_CAST(klass, gtk_knob_get_type(), GtkKnobClass)
+#define GTK_KNOB_CLASS(class)   GTK_CHECK_CLASS_CAST(class, gtk_knob_get_type(), GtkKnobClass)
 #define GTK_IS_KNOB(obj)        GTK_CHECK_TYPE(obj, gtk_knob_get_type())
 
 

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -214,7 +214,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 
 		/* connect signal for clicking session number label */
 		g_signal_connect(G_OBJECT(event), "button_press_event",
-		                 GTK_SIGNAL_FUNC(param_label_button_press),
+		                 GTK_SIGNAL_FUNC(on_param_name_button_press),
 		                 (gpointer) event);
 
 		/* Session selector adjustment */
@@ -259,7 +259,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 
 	/* connect signal for clicking program number label */
 	g_signal_connect(G_OBJECT(event), "button_press_event",
-	                 GTK_SIGNAL_FUNC(param_label_button_press),
+	                 GTK_SIGNAL_FUNC(on_param_name_button_press),
 	                 (gpointer) event);
 
 	/* Program selector adjustment */
@@ -304,7 +304,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 
 		/* connect signal for clicking session name label */
 		g_signal_connect(G_OBJECT(event), "button_press_event",
-		                 GTK_SIGNAL_FUNC(param_label_button_press),
+		                 GTK_SIGNAL_FUNC(on_param_name_button_press),
 		                 (gpointer) event);
 
 		/* Session name text entry */
@@ -433,7 +433,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 
 	/* connect signal for clicking patch name label */
 	g_signal_connect(G_OBJECT(event), "button_press_event",
-	                 GTK_SIGNAL_FUNC(param_label_button_press),
+	                 GTK_SIGNAL_FUNC(on_param_name_button_press),
 	                 (gpointer) event);
 
 	/* Patch name text entry */
@@ -612,7 +612,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 
 	/* connect signal for midi channel label */
 	g_signal_connect(G_OBJECT(event), "button_press_event",
-	                 GTK_SIGNAL_FUNC(param_label_button_press),
+	                 GTK_SIGNAL_FUNC(on_param_name_button_press),
 	                 (gpointer) event);
 
 	/* create adjustment for knob widget */
@@ -712,7 +712,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 
 		/* connect signal for clicking part number label */
 		g_signal_connect(G_OBJECT(event), "button_press_event",
-		                 GTK_SIGNAL_FUNC(param_label_button_press),
+		                 GTK_SIGNAL_FUNC(on_param_name_button_press),
 		                 (gpointer) event);
 
 		/* Part selector adjustment */
@@ -833,7 +833,7 @@ midi_channel_label_handle_event(gpointer UNUSED(data1),
 				state = GTK_STATE_NORMAL;
 			}
 			gtk_widget_set_state(midi_channel_label, state);
-			gp->param[info->id].updated = 1;
+			gp->param[info->id].updated++;
 			return 1;
 			break;
 		case GDK_Return:
@@ -870,7 +870,7 @@ midi_channel_label_handle_event(gpointer UNUSED(data1),
 			info->focused  = 0;
 			info->prelight = 0;
 		}
-		gp->param[info->id].updated = 1;
+		gp->param[info->id].updated++;
 		break;
 	default:
 		/* must handle all enumerations for event type to keep gtk quiet */
@@ -883,7 +883,7 @@ midi_channel_label_handle_event(gpointer UNUSED(data1),
 		gp->param[info->id].value.cc_prev = gp->param[info->id].value.cc_val;
 		gp->param[info->id].value.cc_val  = new_channel;
 		gp->param[info->id].value.int_val = new_channel + gp->param[info->id].info->cc_offset;
-		gp->param[info->id].updated = 1;
+		gp->param[info->id].updated++;
 		patch->param[info->id].value.cc_prev = patch->param[info->id].value.cc_val;
 		patch->param[info->id].value.cc_val  = new_channel;
 		patch->param[info->id].value.int_val = new_channel + patch->param[info->id].info->cc_offset;
@@ -896,11 +896,6 @@ midi_channel_label_handle_event(gpointer UNUSED(data1),
 			gtk_check_menu_item_set_active(menu_item_midi_ch[new_channel], TRUE);
 		}
 #endif
-		/* set detent label text and adjustment for knob */
-		//gtk_label_set_text (GTK_LABEL (midi_channel_label),
-		//                  midi_ch_labels[part->midi_channel]);
-		//gtk_adjustment_set_value (GTK_ADJUSTMENT (midi_channel_adj),
-		//                        part->midi_channel);
 	}
 
 	/* grab focus if we need to */

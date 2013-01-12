@@ -27,6 +27,7 @@
 
 
 void update_midi_channel(PARAM *param);
+void update_bpm(PARAM *param);
 void update_patch_tune(PARAM *param);
 void update_portamento(PARAM *param);
 void update_keymode(PARAM *param);

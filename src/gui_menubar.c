@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -270,6 +270,7 @@ create_menubar(GtkWidget *main_window, GtkWidget *box)
 	}
 
 	/* jack stereo/multi radio group */
+#if MAX_PARTS > 1
 	menu_item_stereo_out    = GTK_CHECK_MENU_ITEM
 		(gtk_item_factory_get_item(item_factory, "/JACK/Stereo Output"));
 	menu_item_multi_out     = GTK_CHECK_MENU_ITEM
@@ -285,7 +286,7 @@ create_menubar(GtkWidget *main_window, GtkWidget *box)
 			gtk_check_menu_item_set_active(menu_item_stereo_out, TRUE);
 		}
 	}
-
+#endif /* MAX_PARTS > 1 */
 
 	/* midi channel radio group */
 #if MAX_PARTS > 1

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ extern volatile gint    engine_index;
 extern int              need_index_resync[MAX_PARTS];
 
 
-void init_buffer_indices(void);
+void init_buffer_indices(int resync);
 
 unsigned int test_midi_index(unsigned int val);
 unsigned int get_midi_index(void);

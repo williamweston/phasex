@@ -1,0 +1,143 @@
+------------------------------------------------------------------------------
+PHASEX Release Checklist
+------------------------------------------------------------------------------
+
+The PHASEX git repository follows a simple branch naming scheme:
+
+Branch:         Description:
+------------------------------------------------------------------------------
+master          Root of all branches (v0.x.w, v0.x.y-dev, v0.x.y, ...).
+v0.x.w          Old release branch.
+v0.x.y-dev      Current dev branch, based on old release branch.
+v0.x.y          New release branch, based on current dev branch.
+v0.x.z-dev      New dev branch, based on new release branch.
+feature-q       New feature branch, to be merged into new dev branch.
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+
+1)   Prepare git repository, starting by committing all changes to
+     current development branch:
+
+           git commit -a -m "Finished changes for v0.x.y"
+
+2)   Switch to previous release branch:
+
+           git checkout v0.x.w
+
+3)   Create the new release branch and switch to it:
+
+           git checkout -b v0.x.y v0.x.w
+
+4)   Merge commits from development branch:
+
+           git merge --no-commit v0.x.y-dev
+
+5)   If necessary resolve any merge conflicts manually, then commit
+     the merge:
+
+           git commit -a -m "Merged in changes for v0.x.w --> v0.x.y."
+
+6)   Browse through git log and spot-check / proofread all changes.
+
+7)   Update all documentation to reflect changes (README, INSTALL,
+     LICENSE, AUTHORS, NEWS, TODO, ChangeLog, parameters.help,
+     signal-diagram.txt, etc.)  Proofread and/or spell-check.
+
+8)   Give credit where credit is due.  For significant contributions,
+     make sure the developer's name and email are listed at the top of
+     each source code file containing the contributions, and keep a
+     master list of authors and contributors in the AUTHORS file.
+
+9)   Test all new features and bug-fixes for correct behavior.
+
+10)  Test core functionality with a known MIDI file and saved session.
+     Does everything sound like it should?
+
+11)  Test all audio and MIDI drivers and the ability to change their
+     settings.
+
+12)  Test all new patches and samples.
+
+13)  Test all parameters and functionality exposed to code changes.
+
+14)  Test running with and without the GUI, and with and without
+     seldom-used configuration / build options.
+
+15)  Test 32- and 64-bit builds, generic and native optimized builds,
+     monotimbral and multitimbral builds, local installs and RPM or
+     any other binary package installs, across as many distributions
+     as possible.
+
+16)  Compare with previous versions and test for regressions.
+
+17)  Verify that all significant changes are listed in the ChangeLog.
+
+18)  Verify source packaging with 'make distcheck'.
+
+19)  Update version number in source files (currently in multiple
+     places, so use grep to find them all.)
+
+20)  Commit changes to git repo and revisit steps 6-20 until no
+     commits are necessary to complete all steps.  All tests must pass
+     before progressing beyond step 20.
+
+21)  In the upstream repository, create new release branch:
+
+           git checkout v0.x.y v0.x.y-dev
+
+22)  Pull in release branch from development repository:
+
+           git pull --squash <dev-repo> v0.x.y
+
+23)  Clone upstream repository and checkout new branch with:
+
+           git clone <upstream-repo> phasex-release
+           cd phasex-release
+           git checkout v0.x.y
+
+24)  Verify build with 'make distcheck'.
+
+25)  Build official release source tarball with 'make dist'.
+
+26)  Unpack new source archive and verify that it builds.
+
+27)  Verify local install with 'make install' and 'make uninstall'.
+
+28)  Build and verify RPMs made from official source tarball.
+
+29)  Archive source tarball, i686 RPM, x86_64 RPM, and source RPM.
+
+30)  If any new commits have been made during steps 22-28, repeat
+     steps 22-30 until the official packages can be built from the
+     sources checked out from git using the proper version tag.  This
+     practice allows the always-avoided last minute commits to be
+     included with the proper branch, and guarantees that the release
+     packages are built with the same sources as found in the git
+     branch named with the corresponding release version.
+
+31)  Add a new git branch for the next version's development cycle with:
+
+           git checkout -b v0.x.z-dev v0.x.y
+
+     where v0.x.z will be the next release _after_ the newly released
+     v0.x.y.  Be sure to remember the -dev at the end of the version
+     tag and branch name for the upcoming development branch.  This
+     practice provides a well defined way to differentiate between
+     release branches and development branches.
+
+32)  Announce / distribute the new release.
+
+33)  Answer emails and fix bugs.  If a hot-fix if necessary, make the
+     hot-fix changes on a new hot-fix branch based on the new release
+     branch.  Pull hot-fix branch into upstream repository and go back
+     to step 23.
+
+34)  Work on new code in new development branch, and pull in new
+     features from feature branches.
+
+35)  When new features and/or bug-fixes are ready, code is deemed
+     stable and worthy of release, go back to step 1.
+
+------------------------------------------------------------------------------

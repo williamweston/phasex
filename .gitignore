@@ -25,6 +25,7 @@ config.status
 configure
 phasex.spec
 phasex-*.tar.gz
+phasex-*.rpm
 stamp-h1
 misc/phasex.desktop
 src/.deps/

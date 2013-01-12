@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,11 @@
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
+#ifdef HAVE_JACK_WEAKJACK_H
+# include <jack/weakjack.h>
+#endif
 #include <jack/jack.h>
 #include <jack/midiport.h>
-#include <jack/session.h>
 #include <glib.h>
 #include "phasex.h"
 #include "config.h"
@@ -47,6 +49,9 @@
 #include "debug.h"
 #include "driver.h"
 
+#ifdef HAVE_JACK_SESSION_H
+# include <jack/session.h>
+#endif
 #ifndef WITHOUT_LASH
 # include "lash.h"
 #endif
@@ -66,7 +71,7 @@ jack_port_t             *output_port2[MAX_PARTS];
 jack_port_t             *dest_port1[MAX_PARTS];
 jack_port_t             *dest_port2[MAX_PARTS];
 
-jack_port_t             *midi_input_port;
+jack_port_t             *midi_input_port            = NULL;
 
 pthread_mutex_t         sample_rate_mutex;
 
@@ -80,9 +85,11 @@ JACK_PORT_INFO          *jack_midi_ports            = NULL;
 int                     jack_midi_ports_changed     = 0;
 int                     jack_rebuilding_port_list   = 0;
 
-jack_session_event_t    *jack_session_event         = NULL;
-
 char                    *jack_session_uuid          = NULL;
+
+#ifdef HAVE_JACK_SESSION_H
+jack_session_event_t    *jack_session_event         = NULL;
+#endif
 
 
 /*****************************************************************************
@@ -93,18 +100,20 @@ char                    *jack_session_uuid          = NULL;
 int
 jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg))
 {
-# ifdef ENABLE_INPUTS
+#ifdef ENABLE_INPUTS
 	jack_default_audio_sample_t *in1;
 	jack_default_audio_sample_t *in2;
-# endif
+#endif
 	jack_default_audio_sample_t *out1;
 	jack_default_audio_sample_t *out2;
 	unsigned int                i;
-	unsigned int                j;
 	PART                        *part;
 	unsigned int                a_index;
+#ifdef MATH_64_BIT
+	unsigned int                j;
+#endif
 
-	if (!jack_running || pending_shutdown) {
+	if (!jack_running || pending_shutdown || (jack_audio_client == NULL)) {
 		return 0;
 	}
 
@@ -124,30 +133,36 @@ jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg))
 
 		part = get_part(i);
 
-		//		memcpy((void *) out1, (void *) & (part->output_buffer1[a_index]),
-		//		       sizeof(jack_default_audio_sample_t) * nframes);
-		//		memcpy((void *) out2, (void *) & (part->output_buffer2[a_index]),
-		//		       sizeof(jack_default_audio_sample_t) * nframes);
-
+#ifdef MATH_32_BIT
+		memcpy((void *) out1, (void *) & (part->output_buffer1[a_index]),
+		       sizeof(jack_default_audio_sample_t) * nframes);
+		memcpy((void *) out2, (void *) & (part->output_buffer2[a_index]),
+		       sizeof(jack_default_audio_sample_t) * nframes);
+#endif
+#ifdef MATH_64_BIT
 		for (j = 0; j < nframes; j++) {
 			out1[j] = (jack_default_audio_sample_t)part->output_buffer1[a_index + j];
 			out2[j] = (jack_default_audio_sample_t)part->output_buffer2[a_index + j];
 		}
+#endif
 	}
 
-# ifdef ENABLE_INPUTS
+#ifdef ENABLE_INPUTS
 	in1 = jack_port_get_buffer(input_port1, nframes);
 	in2 = jack_port_get_buffer(input_port2, nframes);
 
-	//	memcpy((void *) & (input_buffer1[a_index]), (void *) in1,
-	//	       sizeof(jack_default_audio_sample_t) * nframes);
-	//	memcpy((void *) & (input_buffer2[a_index]), (void *) in2,
-	//	       sizeof(jack_default_audio_sample_t) * nframes);
-
+# ifdef MATH_32_BIT
+	memcpy((void *) & (input_buffer1[a_index]), (void *) in1,
+	       sizeof(jack_default_audio_sample_t) * nframes);
+	memcpy((void *) & (input_buffer2[a_index]), (void *) in2,
+	       sizeof(jack_default_audio_sample_t) * nframes);
+# endif
+# ifdef MATH_64_BIT
 	for (j = 0; j < nframes; j++) {
 		input_buffer1[a_index + j] = (sample_t)in1[j];
 		input_buffer2[a_index + j] = (sample_t)in2[j];
 	}
+# endif
 #endif
 
 	inc_audio_index(nframes);
@@ -177,7 +192,7 @@ jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg))
 	jack_default_audio_sample_t *out1;
 	jack_default_audio_sample_t *out2;
 
-	if (!jack_running || pending_shutdown) {
+	if (!jack_running || pending_shutdown || (jack_audio_client == NULL)) {
 		return 0;
 	}
 
@@ -276,11 +291,12 @@ jack_get_midi_port_list(void)
 			}
 			new->name      = strdup(jack_port_name(port));
 			new->type      = strdup(JACK_DEFAULT_MIDI_TYPE);
-			new->type_id   = jack_port_type_id(port);
-			new->connected = jack_port_connected(port);
+			new->connected =
+				((midi_input_port != NULL) ?
+				 (jack_port_connected_to(midi_input_port, jack_port_name(port)) ? 1 : 0) : 0);
 			new->connect_request    = 0;
 			new->disconnect_request = 0;
-			new->next    = NULL;
+			new->next               = NULL;
 			if (head == NULL) {
 				head = cur = new;
 			}
@@ -404,8 +420,8 @@ jack_port_registration_handler(jack_port_id_t port_id, int reg, void *UNUSED(arg
 		}
 		new->name      = strdup(port_name);
 		new->type      = strdup(JACK_DEFAULT_MIDI_TYPE);
-		new->type_id   = jack_port_type_id(port);
-		new->connected = (jack_port_connected_to(midi_input_port, port_name) ? 1 : 0);
+		new->connected = ((midi_input_port != NULL) ?
+		                  (jack_port_connected_to(midi_input_port, port_name) ? 1 : 0) : 0);
 		new->connect_request    = 0;
 		new->disconnect_request = 0;
 		new->next               = NULL;
@@ -465,7 +481,8 @@ jack_port_connection_handler(jack_port_id_t a, jack_port_id_t b, int connect, vo
 	}
 
 	if ((strcmp(jack_port_type(port_a), JACK_DEFAULT_MIDI_TYPE) == 0) &&
-	    (jack_port_is_mine(jack_audio_client, port_a) || jack_port_is_mine(jack_audio_client, port_b))) {
+	    (jack_port_is_mine(jack_audio_client, port_a) ||
+	     jack_port_is_mine(jack_audio_client, port_b))) {
 		cur = jack_midi_ports;
 		while (cur != NULL) {
 			if ((strcmp(cur->name, jack_port_name(port_a)) == 0) ||
@@ -541,6 +558,9 @@ jack_bufsize_handler(jack_nframes_t nframes, void *UNUSED(arg))
 	buffer_latency     = setting_buffer_latency * buffer_period_size;
 	buffer_size_mask   = buffer_size - 1;
 	buffer_period_mask = buffer_period_size - 1;
+
+	init_buffer_indices(1);
+	start_midi_clock();
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
 	             "JACK requested buffer size:  %d (%d * %d periods, mask=0x%x)\n",
@@ -619,6 +639,7 @@ jack_shutdown_handler(void *UNUSED(arg))
 	jack_running        = 0;
 	jack_thread_p       = 0;
 	jack_audio_client   = NULL;
+	midi_input_port     = NULL;
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK shutdown handler called in client thread 0x%lx\n",
 	             pthread_self());
@@ -633,12 +654,7 @@ jack_shutdown_handler(void *UNUSED(arg))
 int
 jack_xrun_handler(void *UNUSED(arg))
 {
-	int     i;
-
-	init_buffer_indices();
-	for (i = 0; i < MAX_PARTS; i++) {
-		need_index_resync[i] = 1;
-	}
+	init_buffer_indices(1);
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK xrun detected.\n");
 	return 0;
@@ -693,8 +709,8 @@ jack_latency_handler(jack_latency_callback_mode_t mode, void *UNUSED(arg))
 	}
 
 	else if (mode == JackPlaybackLatency) {
-		min_adj = buffer_period_size;
-		max_adj = buffer_period_size * 3;
+		min_adj = setting_buffer_latency * buffer_period_size;
+		max_adj = setting_buffer_latency * buffer_period_size;
 		for (i = 0; i < num_output_pairs; i++) {
 			jack_port_get_latency_range(dest_port1[i], JackPlaybackLatency, &range);
 			PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
@@ -752,6 +768,7 @@ jack_graph_order_handler(void *arg)
  *
  * Called when jack needs to save the session.
  *****************************************************************************/
+#ifdef HAVE_JACK_SESSION_H
 void
 jack_session_handler(jack_session_event_t *event, void *UNUSED(arg))
 {
@@ -764,6 +781,17 @@ jack_session_handler(jack_session_event_t *event, void *UNUSED(arg))
 
 	/* keep session event and let watchdog do the real work */
 	jack_session_event = event;
+}
+#endif /* HAVE_JACK_SESSION_H */
+
+
+/*****************************************************************************
+ * jack_error_handler()
+ *****************************************************************************/
+void
+jack_error_handler(const char *msg)
+{
+	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK Error:  %s\n", msg);
 }
 
 
@@ -786,6 +814,8 @@ jack_audio_init(void)
 	unsigned int    new_period_size;
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "Initializing JACK client from thread 0x%lx\n", pthread_self());
+
+	jack_set_error_function(jack_error_handler);
 
 	if (setting_jack_multi_out) {
 		num_output_pairs = MAX_PARTS;
@@ -979,41 +1009,39 @@ jack_audio_init(void)
 
 	/* set all callbacks needed for jack */
 	if (setting_jack_multi_out) {
-		jack_set_process_callback(jack_audio_client,
-		                          jack_process_buffer_multi_out,
-		                          (void *) NULL);
+		jack_set_process_callback
+			(jack_audio_client, jack_process_buffer_multi_out, (void *) NULL);
 	}
 	else {
-		jack_set_process_callback(jack_audio_client,
-		                          jack_process_buffer_stereo_out,
-		                          (void *) NULL);
+		jack_set_process_callback
+			(jack_audio_client, jack_process_buffer_stereo_out, (void *) NULL);
 	}
-	jack_set_buffer_size_callback(jack_audio_client,
-	                              jack_bufsize_handler,
-	                              0);
-	jack_set_xrun_callback(jack_audio_client,
-	                       jack_xrun_handler,
-	                       0);
-	jack_set_client_registration_callback(jack_audio_client,
-	                                      jack_client_registration_handler,
-	                                      (void *) NULL);
-	jack_set_port_registration_callback(jack_audio_client,
-	                                    jack_port_registration_handler,
-	                                    (void *) NULL);
-	jack_set_port_connect_callback(jack_audio_client,
-	                               jack_port_connection_handler,
-	                               (void *) NULL);
-	jack_set_port_rename_callback(jack_audio_client,
-	                              jack_port_rename_handler,
-	                              (void *) NULL);
-	jack_set_session_callback(jack_audio_client,
-	                          jack_session_handler,
-	                          (void *) NULL);
-#ifdef ENABLE_JACK_LATENCY_CALLBACK
-	jack_set_latency_callback(jack_audio_client,
-	                          jack_latency_handler,
-	                          (void *) NULL);
-#endif /* ENABLE_JACK_LATENCY_CALLBACK */
+	jack_set_buffer_size_callback
+		(jack_audio_client, jack_bufsize_handler, 0);
+	jack_set_xrun_callback
+		(jack_audio_client, jack_xrun_handler, 0);
+	jack_set_client_registration_callback
+		(jack_audio_client, jack_client_registration_handler, (void *) NULL);
+	jack_set_port_registration_callback
+		(jack_audio_client, jack_port_registration_handler, (void *) NULL);
+	jack_set_port_connect_callback
+		(jack_audio_client, jack_port_connection_handler, (void *) NULL);
+#ifdef HAVE_JACK_SET_PORT_RENAME_CALLBACK
+	jack_set_port_rename_callback
+		(jack_audio_client, jack_port_rename_handler, (void *) NULL);
+#endif /* HAVE_JACK_SET_PORT_RENAME_CALLBACK */
+#ifdef HAVE_JACK_SET_SESSION_CALLBACK
+	if (jack_set_session_callback) {
+		jack_set_session_callback
+			(jack_audio_client, jack_session_handler, (void *) NULL);
+	}
+#endif /* HAVE_JACK_SET_SESSION_CALLBACK */
+#if defined(HAVE_JACK_LATENCY_CALLBACK) && defined(ENABLE_JACK_LATENCY_CALLBACK)
+	if (jack_set_latency_callback) {
+		jack_set_latency_callback
+			(jack_audio_client, jack_latency_handler, (void *) NULL);
+	}
+#endif /* HAVE_JACK_LATENCY_CALLBACK && ENABLE_JACK_LATENCY_CALLBACK */
 #ifdef ENABLE_JACK_GRAPH_ORDER_CALLBACK
 	jack_set_graph_order_callback(jack_audio_client,
 	                              jack_graph_order_handler,
@@ -1044,8 +1072,7 @@ jack_start(void)
 	int             j;
 	int             k;
 
-	init_buffer_indices();
-
+	init_buffer_indices(0);
 	start_midi_clock();
 
 	/* activate client (callbacks start, so everything needs to be ready) */
@@ -1055,6 +1082,7 @@ jack_start(void)
 		jack_running        = 0;
 		jack_thread_p       = 0;
 		jack_audio_client   = NULL;
+		midi_input_port     = NULL;
 		return 1;
 	}
 
@@ -1254,12 +1282,12 @@ int
 jack_stop(void)
 {
 	jack_client_t   *tmp_client;
-	int             part_num;
 
 	if ((jack_audio_client != NULL) && jack_running && (jack_thread_p) != 0) {
-		tmp_client    = jack_audio_client;
+		tmp_client          = jack_audio_client;
 		jack_audio_client   = NULL;
-		jack_thread_p = 0;
+		jack_thread_p       = 0;
+		midi_input_port     = NULL;
 
 #ifdef JACK_DEACTIVATE_BEFORE_CLOSE
 		jack_deactivate(tmp_client);
@@ -1267,16 +1295,14 @@ jack_stop(void)
 		jack_client_close(tmp_client);
 	}
 
-	jack_running = 0;
-
 	init_engine_buffers();
+	init_buffer_indices(1);
 
-	init_buffer_indices();
-	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-		need_index_resync[part_num] = 1;
-	}
-
+	jack_running = 0;
 	audio_stopped = 1;
+
+	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK stopped.  Client closed.\n");
+
 	return 0;
 }
 
@@ -1359,6 +1385,11 @@ jack_watchdog_cycle(void)
 	char            *name;
 	int             save_and_quit = 0;
 
+	if (buffer_latency != (setting_buffer_latency * buffer_period_size)) {
+		buffer_latency = setting_buffer_latency * buffer_period_size;
+		jack_recompute_total_latencies(jack_audio_client);
+	}
+#ifdef HAVE_JACK_SESSION_H
 	if (jack_session_event != NULL) {
 		switch(jack_session_event->type) {
 		case JackSessionSaveAndQuit:
@@ -1375,6 +1406,7 @@ jack_watchdog_cycle(void)
 			phasex_shutdown("Saved JACK Session.  Goodbye!\n");
 		}
 	}
+#endif /* HAVE_JACK_SESSION_H */
 	if ((midi_driver == MIDI_DRIVER_JACK) && (jack_midi_ports != NULL)) {
 		cur = jack_midi_ports;
 		while (cur != NULL) {
@@ -1418,7 +1450,6 @@ jack_audio_thread(void *UNUSED(arg))
 {
 	struct sched_param  schedparam;
 	pthread_t           thread_id;
-	int                 part_num;
 
 	/* set realtime scheduling and priority */
 	thread_id = pthread_self();
@@ -1438,10 +1469,7 @@ jack_audio_thread(void *UNUSED(arg))
 	pthread_mutex_unlock(&audio_ready_mutex);
 
 	/* initialize buffer indices and set reference clock. */
-	init_buffer_indices();
-	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
-		need_index_resync[part_num] = 1;
-	}
+	init_buffer_indices(1);
 	start_midi_clock();
 
 	jack_start();

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ jack_process_midi(jack_nframes_t nframes)
 		/* handle other messages (sysex / clock / automation / etc) */
 		else {
 			type = * (in_event.buffer);
-			PHASEX_DEBUG(DEBUG_CLASS_JACK_MIDI,
+			PHASEX_DEBUG(DEBUG_CLASS_MIDI,
 			             "+++ jack_process_midi() received midi system message "
 			             "type 0x%02x\n", type);
 

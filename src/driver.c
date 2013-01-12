@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@
 #include "patch.h"
 #include "param.h"
 #include "midimap.h"
+#include "gui_main.h"
 
 #ifndef WITHOUT_LASH
 # include "lash.h"
@@ -656,9 +657,7 @@ phasex_watchdog(void)
 			audio_stopped = 0;
 			start_audio();
 			wait_audio_start();
-			if ((gtkui_thread_p != 0) &&
-			    (config_dialog != NULL) &&
-			    (audio_status_label != NULL)) {
+			if (gtkui_ready && (config_dialog != NULL) && (audio_status_label != NULL)) {
 				query_audio_driver_status(audio_driver_status_msg);
 				gtk_label_set_text(GTK_LABEL(audio_status_label), audio_driver_status_msg);
 			}
@@ -669,10 +668,8 @@ phasex_watchdog(void)
 			start_midi();
 			wait_midi_start();
 		}
-		if (config_changed &&
-		    !engine_stopped && !audio_stopped && !midi_stopped &&
-		    (audio_driver != AUDIO_DRIVER_NONE) &&
-		    (midi_driver != MIDI_DRIVER_NONE)) {
+		if (config_changed && !engine_stopped && !audio_stopped && !midi_stopped &&
+		    (audio_driver != AUDIO_DRIVER_NONE) && (midi_driver != MIDI_DRIVER_NONE)) {
 			config_changed = 0;
 			save_settings(NULL);
 		}

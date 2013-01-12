@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@ void update_param_cc_map(GtkWidget *widget, gpointer data);
 void update_param_locked(GtkWidget *widget, gpointer data);
 void update_param_ignore(GtkWidget *widget, gpointer UNUSED(data));
 void close_cc_edit_dialog(GtkWidget *UNUSED(widget), gpointer UNUSED(data));
-void param_label_button_press(GtkWidget *widget, GdkEventButton *event);
 void create_midimap_load_dialog(void);
 void run_midimap_load_dialog(void);
 void create_midimap_save_dialog(void);

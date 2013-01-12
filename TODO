@@ -192,8 +192,6 @@ MIDI improvements:
 
 * Add support for modwheel and generic high-res controllers.
 
-* Save part --> MIDI channel mapping with session and/or midimap.
-
 * Add MIDI Program Change option to select sessions with values >= 64;
 
 

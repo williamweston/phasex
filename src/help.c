@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +77,7 @@ about_phasex_dialog(void)
 #endif
 	const gchar     *copyright =
 		"Source code, all artwork, and all audio samples:\n"
-		"Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>\n"
+		"Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>\n"
 		"With portions of the source code:\n"
 		"Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>\n"
 		"Copyright (C) 2007 Peter Shorthose <zenadsl6252@zen.co.uk>\n"
@@ -421,6 +421,7 @@ display_param_help(int param_id)
 			same_param_id = 1;
 		}
 		gtk_widget_destroy(param_help_dialog);
+		param_help_dialog   = NULL;
 		param_help_param_id = -1;
 	}
 

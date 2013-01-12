@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2007-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -191,12 +191,6 @@ gtkui_thread(void *UNUSED(arg))
 	create_config_dialog();
 	close_config_dialog(main_window, (gpointer)((long int) config_is_open));
 #endif
-	create_patch_load_dialog();
-	create_patch_save_dialog();
-	create_midimap_load_dialog();
-	create_midimap_save_dialog();
-	create_session_load_dialog();
-	create_session_save_dialog();
 
 	/* add idle handler or timer callback to update widgets */
 	g_timeout_add_full(G_PRIORITY_HIGH_IDLE + 25,
@@ -230,7 +224,7 @@ gtkui_thread(void *UNUSED(arg))
 
 	/* cleanup and shut everything else down */
 	phasex_shutdown("Thank you for using PHASEX!\n"
-	                "(C) 1999-2012 William Weston <whw@linuxmail.org> and others.\n"
+	                "(C) 1999-2013 William Weston <whw@linuxmail.org> and others.\n"
 	                "Released under the GNU Public License, Ver. 3\n");
 
 	/* end of gtkui thread */
@@ -479,9 +473,6 @@ gui_main_loop_iteration(gpointer data)
 			update_gui_session_name();
 		}
 
-		/* avoid simultaneous updates */
-		periodic_update_in_progress = 1;
-
 		/* Update widgets for up to 150 parameters per cycle
 		   go up to NUM_PARAMS + 1 to also get midi_channel in
 		   the extended params. */
@@ -489,13 +480,11 @@ gui_main_loop_iteration(gpointer data)
 			if (gtkui_restarting || (num_updated >= MAX_PARAMS)) {
 				break;
 			}
-			if (gp->param[param_num].updated) {
+			if (gp->param[param_num].updated > 0) {
 				update_gui_param(& (patch->param[param_num]));
 				num_updated++;
 			}
 		}
-
-		periodic_update_in_progress = 0;
 	}
 
 	/* check for changes in audio/midi connection lists */

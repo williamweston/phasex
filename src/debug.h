@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,8 +35,7 @@
 #define DEBUG_BUFFER_MASK           (DEBUG_MESSAGE_POOL_SIZE - 1)
 
 #define DEBUG_CLASS_NONE            0
-#define DEBUG_CLASS_INIT            1
-#define DEBUG_CLASS_MAIN            (1<<1)
+#define DEBUG_CLASS_INIT            (1<<1)
 #define DEBUG_CLASS_GUI             (1<<2)
 #define DEBUG_CLASS_PARAM           (1<<3)
 #define DEBUG_CLASS_MIDI            (1<<4)
@@ -44,13 +43,11 @@
 #define DEBUG_CLASS_MIDI_EVENT      (1<<6)
 #define DEBUG_CLASS_MIDI_TIMING     (1<<7)
 #define DEBUG_CLASS_AUDIO           (1<<8)
-#define DEBUG_CLASS_JACK_AUDIO      (1<<9)
-#define DEBUG_CLASS_JACK_TRANSPORT  (1<<10)
-#define DEBUG_CLASS_JACK_MIDI       (1<<11)
-#define DEBUG_CLASS_RAW_MIDI        (1<<12)
-#define DEBUG_CLASS_ENGINE          (1<<13)
-#define DEBUG_CLASS_ENGINE_TIMING   (1<<14)
-#define DEBUG_CLASS_SESSION         (1<<15)
+#define DEBUG_CLASS_JACK_TRANSPORT  (1<<9)
+#define DEBUG_CLASS_RAW_MIDI        (1<<10)
+#define DEBUG_CLASS_ENGINE          (1<<11)
+#define DEBUG_CLASS_ENGINE_TIMING   (1<<12)
+#define DEBUG_CLASS_SESSION         (1<<13)
 #define DEBUG_CLASS_ALL             ~(0UL | DEBUG_CLASS_MIDI_TIMING | DEBUG_CLASS_ENGINE_TIMING)
 
 #define DEBUG_ATTR_RESET            0
@@ -102,7 +99,7 @@ extern DEBUG_RINGBUFFER main_debug_queue;
 extern int              debug;
 extern unsigned long    debug_class;
 
-extern DEBUG_CLASS      debug_class_list[19];
+extern DEBUG_CLASS      debug_class_list[16];
 
 
 #define PHASEX_ERROR(args...)                                           \

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2001-2004,2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2001-2004,2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -539,12 +539,15 @@ rawmidi_read(RAWMIDI_INFO *rawmidi, unsigned char *buf, int len)
 		break;
 #endif /* ENABLE_RAWMIDI_OSS */
 
-		/* for ALSA, single byte IO seems more dependable */
+		/* for ALSA, single byte and multi-byte seem dependable */
 #ifdef ENABLE_RAWMIDI_ALSA_RAW
 	case MIDI_DRIVER_RAW_ALSA:
 # ifdef RAWMIDI_ALSA_MULTI_BYTE_IO
 		if (buf_available > 0) {
 			while ((buf_index < buf_available) && (output_index < len)) {
+#  ifdef RAWMIDI_DEBUG
+				PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "%02X ", read_buf[buf_index]);
+#  endif /* RAWMIDI_DEBUG */
 				buf[output_index++] = read_buf[buf_index++];
 			}
 		}
@@ -552,23 +555,22 @@ rawmidi_read(RAWMIDI_INFO *rawmidi, unsigned char *buf, int len)
 #  if defined(RAWMIDI_ALSA_NONBLOCK) || defined(RAWMIDI_USE_POLL)
 			if (poll(rawmidi_info->pfds, (nfds_t) rawmidi_info->npfds, 1) > 0)
 #  endif
-				{
-					if ((buf_available = snd_rawmidi_read(rawmidi->handle, read_buf, 256)) < 1) {
-						PHASEX_ERROR("Unable to read from ALSA MIDI device '%s'!\n",
-						             rawmidi->device);
-					}
-					buf_index = 0;
-					while ((buf_index < buf_available) && (output_index < len)) {
-						buf[output_index++] = read_buf[buf_index++];
-					}
+			{
+				if ((buf_available = snd_rawmidi_read(rawmidi->handle, read_buf, 256)) < 1) {
+					PHASEX_ERROR("Unable to read from ALSA MIDI device '%s'!\n",
+					             rawmidi->device);
 				}
-		}
+				buf_index = 0;
+				while ((buf_index < buf_available) && (output_index < len)) {
 #  ifdef RAWMIDI_DEBUG
-		for (bytes_read = 0; bytes_read < buf_available; bytes_read++) {
-			PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "%02X ", read_buf[bytes_read]);
-		}
+					PHASEX_DEBUG(DEBUG_CLASS_RAW_MIDI, "%02X ", read_buf[buf_index]);
 #  endif /* RAWMIDI_DEBUG */
+					buf[output_index++] = read_buf[buf_index++];
+				}
+			}
+		}
 		bytes_read = output_index;
+
 # else /* !RAWMIDI_ALSA_MULTI_BYTE_IO */
 		bytes_read = 0;
 		while (!midi_stopped && !pending_shutdown && (bytes_read < len)) {

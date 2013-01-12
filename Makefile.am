@@ -37,6 +37,16 @@ distclean-local:
 	rm -rf autom4te.cache
 
 
+phasex-$(PACKAGE_VERSION).tar.gz: dist
+
+
+phasex-version:
+	scripts/version-sh
+
+
+phasex.spec: phasex-version phasex.spec.in
+
+
 rpm: phasex-$(PACKAGE_VERSION).tar.gz phasex.spec
 	rpmbuild=$$(mktemp -d -t rpmbuild-phasex.XXXXXXX); src=$$(pwd); \
 	cp phasex-$(PACKAGE_VERSION).tar.gz "$$rpmbuild"; \
@@ -52,3 +62,4 @@ rpm: phasex-$(PACKAGE_VERSION).tar.gz phasex.spec
 	popd; \
 	mv "$$rpmbuild"/$$(arch)/*.rpm . &&  mv "$$rpmbuild"/*.src.rpm . && \
 		rm -rf "$$rpmbuild" && ls -1 *.rpm
+

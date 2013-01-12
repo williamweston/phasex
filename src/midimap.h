@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ extern int      midimap_modified;
 
 
 void build_ccmatrix(void);
+void set_midi_channel_for_part(unsigned int part_num, int new_channel);
 int read_midimap(char *filename);
 int save_midimap(char *filename);
 

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]uroral [S]ynthesis [EX]periment
  *
- * Copyright 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

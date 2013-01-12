@@ -2,6 +2,36 @@
 
 Changelog:
 
+=======
+2013-01-11 William Weston <whw@linuxmail.org> - 0.14.97
+	* Cleaned up pointer sign warning in queue_midi_event().
+	* Included (/usr)/bin/true configure.ac fix from Jörn Nettingsmeier.
+	* Included falktx's build patch for src/Makefile.am.
+	* Added synth-part to MIDI channel assignments to midimaps.
+	* Removed unused type_id from struct jack_port_info.
+	* Added proper detection and conditions for new JACK features.
+	* Reworked BPM handling and removed duplicated code.
+	* Fixed typo in pixmaps/Makefile.am.  (Adam Sampson)
+	* Implemented note-off instant release from attack and decay.
+	* Implemented round-robin voice assignment for mono-multikey.
+	* Fixed bug with assigning MIDI CC in GUI.
+	* Changed MIDI CC mapping event (now ctrl-middle-click).
+	* Changed depracated AM_CONFIG_HEADER to AC_CONFIG_HEADERS.
+	* Fixed FTBFS on systems w/o CLOCK_MONOTONIC_RAW (Adrian Knoth).
+	* Fixed crash and clock sync issues with changing jack buffer size.
+	* Consolidated gtkknob frame offset calculations.
+	* Added checks to prevent errors on JACK client close.
+	* Fixed usage of JACK stereo/multi menuitems for monotimbral builds.
+	* Fixed potential LASH client name bug when using ALSA MIDI.
+	* Added JACK latency recalculation when changing buffer_latency.
+	* Added git version tag tracking to build system.
+	* Changed default locale to "C" instead using env defaults.
+	* Fixed settings not saved on quit.
+	* Fixed new dirs/files not created bug in phasex-convert-patch.
+	* Fixed GUI param update race condition on updated flag.
+	* Fixed sporadic GUI param sensitivity update issue.
+
+
 2012-12-28 William Weston <whw@linuxmail.org> - 0.14.96
 	* Added initial JACK Session support.
 	* Added sess dump dir skipping for Load Session dialog.

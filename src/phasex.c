@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,11 +170,11 @@ showusage(char *argvzero)
 	printf("  -L, --disable-lash     Disable LASH completely for the current session.\n\n");
 #endif
 	printf("[P]hase [H]armonic [A]dvanced [S]ynthesis [EX]permient ver. %s\n", PACKAGE_VERSION);
-	printf("  (C) 1999-2012 William Weston <whw@linuxmail.org>,\n");
+	printf("  (C) 1999-2013 William Weston <whw@linuxmail.org>,\n");
 	printf("With contributions (C) 2010 Anton Kormakov <assault64@gmail.com>, and\n");
 	printf("  (C) 2007 Peter Shorthose <zenadsl6252@zen.co.uk>.\n");
 	printf("GtkKnob code (C) 1999 Tony Garnock-Jones, (C) 2004 Sean Bolton,\n");
-	printf("  (C) 2007 Peter Shorthose, and (C) 2007-2012 William Weston.\n");
+	printf("  (C) 2007 Peter Shorthose, and (C) 2007-2013 William Weston.\n");
 	printf("Distributed under the terms of the GNU GENERAL Public License, Version 3.\n");
 	printf("  (See AUTHORS, LICENSE, and GPL-3.0.txt for details.)\n");
 }
@@ -403,9 +403,11 @@ phasex_shutdown(const char *msg)
 		case MIDI_DRIVER_RAW_ALSA:
 			setting_alsa_raw_midi_device = midi_port_name;
 			break;
+#ifdef ENABLE_RAWMIDI_GENERIC
 		case MIDI_DRIVER_RAW_GENERIC:
 			setting_generic_midi_device = midi_port_name;
 			break;
+#endif
 #ifdef ENABLE_RAWMIDI_OSS
 		case MIDI_DRIVER_RAW_OSS:
 			setting_oss_midi_device = midi_port_name;
@@ -418,6 +420,7 @@ phasex_shutdown(const char *msg)
 	}
 
 	/* TODO: be more thorough about gathering settings */
+	save_settings(NULL);
 
 	/* set the global shutdown flag */
 	pending_shutdown = 1;
@@ -471,7 +474,7 @@ main(int argc, char **argv)
 	unsigned int    bpm_override            = 0;
 	int             saved_errno;
 
-	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "C");
 
 	if (check_other_phasex_instances()) {
 		fprintf(stderr, "Unable to start:  Another instance of phasex is already running.\n");
@@ -481,9 +484,7 @@ main(int argc, char **argv)
 	/* Start debug thread.  debug_class is not set until arguemnts are parsed,
 	   so use fprintf() until then. */
 	if ((ret = pthread_create(&debug_thread_p, NULL, &phasex_debug_thread, NULL)) != 0) {
-		if (debug) {
-			fprintf(stderr, "***** ERROR:  Unable to start debug thread.\n");
-		}
+		fprintf(stderr, "***** ERROR:  Unable to start debug thread.\n");
 	}
 
 	/* lock down memory (rt hates page faults) */
@@ -507,13 +508,8 @@ main(int argc, char **argv)
 		}
 	}
 	if (!lash_disabled) {
-		ret = lash_client_init(&argc, &argv);
-		if (ret == 0) {
-			fprintf(stderr, "Main: LASH client started.\n");
+		if (lash_client_init(&argc, &argv) == 0) {
 			lash_poll_event();
-		}
-		else {
-			fprintf(stderr, "Unable to start lash client.\n");
 		}
 	}
 #endif
@@ -660,7 +656,7 @@ main(int argc, char **argv)
 		case 'l':   /* list audio / midi devices */
 			scan_audio_and_midi();
 			return 0;
-		case 'D':
+		case 'D':   /* session directory */
 			init_session_dir = strdup(optarg);
 			if (config_file != NULL) {
 				free(config_file);
@@ -668,7 +664,7 @@ main(int argc, char **argv)
 			snprintf(filename, PATH_MAX, "%s/%s", init_session_dir, USER_CONFIG_FILE);
 			config_file = strdup(filename);
 			break;
-		case 'u':
+		case 'u':   /* jack session uuid */
 			jack_session_uuid = strdup(optarg);
 			break;
 		case '?':
@@ -810,6 +806,11 @@ main(int argc, char **argv)
 	/* override bpm from command line */
 	override_bpm(bpm_override);
 
+	/* use midimap from settings, if given */
+	if (setting_midimap_file != NULL) {
+		read_midimap(setting_midimap_file);
+	}
+
 	/* start the gui */
 	if (use_gui) {
 		start_gui = 1;
@@ -820,12 +821,6 @@ main(int argc, char **argv)
 			pthread_cond_wait(&gtkui_ready_cond, &gtkui_ready_mutex);
 		}
 		pthread_mutex_unlock(&gtkui_ready_mutex);
-	}
-
-	/* use midimap from settings, if given */
-	/* wait until after gui is loaded before locking parameters */
-	if (setting_midimap_file != NULL) {
-		read_midimap(setting_midimap_file);
 	}
 
 	/* Load JACK session, if necessary. */

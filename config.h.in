@@ -57,6 +57,21 @@
 /* Define to 1 if you have the `isupper' function. */
 #undef HAVE_ISUPPER
 
+/* Define to 1 if you have the <jack/session.h> header file. */
+#undef HAVE_JACK_SESSION_H
+
+/* libjack has jack_set_latency_callback(). */
+#undef HAVE_JACK_SET_LATENCY_CALLBACK
+
+/* libjack has jack_set_port_rename_callback(). */
+#undef HAVE_JACK_SET_PORT_RENAME_CALLBACK
+
+/* libjack has jack_set_session_callback(). */
+#undef HAVE_JACK_SET_SESSION_CALLBACK
+
+/* Define to 1 if you have the <jack/weakjack.h> header file. */
+#undef HAVE_JACK_WEAKJACK_H
+
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 

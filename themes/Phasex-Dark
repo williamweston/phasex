@@ -35,11 +35,6 @@ style "phasex-default"
 	text[ACTIVE]		= @highlight1	# active entry text (not selected)
 	text[SELECTED]		= @highlight1	# active and selected entry text
 	text[INSENSITIVE]	= @grey1	# insensitive widget arrow and button text
-
-	engine "nodoka"
-	{
-		bullet_color    = "#00f000"
-	}
 }
 
 style "phasex-tree" = "phasex-default"
@@ -293,11 +288,6 @@ style "phasex-off-button" = "phasex-radio"
 
 	fg[PRELIGHT]		= @highlight2	# toggle button border and text prelight
 	fg[ACTIVE]		= @highlight1	# toggled-on button text
-
-	engine "nodoka"
-	{
-		bullet_color	= "#f00000"
-	}
 }
 
 style "phasex-patch-group" = "phasex-default"

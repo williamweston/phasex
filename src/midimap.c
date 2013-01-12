@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,10 @@
 #include "settings.h"
 #include "engine.h"
 #include "string_util.h"
+#include "param_strings.h"
+#include "gui_main.h"
+#include "gui_patch.h"
+#include "gui_navbar.h"
 #include "debug.h"
 
 
@@ -80,6 +84,43 @@ build_ccmatrix(void)
 			/* map it after the first used slot */
 			if (j < 16) {
 				ccmatrix[cc][j] = (int) id;
+			}
+		}
+	}
+}
+
+
+/*****************************************************************************
+ * set_midi_channel_for_part()
+ *****************************************************************************/
+void
+set_midi_channel_for_part(unsigned int part_num, int new_channel) {
+	PART        *part  = get_part(part_num);
+	PATCH       *patch = get_patch(visible_sess_num, part_num, visible_prog_num[part_num]);;
+
+	/* only deal with real changes */
+	if (part->midi_channel != new_channel) {
+		/* set new channel for current part */
+		part->midi_channel = new_channel;
+
+		patch->param[PARAM_MIDI_CHANNEL].value.cc_prev =
+			patch->param[PARAM_MIDI_CHANNEL].value.cc_val;
+		patch->param[PARAM_MIDI_CHANNEL].value.cc_val  = new_channel;
+		patch->param[PARAM_MIDI_CHANNEL].value.int_val =
+			new_channel + patch->param[PARAM_MIDI_CHANNEL].info->cc_offset;
+		patch->param[PARAM_MIDI_CHANNEL].updated = 1;
+
+		if (gtkui_ready && (gp != NULL)) {
+			gp->param[PARAM_MIDI_CHANNEL].value.cc_prev =
+				gp->param[PARAM_MIDI_CHANNEL].value.cc_val;
+			gp->param[PARAM_MIDI_CHANNEL].value.cc_val  = new_channel;
+			gp->param[PARAM_MIDI_CHANNEL].value.int_val =
+				new_channel + gp->param[PARAM_MIDI_CHANNEL].info->cc_offset;
+			gp->param[PARAM_MIDI_CHANNEL].updated++;
+
+			/* set adjustment for spin button */
+			if (midi_channel_adj != NULL) {
+				gtk_adjustment_set_value(GTK_ADJUSTMENT(midi_channel_adj), new_channel);
 			}
 		}
 	}
@@ -149,11 +190,17 @@ read_midimap(char *filename)
 
 		/* find named parameter */
 		id = -1;
-		for (param_num = 0; param_num < NUM_PARAMS; param_num++) {
-			param = get_param(0, param_num);
-			if (strcmp(param_name, param->info->name) == 0) {
-				id = (int) param_num;
-				break;
+		if (strncmp(param_name, "midi_channel_", 13) == 0) {
+			part_num = (unsigned int)(atoi(&(param_name[13])) - 1);
+		}
+		else {
+			part_num = 99;
+			for (param_num = 0; param_num < NUM_PARAMS; param_num++) {
+				param = get_param(0, param_num);
+				if (strcmp(param_name, param->info->name) == 0) {
+					id = (int) param_num;
+					break;
+				}
 			}
 		}
 
@@ -167,14 +214,24 @@ read_midimap(char *filename)
 			continue;
 		}
 
-		/* get midi cc num */
+		/* get midi cc num / midi ch num */
 		if ((p = get_next_token(buffer)) == NULL) {
 			while (get_next_token(buffer) != NULL);
 			continue;
 		}
-		cc_num = atoi(p);
-		if ((cc_num < -1) || (cc_num >= 128)) {
-			cc_num = -1;
+		if (part_num == 99) {
+			cc_num = atoi(p);
+			if ((cc_num < -1) || (cc_num >= 128)) {
+				cc_num = -1;
+			}
+		}
+		else {
+			id = -1;
+			cc_num = atoi(p) - 1;
+			if ((cc_num < 0) || (cc_num > 16)) {
+				cc_num = 16;
+			}
+			set_midi_channel_for_part(part_num, cc_num);
 		}
 
 		/* see if there's a ',locked' */
@@ -224,12 +281,10 @@ read_midimap(char *filename)
 		if ((id >= 0) && (id < NUM_PARAMS)) {
 			for (part_num = 0; part_num < MAX_PARTS; part_num++) {
 				param = get_param(part_num, (unsigned int) id);
-				PHASEX_DEBUG(DEBUG_CLASS_GUI, "Load MIDI Map: id=[%03d] cc=[%03d] param=<%s>\n",
-				             id, cc_num, param->info->name);
 				param->info->cc_num = cc_num;
 			}
 		}
-		else if (debug && (strcmp(param_name, "midi_channel") != 0)) {
+		else if (debug && (strncmp(param_name, "midi_channel", 12) != 0)) {
 			PHASEX_WARN("Unknown parameter '%s' in midimap '%s', line %d.\n",
 			            param_name, midimap_filename, line);
 		}
@@ -255,6 +310,7 @@ save_midimap(char *filename)
 	PARAM           *param;
 	FILE            *map_f;
 	unsigned int    param_num;
+	unsigned int    part_num;
 	unsigned int    k;
 
 	/* open the midimap file */
@@ -270,6 +326,12 @@ save_midimap(char *filename)
 			free(midimap_filename);
 		}
 		midimap_filename = strdup(filename);
+	}
+
+	/* keep track of midi channels */
+	for (part_num = 0; part_num < MAX_PARTS; part_num++) {
+		fprintf(map_f, "midi_channel_%02d         = %s;\n",
+		        (part_num + 1), midi_ch_names[(get_part(part_num)->midi_channel + 1)]);
 	}
 
 	/* output 'param_name = cc_num;' for each param */

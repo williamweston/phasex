@@ -1,0 +1,11 @@
+#!/bin/sh
+
+umask 133
+version_string=`git describe --tags`;
+if [ -n "${version_string}" ]; then
+	echo "${version_string}" > phasex-version
+else
+	version_string=`cat phasex-version`
+fi
+perl -pi -e "s/^PHASEX-.*:$/PHASEX-${version_string}:/g" README
+echo "${version_string}"

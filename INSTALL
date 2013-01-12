@@ -87,8 +87,9 @@ flag.  Options are:  1 (slow CPU), 2 (average CPU), 3 (fast CPU and
 The number of active synth threads (and thus the number of active
 synth parts) can be set with the --enable-parts= option.  In general,
 enabling one part per CPU core will provide rock-solid xrun-free
-performance.  Modern multi-core systems may perform the same with as
-many as two synth threads per CPU core enabled.  YMMV.
+performance (recommended for live / on-stage use).  Modern multi-core
+systems may perform the same with as many as two synth threads per CPU
+core enabled (recommended for studio use).  As usual, YMMV.
 
 By default, 64-bit builds are enabled on 64-bit architectures.  To
 force a 32-bit build on a 64-bit architecture (for a native 32-bit

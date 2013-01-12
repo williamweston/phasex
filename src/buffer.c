@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,12 +52,19 @@ int             need_index_resync[MAX_PARTS];
  * init_buffer_indices()
  *****************************************************************************/
 void
-init_buffer_indices(void)
+init_buffer_indices(int resync)
 {
+	int             part_num;
+
 	g_atomic_int_set(&need_increment, 0);
 	set_audio_index(buffer_size - buffer_latency);
 	set_engine_index(0);
 	set_midi_index(0);
+	if (resync) {
+		for (part_num = 0; part_num < MAX_PARTS; part_num++) {
+			need_index_resync[part_num] = 1;
+		}
+	}
 }
 
 

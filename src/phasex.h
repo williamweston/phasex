@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,13 +167,13 @@ typedef float sample_t;
 /* Total polyphony: As a general rule of thumb, this should be
    somewhat lower than one voice per 100 MHz CPU power.  YMMV. */
 #if (PHASEX_CPU_POWER == 1)
-# define DEFAULT_POLYPHONY              6
+# define DEFAULT_POLYPHONY              4
 #endif
 #if (PHASEX_CPU_POWER == 2)
-# define DEFAULT_POLYPHONY              8
+# define DEFAULT_POLYPHONY              6
 #endif
 #if (PHASEX_CPU_POWER == 3)
-# define DEFAULT_POLYPHONY              12
+# define DEFAULT_POLYPHONY              8
 #endif
 #if (PHASEX_CPU_POWER == 4)
 # define DEFAULT_POLYPHONY              12
@@ -255,9 +255,12 @@ typedef float sample_t;
 /* Build with audio input code enabled (ALSA and JACK). */
 #define ENABLE_INPUTS
 
+/* JACK Options */
+#define ENABLE_JACK_LATENCY_CALLBACK
+
 /* Define ALSA_SCAN_SUBDEVICES to scan individual audio / MIDI
    subdevices.  In practice, almost everyone ignores the subdevices,
-   this should not be necessary. */
+   and this should not be necessary. */
 //define ALSA_SCAN_SUBDEVICES
 
 /* Phase of MIDI period for synchronizing audio buffer processing period starts. */
@@ -266,7 +269,6 @@ typedef float sample_t;
 /* max number of samples to use in the 8 period ringbuffer. */
 /* must be a power of 2, and must handle at least 8 periods of >= 1024 */
 #define PHASEX_MAX_BUFSIZE              16384   /* up to 8 periods of 2048 */
-#define DEFAULT_BUFFER_SIZE             (DEFAULT_BUFFER_PERIOD_SIZE * DEFAULT_BUFFER_PERIODS)
 #define DEFAULT_BUFFER_PERIOD_SIZE      256
 #define DEFAULT_BUFFER_PERIODS          8
 #define DEFAULT_LATENCY_PERIODS         2
@@ -311,7 +313,6 @@ typedef float sample_t;
 
 /* Incomplete features */
 //define NONSTANDARD_HARMONICS
-//define ENABLE_JACK_LATENCY_CALLBACK
 //define ENABLE_JACK_GRAPH_ORDER_CALLBACK
 
 /* Depracated features */
@@ -377,7 +378,7 @@ typedef float sample_t;
  *
  *****************************************************************************/
 
-/* Insist that funtion arguments as USED, or UNUSED, if necessary */
+/* Insist that funtion arguments are USED or UNUSED, if necessary */
 #if defined(USED)
 #elif defined(__GNUC__)
 # define USED(x) x

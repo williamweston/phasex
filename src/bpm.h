@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 
 void override_bpm(unsigned int new_bpm);
-void update_bpm(PARAM *param);
+void set_bpm(PARAM *param, sample_t float_bpm);
 
 
 #endif /* _PHASEX_BPM_H_ */

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ volatile ATOMIC_TIMESTAMP   active_sensing_timeout;
 #endif /* (ARCH_BITS == 64) */
 
 
-clockid_t                   midi_clockid          = CLOCK_MONOTONIC_RAW;
+clockid_t                   midi_clockid          = -1;
 
 timecalc_t                  nsec_per_frame        = (1000000000.0 / 44100.0);
 timecalc_t                  nsec_per_period       = (1000000000.0 / 44100.0) * 256.0;
