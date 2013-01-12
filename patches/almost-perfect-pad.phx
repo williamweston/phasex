@@ -1,5 +1,5 @@
 # phasex patch
-phasex_version		= 0.14.94;
+phasex_version		= 0.14.97;
 patch_name		= "almost-perfect-pad";
 bpm			= 120;
 patch_tune		= 0;
@@ -11,7 +11,7 @@ portamento		= 0;
 input_boost		= 0;
 input_follow		= off;
 pan			= 0;
-stereo_width		= 127;
+stereo_width		= 111;
 amp_velocity		= 0;
 amp_attack		= 34;
 amp_decay		= 11;
@@ -42,8 +42,8 @@ chorus_lfo_wave		= sine;
 chorus_lfo_rate		= 1/1;
 chorus_phase_rate	= 4/1;
 chorus_phase_balance	= 64;
-delay_mix		= 0;
-delay_feed		= 24;
+delay_mix		= 16;
+delay_feed		= 16;
 delay_time		= 1/4;
 delay_crossover		= on;
 delay_lfo		= off;

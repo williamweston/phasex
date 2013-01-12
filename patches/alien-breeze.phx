@@ -1,5 +1,5 @@
 # phasex patch
-phasex_version		= 0.14.94;
+phasex_version		= 0.14.97;
 patch_name		= "alien-breeze";
 bpm			= 120;
 patch_tune		= 0;
@@ -42,9 +42,9 @@ chorus_lfo_wave		= sine;
 chorus_lfo_rate		= 2/1;
 chorus_phase_rate	= 4/1;
 chorus_phase_balance	= 64;
-delay_mix		= 0;
-delay_feed		= 0;
-delay_time		= 1/8;
+delay_mix		= 16;
+delay_feed		= 16;
+delay_time		= 1/4;
 delay_crossover		= on;
 delay_lfo		= off;
 osc1_modulation		= mix;

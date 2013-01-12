@@ -2,7 +2,6 @@
 
 Changelog:
 
-=======
 2013-01-11 William Weston <whw@linuxmail.org> - 0.14.97
 	* Cleaned up pointer sign warning in queue_midi_event().
 	* Included (/usr)/bin/true configure.ac fix from Jörn Nettingsmeier.
@@ -17,7 +16,7 @@ Changelog:
 	* Fixed bug with assigning MIDI CC in GUI.
 	* Changed MIDI CC mapping event (now ctrl-middle-click).
 	* Changed depracated AM_CONFIG_HEADER to AC_CONFIG_HEADERS.
-	* Fixed FTBFS on systems w/o CLOCK_MONOTONIC_RAW (Adrian Knoth).
+	* Fixed FTBFS on systems w/o CLOCK_MONOTONIC_RAW.  (Adrian Knoth)
 	* Fixed crash and clock sync issues with changing jack buffer size.
 	* Consolidated gtkknob frame offset calculations.
 	* Added checks to prevent errors on JACK client close.
@@ -30,6 +29,7 @@ Changelog:
 	* Fixed new dirs/files not created bug in phasex-convert-patch.
 	* Fixed GUI param update race condition on updated flag.
 	* Fixed sporadic GUI param sensitivity update issue.
+	* Updated system synth-patches.
 
 
 2012-12-28 William Weston <whw@linuxmail.org> - 0.14.96

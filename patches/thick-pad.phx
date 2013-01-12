@@ -1,5 +1,5 @@
 # phasex patch
-phasex_version		= 0.14.94;
+phasex_version		= 0.14.97;
 patch_name		= "thick-pad";
 bpm			= 120;
 patch_tune		= 0;

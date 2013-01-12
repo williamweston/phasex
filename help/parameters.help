@@ -690,17 +690,6 @@ When using LASH or JACK Session for session management, sessions
 include full state information and are saved to a location of the
 session manager's choosing.
 
-<b>Session Management:</b>
-
-The native session manager in PHASEX behaves much like the patch
-manager.  Sessions can selected from the session bank with the Session
-# spinbutton, loaded or saved from the filesystem using the Session
-Name entry and the Session Load and Save buttons.  By default, new
-sessions are saved to ~/.phasex/sessions but can be saved anywhere.
-When using LASH or JACK Session for session management, sessions
-include full state information and are saved to a location of the
-session manager's choosing.
-
 <b>Preferences:</b>
 
 In the spirit of vintage hardware synth designs, all immediately

@@ -1,5 +1,5 @@
 # phasex patch
-phasex_version		= 0.14.94;
+phasex_version		= 0.14.97;
 patch_name		= "phasex-default";
 bpm			= 120;
 patch_tune		= 0;
@@ -42,8 +42,8 @@ chorus_lfo_wave		= sine;
 chorus_lfo_rate		= 4/1;
 chorus_phase_rate	= 1/1;
 chorus_phase_balance	= 64;
-delay_mix		= 24;
-delay_feed		= 40;
+delay_mix		= 16;
+delay_feed		= 16;
 delay_time		= 3/16;
 delay_crossover		= on;
 delay_lfo		= off;

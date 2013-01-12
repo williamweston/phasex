@@ -1,5 +1,5 @@
 # phasex patch
-phasex_version		= 0.14.94;
+phasex_version		= 0.14.97;
 patch_name		= "fm-polysynth";
 bpm			= 120;
 patch_tune		= 0;
@@ -11,7 +11,7 @@ portamento		= 11;
 input_boost		= 0;
 input_follow		= off;
 pan			= 0;
-stereo_width		= 127;
+stereo_width		= 64;
 amp_velocity		= 0;
 amp_attack		= 8;
 amp_decay		= 25;

@@ -1,5 +1,5 @@
 # phasex patch
-phasex_version		= 0.14.94;
+phasex_version		= 0.14.97;
 patch_name		= "synth-bass-drum";
 bpm			= 120;
 patch_tune		= 0;
@@ -8,7 +8,7 @@ keymode			= poly;
 keyfollow_vol		= 0;
 transpose		= -24;
 portamento		= 0;
-input_boost		= 127;
+input_boost		= 126;
 input_follow		= off;
 pan			= 0;
 stereo_width		= 0;
