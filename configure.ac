@@ -20,7 +20,7 @@ dnl # along with PHASEX.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_INIT([PHASEX], m4_esyscmd_s([sh scripts/version-sh]))
 AC_CONFIG_AUX_DIR(scripts)
-AM_INIT_AUTOMAKE(0.10.0)
+AM_INIT_AUTOMAKE
 
 ###AM_MAINTAINER_MODE
 ###AM_ACLOCAL_INCLUDE(m4)
