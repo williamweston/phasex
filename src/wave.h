@@ -26,7 +26,7 @@
 #include "phasex.h"
 
 
-/* hardcoded waveform numbers (should match the functions) */
+/* hardcoded waveform numbers */
 #define WAVE_SINE           0
 #define WAVE_TRIANGLE       1
 #define WAVE_SAW            2
@@ -41,30 +41,62 @@
 #define WAVE_JUNO_SAW       11
 #define WAVE_JUNO_SQUARE    12
 #define WAVE_JUNO_POLY      13
-#define WAVE_ANALOG_SQUARE  14
-#define WAVE_VOX_1          15
-#define WAVE_VOX_2          16
-#define WAVE_POLY_SINE      17
-#define WAVE_POLY_SAW       18
-#define WAVE_POLY_REVSAW    19
-#define WAVE_POLY_SQUARE_1  20
-#define WAVE_POLY_SQUARE_2  21
-#define WAVE_POLY_1         22
-#define WAVE_POLY_2         23
-#define WAVE_POLY_3         24
-#define WAVE_POLY_4         25
-#define WAVE_NULL           26
-#define WAVE_IDENTITY       27
+#define WAVE_ANALOG_SINE_1  14
+#define WAVE_ANALOG_SINE_2  15
+#define WAVE_ANALOG_SQUARE  16
+#define WAVE_VOX_1          17
+#define WAVE_VOX_2          18
+#define WAVE_POLY_SINE      19
+#define WAVE_POLY_SAW       20
+#define WAVE_POLY_REVSAW    21
+#define WAVE_POLY_SQUARE_1  22
+#define WAVE_POLY_SQUARE_2  23
+#define WAVE_POLY_1         24
+#define WAVE_POLY_2         25
+#define WAVE_POLY_3         26
+#define WAVE_POLY_4         27
+#define WAVE_NULL           28
+#define WAVE_IDENTITY       29
+#define WAVE_TEST_1         30
+#define WAVE_TEST_2         31
 
 
 /* lookup macro for exponential frequency scaling */
 #define halfsteps_to_freq_mult(val)                                     \
 	(freq_shift_table[(int)(((val)*F_TUNING_RESOLUTION)+FREQ_SHIFT_ZERO_OFFSET)])
 
+/* oscillator wave table */
+#ifdef MALLOC_WAVE_TABLE
+
+#define wave_get(wave_num, sample_num)                                  \
+	(wave_table[((((unsigned int)(wave_num)) * (WAVEFORM_SIZE + 4)) + ((unsigned int)(sample_num)))])
+#define wave_lookup(wave_num, sample_num)                               \
+	(wave_table[((((unsigned int)(wave_num)) * (WAVEFORM_SIZE + 4)) + ((unsigned int)(sample_num)))])
+#define wave_set(wave_num, sample_num, value)                           \
+	wave_table[((((unsigned int)(wave_num)) * (WAVEFORM_SIZE + 4)) + ((unsigned int)(sample_num)))] = (sample_t)(value)
+#define wave_inc(wave_num, sample_num, value)                           \
+	wave_table[((((unsigned int)(wave_num)) * (WAVEFORM_SIZE + 4)) + ((unsigned int)(sample_num)))] += (sample_t)(value)
+
+extern sample_t *wave_table;
+
+#else
+
+#define wave_get(wave_num, sample_num)                                  \
+	(osc_table[(unsigned int)(wave_num)][(unsigned int)(sample_num)])
+#define wave_lookup(wave_num, sample_num)                               \
+	(osc_table[(unsigned int)(wave_num)][(unsigned int)(sample_num)])
+#define wave_set(wave_num, sample_num, value)                           \
+	osc_table[(unsigned int)(wave_num)][(unsigned int)(sample_num)] = (sample_t)(value)
+#define wave_inc(wave_num, sample_num, value)                           \
+	osc_table[wave_num][sample_num] += (sample_t)(value)
+
+extern sample_t osc_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
+
+#endif
+
 
 /* lookup tables */
 extern sample_t freq_shift_table[FREQ_SHIFT_TABLE_SIZE];
-extern sample_t osc_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
 extern sample_t freq_table[128][648];
 extern sample_t keyfollow_table[128][128];
 extern sample_t mix_table[128];

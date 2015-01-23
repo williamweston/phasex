@@ -1552,7 +1552,7 @@ update_param_sensitivity(unsigned int part_num, unsigned int id)
  * get_param_sensitivity()
  *****************************************************************************/
 int
-get_param_sensitivity(unsigned int part_num, unsigned int id)
+get_param_sensitivity(unsigned int UNUSED(part_num), unsigned int id)
 {
 	int     sensitive = 1;
 	PATCH   *patch    = gp;

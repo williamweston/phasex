@@ -116,7 +116,7 @@ filter_osc_table_12dB(int wave_num, int num_cycles, double octaves)
 	int         j;
 	int         cycle;
 	int         sample;
-	int         oversample  = 23;
+	int         oversample  = 37;
 	sample_t    f;
 	sample_t    q;
 	sample_t    hp          = 0.0;
@@ -139,7 +139,7 @@ filter_osc_table_12dB(int wave_num, int num_cycles, double octaves)
 			for (j = 0; j < oversample; j++) {
 
 				/* highpass */
-				hp = osc_table[wave_num][sample] - lp - (bp * q);
+				hp = wave_lookup(wave_num, sample) - lp - (bp * q);
 
 				/* bandpass */
 				bp += (f * hp);
@@ -151,7 +151,7 @@ filter_osc_table_12dB(int wave_num, int num_cycles, double octaves)
 			/* ignore filter output on all but last cycle */
 			if (cycle == num_cycles) {
 				/* take the lowpass tap */
-				osc_table[wave_num][sample] = lp;
+				wave_set(wave_num, sample, lp);
 			}
 		}
 	}
@@ -170,7 +170,7 @@ filter_osc_table_24dB(int wave_num, int num_cycles, double octaves, sample_t sca
 	int         j;
 	int         cycle;
 	int         sample;
-	int         oversample  = 11;
+	int         oversample  = 37;
 	sample_t    a;
 	sample_t    d;
 	sample_t    f;
@@ -192,12 +192,12 @@ filter_osc_table_24dB(int wave_num, int num_cycles, double octaves, sample_t sca
 	p = (k + 1.0) * 0.5;
 
 	for (cycle = 1; cycle <= num_cycles; cycle++) {
-		for (sample = 0; sample < F_WAVEFORM_SIZE; sample++) {
+		for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
 			a = 0.0;
 			for (j = 0; j < oversample; j++) {
 				a += 2.0;
 				d = (a - f) / a;
-				x = osc_table[wave_num][sample] - (4.0 * p * y4);
+				x = wave_lookup(wave_num, sample) - (4.0 * p * y4);
 				y1 = ((x  + oldx)  * p) - (k * y1);
 				y2 = ((y1 + oldy1) * p) - (k * y2);
 				y3 = ((y2 + oldy2) * p) - (k * y3);
@@ -209,7 +209,7 @@ filter_osc_table_24dB(int wave_num, int num_cycles, double octaves, sample_t sca
 				oldy3 = y3;
 			}
 			if (cycle == num_cycles) {
-				osc_table[wave_num][sample] = 4.0 * scale * y4;
+				wave_set(wave_num, sample, (4.0 * scale * y4));
 			}
 		}
 	}

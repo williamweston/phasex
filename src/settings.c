@@ -2443,7 +2443,7 @@ create_config_dialog(void)
 	int             min_prio;
 	int             max_prio;
 	gint            page_num            = 0;
-	gfloat          button_x            = 0.37;
+	gfloat          button_x            = (gfloat)0.37;
 
 	/* don't do anything if the dialog already exists */
 	if (config_dialog != NULL) {

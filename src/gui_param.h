@@ -41,7 +41,7 @@ void create_param_input(GtkWidget *UNUSED(main_window), GtkWidget *table,
                         guint col, guint row, PARAM *param, gint page_num);
 void update_param_sensitivities(void);
 void update_param_sensitivity(unsigned int part_num, unsigned int id);
-int get_param_sensitivity(unsigned int part_num, unsigned int id);
+int get_param_sensitivity(unsigned int UNUSED(part_num), unsigned int id);
 void update_param_child_sensitivities(unsigned int part_num, unsigned int id);
 
 

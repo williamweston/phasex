@@ -232,6 +232,8 @@ char *wave_names[] = {
 	"juno_saw",
 	"juno_square",
 	"juno_poly",
+	"analog_sine_1",
+	"analog_sine_2",
 	"analog_square",
 	"vox_1",
 	"vox_2",
@@ -246,6 +248,8 @@ char *wave_names[] = {
 	"poly_4",
 	"null",
 	"identity",
+	"test_1",
+	"test_2",
 	NULL
 };
 
@@ -456,7 +460,9 @@ const char *wave_labels[] = {
 	"Juno Saw  ",
 	"Juno Sqr  ",
 	"Juno Poly ",
-	"Analog Sqr",
+	"Anlg Sin 1",
+	"Anlg Sin 2",
+	"Anlg Squar",
 	"Vox 1     ",
 	"Vox 2     ",
 	"Poly Sine ",
@@ -470,6 +476,8 @@ const char *wave_labels[] = {
 	"Poly 4    ",
 	"Null      ",
 	"Identity  ",
+	"Test 1    ",
+	"Test 2    ",
 	NULL
 };
 

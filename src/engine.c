@@ -273,16 +273,16 @@ init_engine_parameters(void)
 		}
 
 		/* set mix weights for the 90 degree offset chorus lfo positions */
-		chorus->phase_amount_a = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_a])
+		chorus->phase_amount_a = (1.0 + wave_lookup(WAVE_SINE, (int) chorus->phase_index_a))
 			* 0.5 * (mix_table[127 - state->chorus_phase_balance_cc]);
 
-		chorus->phase_amount_b = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_b])
+		chorus->phase_amount_b = (1.0 + wave_lookup(WAVE_SINE, (int) chorus->phase_index_b))
 			* 0.5 * (mix_table[state->chorus_phase_balance_cc]);
 
-		chorus->phase_amount_c = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_c])
+		chorus->phase_amount_c = (1.0 + wave_lookup(WAVE_SINE, (int) chorus->phase_index_c))
 			* 0.5 * (mix_table[127 - state->chorus_phase_balance_cc]);
 
-		chorus->phase_amount_d = (1.0 + osc_table[WAVE_SINE][(int) chorus->phase_index_d])
+		chorus->phase_amount_d = (1.0 + wave_lookup(WAVE_SINE, (int) chorus->phase_index_d))
 			* 0.5 * (mix_table[state->chorus_phase_balance_cc]);
 
 		/* set chorus lfo indices */
@@ -1151,7 +1151,7 @@ void run_lfo(PART         *part,
 #ifdef INTERPOLATE_WAVETABLE_LOOKUPS
 		part->lfo_out[lfo]   = osc_table_hermite(state->lfo_wave[lfo], part->lfo_index[lfo]);
 #else
-		part->lfo_out[lfo]   = osc_table[state->lfo_wave[lfo]][(int) part->lfo_index[lfo]];
+		part->lfo_out[lfo]   = wave_lookup(state->lfo_wave[lfo], (int) part->lfo_index[lfo]);
 #endif
 		part->lfo_index[lfo] += part->lfo_adjust[lfo];
 		while (part->lfo_index[lfo] < 0.0) {
@@ -1447,11 +1447,14 @@ run_osc(VOICE *voice, PART *part, PATCH_STATE *state, unsigned int osc)
 		                                          (voice->index[osc] + phase_adjust2));
 #else
 		voice->osc_out1[osc] =
-			(osc_table[part->osc_wave[osc]][(((int)(voice->index[osc] - phase_adjust1)
-			                                   + WAVEFORM_SIZE) % WAVEFORM_SIZE)]);
+			(wave_lookup(part->osc_wave[osc], 
+				   (((int)(voice->index[osc] - phase_adjust1)
+	                                   + WAVEFORM_SIZE) % WAVEFORM_SIZE)));
+
 		voice->osc_out2[osc] =
-			(osc_table[part->osc_wave[osc]][(((int)(voice->index[osc] + phase_adjust2)
-			                                   + WAVEFORM_SIZE) % WAVEFORM_SIZE)]);
+			(wave_lookup(part->osc_wave[osc], 
+				   (((int)(voice->index[osc] + phase_adjust2)
+	                                   + WAVEFORM_SIZE) % WAVEFORM_SIZE)));
 #endif
 		break;
 
@@ -1615,22 +1618,22 @@ run_chorus(CHORUS *chorus, PART *part, PATCH_STATE *state)
 	/* set phase offset read indices into chorus delay buffer */
 	chorus->read_index_a =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_a] + 1.0) *
+		 ((wave_lookup(state->chorus_lfo_wave, (int) chorus->lfo_index_a) + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	chorus->read_index_b =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_b] + 1.0) *
+		 ((wave_lookup(state->chorus_lfo_wave, (int) chorus->lfo_index_b) + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	chorus->read_index_c =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_c] + 1.0) *
+		 ((wave_lookup(state->chorus_lfo_wave, (int) chorus->lfo_index_c) + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	chorus->read_index_d =
 		((sample_t)(chorus->bufsize + chorus->write_index - chorus->length - 1) +
-		 ((osc_table[state->chorus_lfo_wave][(int) chorus->lfo_index_d] + 1.0) *
+		 ((wave_lookup(state->chorus_lfo_wave, (int) chorus->lfo_index_d) + 1.0) *
 		  chorus->half_size * state->chorus_amount));
 
 	/* grab values from phase offset positions within chorus delay buffer */
@@ -1650,25 +1653,25 @@ run_chorus(CHORUS *chorus, PART *part, PATCH_STATE *state)
 	   Set phase offset read indices into chorus delay buffer */
 	chorus->read_index_a =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_a)] + 1.0) *
+		 (int)(((wave_lookup(state->chorus_lfo_wave, (int)(chorus->lfo_index_a)) + 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
 	chorus->read_index_b =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_b)] + 1.0) *
+		 (int)(((wave_lookup(state->chorus_lfo_wave, (int)(chorus->lfo_index_b)) + 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
 	chorus->read_index_c =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_c)] * 1.0) *
+		 (int)(((wave_lookup(state->chorus_lfo_wave, (int)(chorus->lfo_index_c)) * 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
 	chorus->read_index_d =
 		(chorus->bufsize + chorus->write_index +
-		 (int)(((osc_table[state->chorus_lfo_wave][(int)(chorus->lfo_index_d)] * 1.0) *
+		 (int)(((wave_lookup(state->chorus_lfo_wave, (int)(chorus->lfo_index_d)) * 1.0) *
 		        chorus->half_size * state->chorus_amount)) -
 		 chorus->length - 1) & chorus->bufsize_mask;
 
@@ -1751,12 +1754,12 @@ run_chorus(CHORUS *chorus, PART *part, PATCH_STATE *state)
 	}
 
 	/* set amount used for mix weight for the LFO positions at right angles */
-	chorus->phase_amount_a = (1.0 + osc_table[WAVE_SINE][(int)(chorus->phase_index_a)])
+	chorus->phase_amount_a = (1.0 + wave_lookup(WAVE_SINE, (int)(chorus->phase_index_a)))
 		* 0.5 * (mix_table[127 - state->chorus_phase_balance_cc]);
 
 	chorus->phase_amount_c = 1.0 - chorus->phase_amount_a;
 
-	chorus->phase_amount_b = (1.0 + osc_table[WAVE_SINE][(int)(chorus->phase_index_b)])
+	chorus->phase_amount_b = (1.0 + wave_lookup(WAVE_SINE, (int)(chorus->phase_index_b)))
 		* 0.5 * (mix_table[state->chorus_phase_balance_cc]);
 
 	chorus->phase_amount_d = 1.0 - chorus->phase_amount_b;

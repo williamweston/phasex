@@ -129,18 +129,22 @@ typedef float sample_t;
    88200 96000 97200 98304 115200 129600 132300 144000 162000
    176400 */
 #if (PHASEX_CPU_POWER == 1)
-# define WAVEFORM_SIZE                  32400
-# define F_WAVEFORM_SIZE                32400.0
+# define WAVEFORM_SIZE                  30030
+# define F_WAVEFORM_SIZE                30030.0
 #endif
 #if (PHASEX_CPU_POWER == 2)
 # define WAVEFORM_SIZE                  32400
 # define F_WAVEFORM_SIZE                32400.0
 #endif
 #if (PHASEX_CPU_POWER == 3)
+# define WAVEFORM_SIZE                  43890
+# define F_WAVEFORM_SIZE                43890.0
+#endif
+#if (PHASEX_CPU_POWER == 4)
 # define WAVEFORM_SIZE                  50820
 # define F_WAVEFORM_SIZE                50820.0
 #endif
-#if (PHASEX_CPU_POWER == 4)
+#if (PHASEX_CPU_POWER == 5)
 # define WAVEFORM_SIZE                  50820
 # define F_WAVEFORM_SIZE                50820.0
 #endif
@@ -304,6 +308,8 @@ typedef float sample_t;
    Config file and command line options are always supported! */
 #define ENABLE_CONFIG_DIALOG
 
+#define ENABLE_SPLASH_WINDOW
+//define MALLOC_WAVE_TABLE
 
 /*****************************************************************************
  *
@@ -355,7 +361,7 @@ typedef float sample_t;
 #define SAMPLE_RATE_OVERSAMPLE          2
 
 /* Update NUM_WAVEFORMS after adding new waveforms */
-#define NUM_WAVEFORMS                   28
+#define NUM_WAVEFORMS                   32
 
 /* Maximum delay times, in samples, must be powers of 2, and large
    enough to function at all sample rates. */

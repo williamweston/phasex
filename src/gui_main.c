@@ -77,12 +77,15 @@ GtkFileFilter       *file_filter_patches    = NULL;
 GtkFileFilter       *file_filter_map        = NULL;
 
 GtkWidget           *main_window            = NULL;
+#ifdef ENABLE_SPLASH_WINDOW
 GtkWidget           *splash_window          = NULL;
+#endif
 GtkWidget           *focus_widget           = NULL;
 
 GtkKnobAnim         *knob_anim              = NULL;
 GtkKnobAnim         *detent_knob_anim       = NULL;
 
+#ifdef ENABLE_SPLASH_WINDOW
 int                 alpha_support           = 0;
 int                 composite_support       = 0;
 
@@ -90,6 +93,7 @@ GdkPixbuf           *splash_pixbuf          = NULL;
 
 int                 splash_width            = 256;
 int                 splash_height           = 256;
+#endif
 
 int                 forced_quit             = 0;
 int                 gtkui_restarting        = 0;
@@ -106,7 +110,9 @@ void *
 gtkui_thread(void *UNUSED(arg))
 {
 	static int  once = 1;
+#ifdef ENABLE_SPLASH_WINDOW
 	GdkWindow   *window;
+#endif
 
 #ifdef ENABLE_NLS
 	bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
@@ -121,6 +127,7 @@ gtkui_thread(void *UNUSED(arg))
 		PHASEX_ERROR("gtk_init_check() failure!\n");
 	}
 
+#ifdef ENABLE_SPLASH_WINDOW
 	/* create splash screen and sit in gtk_main until the rest is ready */
 	create_splash_window();
 
@@ -134,6 +141,11 @@ gtkui_thread(void *UNUSED(arg))
 	}
 
 	PHASEX_DEBUG(DEBUG_CLASS_GUI, "Splash Done!\n");
+#else
+	while (!start_gui) {
+		usleep(125000);
+	}
+#endif
 
 	/* continue on with GUI setup */
 	file_filter_all         = NULL;
@@ -171,6 +183,7 @@ gtkui_thread(void *UNUSED(arg))
 	}
 	init_gui_patch();
 
+#ifdef ENABLE_SPLASH_WINDOW
 	/* allow main window to appear on top */
 #if GTK_CHECK_VERSION(2, 14, 0)
 	window = gtk_widget_get_window(splash_window);
@@ -182,6 +195,7 @@ gtkui_thread(void *UNUSED(arg))
 		gtk_main_iteration_do(FALSE);
 		usleep(1000);
 	}
+#endif
 
 	/* everything gets created from here */
 	create_main_window();
@@ -212,8 +226,10 @@ gtkui_thread(void *UNUSED(arg))
 
 	update_param_sensitivities();
 
+#ifdef ENABLE_SPLASH_WINDOW
 	gtk_widget_destroy(splash_window);
 	splash_window = NULL;
+#endif
 
 	/* gtkui thread sits and runs here */
 	gtk_main();
@@ -594,6 +610,7 @@ handle_window_state_event(GtkWidget *UNUSED(widget), GdkEventWindowState *state)
 }
 
 
+#ifdef ENABLE_SPLASH_WINDOW
 /*****************************************************************************
  * splash_expose()
  *
@@ -782,6 +799,7 @@ create_splash_window(void)
 		cairo_destroy(cr);
 	}
 }
+#endif /* ENABLE_SPLASH_WINDOW */
 
 
 /*****************************************************************************
