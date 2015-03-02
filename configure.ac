@@ -3,7 +3,7 @@ dnl # configure.ac
 dnl #
 dnl # PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
 dnl #
-dnl # Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
+dnl # Copyright (C) 2007-2013 William Weston <william.h.weston@gmail.com>
 dnl #
 dnl # PHASEX is free software: you can redistribute it and/or modify
 dnl # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ AC_DEFINE_UNQUOTED(GTKRC_DARK,           ["${ac_datadir}/themes/Phasex-Dark/gtk-
                                          [PHASEX Dark GTK Theme])
 AC_DEFINE_UNQUOTED(GTKRC_LIGHT,          ["${ac_datadir}/themes/Phasex-Light/gtk-2.0/gtkrc"],
                                          [PHASEX Light GTK Theme])
-AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT,    ["whw@linuxmail.org"],
+AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT,    ["william.h.weston@gmail.com"],
                                          [Address where bug reports should be sent])
 
 
@@ -646,15 +646,18 @@ fi
 case "$DEBUG_CFLAGS" in
 	"none")
 		DEBUG_CFLAGS=""
-		OPT_CFLAGS="-pipe -Wall $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O3 -ffast-math -fomit-frame-pointer -fsingle-precision-constant"
+#		OPT_CFLAGS="-pipe -Wall $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O3 -ffast-math -fomit-frame-pointer -fsingle-precision-constant"
+		OPT_CFLAGS="-pipe -Wall $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O3 -ffast-math -fomit-frame-pointer"
 		;;
 	"yes")
 		DEBUG_CFLAGS="-g"
-		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O2 -ffast-math -fsingle-precision-constant"
+#		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O2 -ffast-math -fsingle-precision-constant"
+		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -O2 -ffast-math"
 		;;
 	*)
 		DEBUG_CFLAGS="-g"
-		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -fsingle-precision-constant"
+#		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS -fsingle-precision-constant"
+		OPT_CFLAGS="-pipe -Wall -Wcast-align -Wconversion -Wextra -Werror=format-security $ARCH_OPT_CFLAGS -m$ARCH_BITS $ARCH_MATH_CFLAGS"
 		;;
 esac
 

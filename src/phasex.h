@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,8 +81,8 @@ typedef float sample_t;
 
 /* Number of micro-tuning steps between halfsteps. */
 /* A value of 120 seems to provide good harmonics. */
-#define TUNING_RESOLUTION               120
-#define F_TUNING_RESOLUTION             120.0
+#define TUNING_RESOLUTION               1440
+#define F_TUNING_RESOLUTION             1440.0
 
 /* Default timer interval for visual parameter refresh (in msec). */
 #if (PHASEX_CPU_POWER == 1)
@@ -141,10 +141,6 @@ typedef float sample_t;
 # define F_WAVEFORM_SIZE                43890.0
 #endif
 #if (PHASEX_CPU_POWER == 4)
-# define WAVEFORM_SIZE                  50820
-# define F_WAVEFORM_SIZE                50820.0
-#endif
-#if (PHASEX_CPU_POWER == 5)
 # define WAVEFORM_SIZE                  50820
 # define F_WAVEFORM_SIZE                50820.0
 #endif
@@ -253,8 +249,9 @@ typedef float sample_t;
 /* Audio output defaults, mostly for first startup w/ no config file.
    These options now can be set in config file and/or command line. */
 //define DEFAULT_AUDIO_DRIVER            AUDIO_DRIVER_ALSA_PCM
+//define DEFAULT_MIDI_DRIVER             MIDI_DRIVER_ALSA_SEQ
 #define DEFAULT_AUDIO_DRIVER            AUDIO_DRIVER_JACK
-#define DEFAULT_MIDI_DRIVER             MIDI_DRIVER_ALSA_SEQ
+#define DEFAULT_MIDI_DRIVER             MIDI_DRIVER_JACK
 
 /* Build with audio input code enabled (ALSA and JACK). */
 #define ENABLE_INPUTS

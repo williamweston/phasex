@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -878,7 +878,7 @@ update_osc_transpose(PARAM *param)
 			   need to be set properly here, not just this one. */
 			for (osc = 0; osc < NUM_OSCS; osc++) {
 				voice->osc_portamento[osc] =
-					4.0 * (freq_table[state->patch_tune_cc]
+					1.0 * (freq_table[state->patch_tune_cc]
 					       [256 + voice->osc_key[osc] + state->transpose +
 					        state->osc_transpose_cc[osc] - 64] -
 					       voice->osc_freq[osc]) /

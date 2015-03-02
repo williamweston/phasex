@@ -156,12 +156,12 @@ fi
 
 
 %changelog
-* Wed Dec 19 2012 William Weston <whw@linuxmail.org> - 0.14.94
+* Wed Dec 19 2012 William Weston <william.h.weston@gmail.com> - 0.14.94
 - Fixed typo in use of ix86 arch macro.
 - Updated description, license, and URL.
 - Updated for 0.14.94.
 
-* Tue Dec 04 2012 William Weston <whw@linuxmail.org> - 0.14.93
+* Tue Dec 04 2012 William Weston <william.h.weston@gmail.com> - 0.14.93
 - Removed use of --desktop_vendor for desktop-file-install.
 - Added new files for 0.14.93.
 - Added needed / new options for running configure.
@@ -171,48 +171,48 @@ fi
 - Fixed install of docs.
 - Updated contact email address.
 
-* Sat Sep 22 2012 William Weston <whw@linuxmail.org> - 0.14.0dev
+* Sat Sep 22 2012 William Weston <william.h.weston@gmail.com> - 0.14.0dev
 - Removed desktop_vendor from desktop-file-install.
 - Added new files for 0.14.x.
 
-* Mon Oct 05 2009 William Weston <whw@linuxmail.org> - 0.12.0-0pre2
+* Mon Oct 05 2009 William Weston <william.h.weston@gmail.com> - 0.12.0-0pre2
 - Removed deprecated Applications category from desktop file install.
 - Added --with-atom rpmbuild option for forcing atom optimizations.
 - Added autoconf and automake to the build requirements.
 
-* Mon Sep 21 2009 William Weston <whw@linuxmail.org> - 0.12.0-0pre1
+* Mon Sep 21 2009 William Weston <william.h.weston@gmail.com> - 0.12.0-0pre1
 - Added 32-bit detection for cross-arch builds.
 - Fixed beta versioning handling.
 - Updated categories for desktop file install.
 - Removed use of RPM_OPT_FLAGS (phasex handles its own optimizations).
 
-* Mon Sep 14 2009 William Weston <whw@linuxmail.org> - 0.12.0-0beta4
+* Mon Sep 14 2009 William Weston <william.h.weston@gmail.com> - 0.12.0-0beta4
 - Update files section to include new Dark and Light themes.
 
-* Mon May 18 2009 William Weston <whw@linuxmail.org> - 0.12.0-0beta2
+* Mon May 18 2009 William Weston <william.h.weston@gmail.com> - 0.12.0-0beta2
 - Updated beta version macro system for 0.12.0-0beta2.
 - Fixed case typo in ChangeLog filename.
 
-* Thu Jan 29 2009 William Weston <whw@linuxmail.org> - 0.12.0-0beta
+* Thu Jan 29 2009 William Weston <william.h.weston@gmail.com> - 0.12.0-0beta
 - Updated for 0.12.0.
 - Added libsamplerate dependency.
 - Added beta versioning macro.
 
-* Wed Sep  3 2008 William Weston <whw@linuxmail.org> - 0.11.2-0
+* Wed Sep  3 2008 William Weston <william.h.weston@gmail.com> - 0.11.2-0
 - Updated for 0.11.2.
 
-* Tue Aug  7 2007 William Weston <whw@linuxmail.org> - 0.11.0-0
+* Tue Aug  7 2007 William Weston <william.h.weston@gmail.com> - 0.11.0-0
 - Updated for 0.11.0.
 
-* Thu May 24 2007 William Weston <whw@linuxmail.org> - 0.10.3-0
+* Thu May 24 2007 William Weston <william.h.weston@gmail.com> - 0.10.3-0
 - Updated for 0.10.3.
 
-* Tue May 15 2007 William Weston <whw@linuxmail.org> - 0.10.2-0
+* Tue May 15 2007 William Weston <william.h.weston@gmail.com> - 0.10.2-0
 - Updated for 0.10.2.
 
-* Thu May  3 2007 William Weston <whw@linuxmail.org> - 0.10.1-0
+* Thu May  3 2007 William Weston <william.h.weston@gmail.com> - 0.10.1-0
 - Added README and COPYING to doc install.
 - Updated for 0.10.1.
 
-* Tue May  1 2007 William Weston <whw@linuxmail.org> - 0.10.0-0
+* Tue May  1 2007 William Weston <william.h.weston@gmail.com> - 0.10.0-0
 - Initial RPM spec file.

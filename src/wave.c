@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -392,13 +392,6 @@ build_velocity_gain_table(void)
 			velocity_gain_table[j][k] = gain;
 		}
 	}
-
-/*
-	for (j = 1; j < 128; j += 7) {
-		for (k = 1; k < 128; k += 7) {
-		}
-	}
-*/
 }
 
 
@@ -478,7 +471,7 @@ build_waveform_tables(void)
 		wave_inc(WAVE_POLY_SQUARE_2, sample_num,   -wave_j);
 		wave_inc(WAVE_POLY_4, sample_num,          -wave_j);
 
-		for (j = 2.0; j <= 19.0; j += 1.0) {    /* j: even/odd harmonics  */
+		for (j = 2.0; j <= 19.0; j += 1.0) {/* j: even/odd harmonics  */
 			k = ((j - 1.0) * 2.0);          /* k: even harmonics      */
 			l = ((j - 1.0) * 2.0) + 1.0;    /* l: odd harmonics       */
 			m = ((j - 1.0) * 3.0);          /* m: partial even/odd    */
@@ -507,10 +500,8 @@ build_waveform_tables(void)
 				(sample_t)(MATH_SIN((m * opp_phase)) * -1.0 / m));
 		}
 
-		//wave_set(WAVE_POLY_SAW, sample_num,
-		//	wave_lookup(WAVE_POLY_REVSAW, (WAVEFORM_SIZE - sample_num)));
-		j = wave_lookup(WAVE_POLY_REVSAW, (WAVEFORM_SIZE - sample_num));
-		wave_set(WAVE_POLY_SAW, sample_num, j);
+		wave_set(WAVE_POLY_SAW, sample_num,
+			wave_lookup(WAVE_POLY_REVSAW, (WAVEFORM_SIZE - sample_num)));
 	}
 
 	/* bandlimit the _S (or BL) and Poly waveshapes */
@@ -535,37 +526,33 @@ build_waveform_tables(void)
 	load_waveform_sample(WAVE_JUNO_SQUARE,    7,   6.0,  1.00);
 	load_waveform_sample(WAVE_JUNO_POLY,      7,  11.0,  1.00);
 	load_waveform_sample(WAVE_ANALOG_SINE_1,  7,  11.0,  1.00);
-	load_waveform_sample(WAVE_ANALOG_SINE_2,  7,   7.0,  1.00);
+	load_waveform_sample(WAVE_ANALOG_SINE_2,  7,   6.0,  1.00);
 	load_waveform_sample(WAVE_ANALOG_SQUARE,  7,  11.0,  1.00);
 	load_waveform_sample(WAVE_VOX_1,          7,   6.0,  1.00);
 	load_waveform_sample(WAVE_VOX_2,          7,   6.0,  1.00);
-	load_waveform_sample(WAVE_TEST_1,         7,  11.0,  1.00);
-	load_waveform_sample(WAVE_TEST_2,         7,  11.0,  1.00);
 	load_waveform_sample(-1, -1, -1, -1);
 #else
 	for (sample_num = 0; sample_num < WAVEFORM_SIZE; sample_num++) {
 		j = wave_lookup(WAVE_SINE, sample_num);
-
 		wave_set(WAVE_JUNO_OSC, sample_num, j);
-		wave_set(WAVE_JUNO_SAW, sample_num, j);
-		wave_set(WAVE_JUNO_SQUARE, sample_num, j);
 		wave_set(WAVE_JUNO_POLY, sample_num, j);
 		wave_set(WAVE_ANALOG_SINE, sample_num, j);
-		wave_set(WAVE_ANALOG_SQUARE, sample_num, j);
 		wave_set(WAVE_VOX_1, sample_num, j);
 		wave_set(WAVE_VOX_2, sample_num, j);
-		wave_set(WAVE_TEST_1, sample_num, j);
-		wave_set(WAVE_TEST_2, sample_num, j);
+
+		j = wave_lookup(WAVE_SQUARE, sample_num);
+		wave_set(WAVE_JUNO_SQUARE, sample_num, j);
+		wave_set(WAVE_ANALOG_SQUARE, sample_num, j);
+
+		wave_set(WAVE_JUNO_SAW, sample_num, wave_lookup(WAVE_SAW, sample_num));
 	}
 #endif
 
 	/* wrap first four samples to end of each waveform table for hermite optimization */
 	for (wave_num = 0; wave_num < NUM_WAVEFORMS; wave_num++) {
 		for (sample_num = 0; sample_num < 4; sample_num++) {
-			//wave_set(wave_num, (WAVEFORM_SIZE + sample_num),
-			//	wave_lookup(wave_num, sample_num));
-			k = wave_lookup(wave_num, sample_num);
-			wave_set(wave_num, (WAVEFORM_SIZE + sample_num), k);
+			wave_set(wave_num, (WAVEFORM_SIZE + sample_num),
+				wave_lookup(wave_num, sample_num));
 		}
 	}
 }
@@ -586,15 +573,14 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 	char            filename[PATH_MAX];
 	struct stat     statbuf;
 	SRC_DATA        src_data;
-	int		rawfile;
+	int             rawfile;
 	unsigned int    sample;
 	unsigned int    input_len;
 	sample_t        pos_max;
 	sample_t        neg_max;
 	sample_t        offset;
 	sample_t        scalar;
-	sample_t	value;
-	size_t          sample_t_size = sizeof(sample_t);
+	size_t          sample_t_size       = sizeof(sample_t);
 	int             bytes_read          = 0;
 	size_t          samples_read        = 0;
 	size_t          total_read          = 0;
@@ -629,11 +615,8 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 		PHASEX_ERROR("Unable to load raw sample file '%s'\n", filename);
 	}
 	input_len = (unsigned int)((unsigned int) statbuf.st_size / sizeof(float));
-//	PHASEX_DEBUG(DEBUG_CLASS_INIT, "Loading raw waveform '%s': %d samples\n",
-//	             filename, input_len);
 
 	/* open raw sample file */
-	//if ((rawfile = open(filename, O_RDONLY | O_CLOEXEC, S_IRUSR)) > 0)
 	if ((rawfile = open(filename, O_RDONLY, S_IRUSR)) > 0) {
 
 		/* read sample data */
@@ -652,8 +635,8 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 
 		if (samples_read == input_len) {
 
-			/* normalize sample to [-1,1] */
-			pos_max = neg_max = 0.0;
+			/* obtain normalization parameters for bandlimiting filter */
+			offset = pos_max = neg_max = 0.0;
 			for (sample = 0; sample < input_len; sample++) {
 				if (in_buf[sample] > pos_max) {
 					pos_max = in_buf[sample];
@@ -661,16 +644,15 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 				if (in_buf[sample] < neg_max) {
 					neg_max = in_buf[sample];
 				}
+				offset -= in_buf[sample];
 			}
-			offset = (pos_max + neg_max) / -2.0;
-			scalar = 1.0 / (sample_t)((pos_max - neg_max) / 2.0);
-//			for (sample = 0; sample < input_len; sample++) {
-//				in_buf[sample] = (in_buf[sample] + offset) * scalar;
-//			}
+			offset /= (float)input_len;
+			if ((scalar = pos_max + offset) < -(offset + neg_max)) {
+				scalar = -(offset + neg_max);
+			}
+			scalar = 1.0/scalar;
 
-//			PHASEX_DEBUG(DEBUG_CLASS_INIT, "{1} Normalized raw waveform '%s':  offset=%f  scalar=%f\n", wave_names[wavenum], offset, scalar);
-
-			PHASEX_DEBUG(DEBUG_CLASS_INIT, "Loaded raw waveform '%s' %d samples:  Will normalize from offset=%f, scale=%f\n",
+			PHASEX_DEBUG(DEBUG_CLASS_INIT, "Resampling raw waveform '%s' %d samples:  offset=%f, scale=%f\n",
 				wave_names[wavenum], input_len, (double)(-offset), (double)(1.0 / scalar));
 
 			/* resample to fit WAVEFORM_SIZE */
@@ -699,15 +681,12 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 			}
 			else {
 				for (sample = 0; sample < input_len; sample++) {
-					//osc_table[wavenum, sample] *= scale;
-					value = wave_lookup(wavenum, sample) * scale;
-					wave_set(wavenum, sample, value);
+					wave_set(wavenum, sample, wave_lookup(wavenum, sample) * scale);
 				}
 			}
 
-#if 1
-			/* normalize sample to [-1,1] */
-			pos_max = neg_max = 0.0;
+			/* normalize sample */
+			offset = pos_max = neg_max = 0.0;
 			for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
 				if (wave_lookup(wavenum, sample) > pos_max) {
 					pos_max = wave_lookup(wavenum, sample);
@@ -715,16 +694,19 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 				if (wave_lookup(wavenum, sample) < neg_max) {
 					neg_max = wave_lookup(wavenum, sample);
 				}
+				offset -= in_buf[sample];
 			}
-			offset = (pos_max + neg_max) / -2.0;
-			scalar = 1.0 / ((pos_max - neg_max) / 2.0);
+			offset /= (float)input_len;
+			if ((scalar = pos_max + offset) < -(offset + neg_max)) {
+				scalar = -(offset + neg_max);
+			}
+			scalar = 1.0/scalar;
 			for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
-				//wave_set(wavenum, sample, (wave_lookup(wavenum, sample) + offset) * scalar);
-				value = (wave_lookup(wavenum, sample) + offset) * scalar;
-				wave_set(wavenum, sample, value);
+				wave_set(wavenum, sample, (wave_lookup(wavenum, sample) + offset) * scalar);
 			}
-			PHASEX_DEBUG(DEBUG_CLASS_INIT, "{2} Normalized raw waveform '%s':  offset=%f  scalar=%f\n", wave_names[wavenum], offset, scalar);
-#endif
+			PHASEX_DEBUG(DEBUG_CLASS_INIT,
+			             "{2} Normalized raw waveform '%s':  offset=%f  scalar=%f\n",
+			             wave_names[wavenum], offset, scalar);
 
 			/* all done */
 			return 0;
@@ -734,9 +716,7 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 	/* copy sine data on failure */
 	PHASEX_ERROR("Error reading '%s'!\n", filename);
 	for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
-		//wave_set(wavenum, sample, wave_lookup(WAVE_SINE, sample));
-		value = wave_lookup(WAVE_SINE, sample);
-		wave_set(wavenum, sample, value);
+		wave_set(wavenum, sample, wave_lookup(WAVE_SINE, sample));
 	}
 
 	return -1;

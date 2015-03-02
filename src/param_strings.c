@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -248,8 +248,6 @@ char *wave_names[] = {
 	"poly_4",
 	"null",
 	"identity",
-	"test_1",
-	"test_2",
 	NULL
 };
 
@@ -476,8 +474,6 @@ const char *wave_labels[] = {
 	"Poly 4    ",
 	"Null      ",
 	"Identity  ",
-	"Test 1    ",
-	"Test 2    ",
 	NULL
 };
 

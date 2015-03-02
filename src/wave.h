@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,8 +57,6 @@
 #define WAVE_POLY_4         27
 #define WAVE_NULL           28
 #define WAVE_IDENTITY       29
-#define WAVE_TEST_1         30
-#define WAVE_TEST_2         31
 
 
 /* lookup macro for exponential frequency scaling */

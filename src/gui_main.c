@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2007-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -240,7 +240,7 @@ gtkui_thread(void *UNUSED(arg))
 
 	/* cleanup and shut everything else down */
 	phasex_shutdown("Thank you for using PHASEX!\n"
-	                "(C) 1999-2013 William Weston <whw@linuxmail.org> and others.\n"
+	                "(C) 1999-2015 Willaim Weston <william.h.weston@gmail.com> and others.\n"
 	                "Released under the GNU Public License, Ver. 3\n");
 
 	/* end of gtkui thread */

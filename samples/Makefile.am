@@ -10,6 +10,7 @@ sample_files = \
 	vox_1.raw \
 	vox_2.raw \
 	vox_3.raw \
+	analog_sine.raw \
 	analog_square.raw
 
 dist_samples_DATA = $(sample_files)

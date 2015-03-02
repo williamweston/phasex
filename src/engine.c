@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -193,9 +193,7 @@ init_engine_internals(void)
 
 	/* (-3dB @ 20Hz) DC blocking filter */
 	/* 1.0 - (M_PI * 2 * freq / (sample_t) f_sample_rate) */
-#ifdef ENABLE_DC_REJECTION_FILTER
-	global.dcR_const = 1.0 - (125.6 / (sample_t) f_sample_rate);
-#endif
+	global.wdcf = 125.7 / (sample_t) f_sample_rate;
 }
 
 
@@ -486,6 +484,10 @@ init_engine_parameters(void)
 			voice->age        = 0;
 			voice->midi_key   = -1;
 			voice->keypressed = -1;
+
+			/* init dc filters */
+			voice->dcf1 = 0.0;
+			voice->dcf2 = 0.0;
 
 			/* initialize moog filters */
 			voice->filter_y1_1    = 0.0;
@@ -780,10 +782,6 @@ void
 run_part(PART *part, PATCH_STATE *state, unsigned int part_num)
 {
 	unsigned int    osc;
-#ifdef ENABLE_DC_REJECTION_FILTER
-	sample_t        tmp1;
-	sample_t        tmp2;
-#endif
 
 	/* generate amplitude envelopes for all voices */
 	run_voice_envelopes(part, state, part_num);
@@ -842,19 +840,6 @@ run_part(PART *part, PATCH_STATE *state, unsigned int part_num)
 	if (state->delay_mix_cc) {
 		run_delay(get_delay(part_num), part, state);
 	}
-
-	/* output this sample to the buffer */
-#ifdef ENABLE_DC_REJECTION_FILTER
-	tmp1 = part->out1;
-	part->out1 = part->out1 - part->dcR_in1 + global.dcR_const * part->dcR_out1;
-	part->dcR_in1  = tmp1;
-	part->dcR_out1 = part->out1;
-
-	tmp2 = part->out2;
-	part->out2 = part->out2 - part->dcR_in2 + global.dcR_const * part->dcR_out2;
-	part->dcR_in2  = tmp2;
-	part->dcR_out2 = part->out2;
-#endif
 }
 
 
@@ -1300,6 +1285,12 @@ run_oscillators(VOICE *voice, PART *part, PATCH_STATE *state)
 		run_osc(voice, part, state, osc);
 	}
 
+	/* apply DC filters */
+	voice->dcf1 += global.wdcf * (voice->out1 - voice->dcf1);
+	voice->out1 -= voice->dcf1;
+	voice->dcf2 += global.wdcf * (voice->out2 - voice->dcf2);
+	voice->out2 -= voice->dcf2;
+
 	/* oscs are mixed.  now apply AM oscs. */
 	for (osc = 0; osc < NUM_OSCS; osc++) {
 		if (state->osc_modulation[osc] == MOD_TYPE_AM) {
@@ -1329,6 +1320,7 @@ run_osc(VOICE *voice, PART *part, PATCH_STATE *state, unsigned int osc)
 	/* current pitch bend for this osc */
 	part->osc_pitch_bend[osc] = part->pitch_bend_base * state->osc_pitchbend[osc];
 
+	/* frequency modulations */
 	switch (state->osc_freq_base[osc]) {
 
 	case FREQ_BASE_MIDI_KEY:
@@ -1411,7 +1403,7 @@ run_osc(VOICE *voice, PART *part, PATCH_STATE *state, unsigned int osc)
 
 		/* calculate current phase shift */
 
-		/* get data from modulation source */
+		/* get data from phase modulation source */
 		switch (state->phase_mod_type[osc]) {
 		case MOD_TYPE_LFO:
 			tmp_1 = tmp_2 = part->lfo_out[state->phase_lfo[osc]];

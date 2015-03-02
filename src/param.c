@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -274,7 +274,7 @@ init_params(void)
 	init_param_info(PARAM_CHORUS_PHASE_RATE,     "chorus_phase_rate",   "Phase Rate",  PARAM_TYPE_RATE, -1, 127,  64,   0, 0,  4, 1, update_chorus_phase_rate,   rate_labels,        rate_names);
 	init_param_info(PARAM_CHORUS_PHASE_BALANCE,  "chorus_phase_balance","Phase Bal",   PARAM_TYPE_REAL, -1, 127,  64,   0, 0,  8, 0, update_chorus_phase_balance,NULL,               NULL);
 	init_param_info(PARAM_CHORUS_FEED,           "chorus_feed",         "Feedback",    PARAM_TYPE_REAL, -1, 127,  11,   0, 0,  8, 0, update_chorus_feed,         NULL,               NULL);
-	init_param_info(PARAM_CHORUS_LFO_WAVE,       "chorus_lfo_wave",     "LFO Wave",    PARAM_TYPE_DTNT, -1,  31,   0,   0, 0,  1, 0, update_chorus_lfo_wave,     wave_labels,        wave_names);
+	init_param_info(PARAM_CHORUS_LFO_WAVE,       "chorus_lfo_wave",     "LFO Wave",    PARAM_TYPE_DTNT, -1,  29,   0,   0, 0,  1, 0, update_chorus_lfo_wave,     wave_labels,        wave_names);
 	init_param_info(PARAM_CHORUS_LFO_RATE,       "chorus_lfo_rate",     "LFO Rate",    PARAM_TYPE_RATE, -1, 127, 115,   0, 0,  4, 1, update_chorus_lfo_rate,     rate_labels,        rate_names);
 	init_param_info(PARAM_CHORUS_CROSSOVER,      "chorus_crossover",    "Crossover",   PARAM_TYPE_BOOL, -1,   1,   1,   0, 0,  1, 0, update_chorus_crossover,    on_off_labels,      boolean_names);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
@@ -285,7 +285,7 @@ init_params(void)
 	init_param_info(PARAM_DELAY_LFO,             "delay_lfo",           "LFO",         PARAM_TYPE_BBOX, -1, 127,   0,   0, 0,  1, 0, update_delay_lfo,           lfo_labels,         lfo_names);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
 	init_param_info(PARAM_OSC1_MODULATION,       "osc1_modulation",     "Mix Mod",     PARAM_TYPE_BBOX, -1,   3,   1,   0, 0,  1, 0, update_osc_modulation,      mod_type_labels,    mod_type_names);
-	init_param_info(PARAM_OSC1_WAVE,             "osc1_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,  13,   0, 0,  1, 0, update_osc_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_OSC1_WAVE,             "osc1_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,  13,   0, 0,  1, 0, update_osc_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_OSC1_FREQ_BASE,        "osc1_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   0,   0, 0,  1, 1, update_osc_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_OSC1_RATE,             "osc1_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 0,  4, 1, update_osc_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_OSC1_POLARITY,         "osc1_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 0,  1, 0, update_osc_polarity,        polarity_labels,    polarity_names);
@@ -304,7 +304,7 @@ init_params(void)
 	init_param_info(PARAM_OSC1_WAVE_LFO_AMOUNT,  "osc1_wave_lfo_amount","Wave Amt",    PARAM_TYPE_REAL, -1, 127,  64, -64, 0,  1, 0, update_osc_wave_lfo_amount, NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
 	init_param_info(PARAM_OSC2_MODULATION,       "osc2_modulation",     "Mix Mod",     PARAM_TYPE_BBOX, -1,   3,   1,   0, 1,  1, 0, update_osc_modulation,      mod_type_labels,    mod_type_names);
-	init_param_info(PARAM_OSC2_WAVE,             "osc2_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,  13,   0, 1,  1, 0, update_osc_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_OSC2_WAVE,             "osc2_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,  13,   0, 1,  1, 0, update_osc_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_OSC2_FREQ_BASE,        "osc2_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   0,   0, 1,  1, 1, update_osc_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_OSC2_RATE,             "osc2_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 1,  4, 1, update_osc_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_OSC2_POLARITY,         "osc2_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 1,  1, 0, update_osc_polarity,        polarity_labels,    polarity_names);
@@ -323,7 +323,7 @@ init_params(void)
 	init_param_info(PARAM_OSC2_WAVE_LFO_AMOUNT,  "osc2_wave_lfo_amount","Wave Amt",    PARAM_TYPE_REAL, -1, 127,  64, -64, 1,  1, 0, update_osc_wave_lfo_amount, NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
 	init_param_info(PARAM_OSC3_MODULATION,       "osc3_modulation",     "Mix Mod",     PARAM_TYPE_BBOX, -1,   3,   1,   0, 2,  1, 0, update_osc_modulation,      mod_type_labels,    mod_type_names);
-	init_param_info(PARAM_OSC3_WAVE,             "osc3_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,  15,   0, 2,  1, 0, update_osc_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_OSC3_WAVE,             "osc3_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,  15,   0, 2,  1, 0, update_osc_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_OSC3_FREQ_BASE,        "osc3_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   0,   0, 2,  1, 1, update_osc_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_OSC3_RATE,             "osc3_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 2,  4, 1, update_osc_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_OSC3_POLARITY,         "osc3_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 2,  1, 0, update_osc_polarity,        polarity_labels,    polarity_names);
@@ -342,7 +342,7 @@ init_params(void)
 	init_param_info(PARAM_OSC3_WAVE_LFO_AMOUNT,  "osc3_wave_lfo_amount","Wave Amt",    PARAM_TYPE_REAL, -1, 127,  64, -64, 2,  1, 0, update_osc_wave_lfo_amount, NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
 	init_param_info(PARAM_OSC4_MODULATION,       "osc4_modulation",     "Mix Mod",     PARAM_TYPE_BBOX, -1,   3,   1,   0, 3,  1, 0, update_osc_modulation,      mod_type_labels,    mod_type_names);
-	init_param_info(PARAM_OSC4_WAVE,             "osc4_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,  24,   0, 3,  1, 0, update_osc_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_OSC4_WAVE,             "osc4_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,  24,   0, 3,  1, 0, update_osc_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_OSC4_FREQ_BASE,        "osc4_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   0,   0, 3,  1, 1, update_osc_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_OSC4_RATE,             "osc4_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 3,  4, 1, update_osc_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_OSC4_POLARITY,         "osc4_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 3,  1, 0, update_osc_polarity,        polarity_labels,    polarity_names);
@@ -360,7 +360,7 @@ init_params(void)
 	init_param_info(PARAM_OSC4_WAVE_LFO,         "osc4_wave_lfo",       "Wave LFO",    PARAM_TYPE_BBOX, -1,   4,   0,   0, 3,  1, 0, update_osc_wave_lfo,        lfo_labels,         lfo_names);
 	init_param_info(PARAM_OSC4_WAVE_LFO_AMOUNT,  "osc4_wave_lfo_amount","Wave Amt",    PARAM_TYPE_REAL, -1, 127,  64, -64, 3,  1, 0, update_osc_wave_lfo_amount, NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
-	init_param_info(PARAM_LFO1_WAVE,             "lfo1_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,   0,   0, 0,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_LFO1_WAVE,             "lfo1_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,   0,   0, 0,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_LFO1_FREQ_BASE,        "lfo1_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   8,   0, 0,  1, 1, update_lfo_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_LFO1_RATE,             "lfo1_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 0,  4, 1, update_lfo_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_LFO1_POLARITY,         "lfo1_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 0,  1, 0, update_lfo_polarity,        polarity_labels,    polarity_names);
@@ -369,7 +369,7 @@ init_params(void)
 	init_param_info(PARAM_LFO1_PITCHBEND,        "lfo1_pitchbend",      "Pitchbend",   PARAM_TYPE_REAL, -1, 127,  64, -64, 0, 12, 0, update_lfo_pitchbend,       NULL,               NULL);
 	init_param_info(PARAM_LFO1_VOICE_AM,         "lfo1_voice_am",       "Voice AM",    PARAM_TYPE_REAL, -1, 127,  64, -64, 0,  8, 0, update_lfo_voice_am,        NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
-	init_param_info(PARAM_LFO2_WAVE,             "lfo2_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,   0,   0, 1,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_LFO2_WAVE,             "lfo2_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,   0,   0, 1,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_LFO2_FREQ_BASE,        "lfo2_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   8,   0, 1,  1, 1, update_lfo_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_LFO2_RATE,             "lfo2_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 1,  4, 1, update_lfo_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_LFO2_POLARITY,         "lfo2_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 1,  1, 0, update_lfo_polarity,        polarity_labels,    polarity_names);
@@ -378,7 +378,7 @@ init_params(void)
 	init_param_info(PARAM_LFO2_PITCHBEND,        "lfo2_pitchbend",      "Pitchbend",   PARAM_TYPE_REAL, -1, 127,  64, -64, 1, 12, 0, update_lfo_pitchbend,       NULL,               NULL);
 	init_param_info(PARAM_LFO2_LFO1_FM,          "lfo2_lfo1_fm",        "LFO-1 Rate",  PARAM_TYPE_REAL, -1, 127,  64, -64, 1, 12, 0, update_lfo_lfo_rate,        NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
-	init_param_info(PARAM_LFO3_WAVE,             "lfo3_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,   0,   0, 2,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_LFO3_WAVE,             "lfo3_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,   0,   0, 2,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_LFO3_FREQ_BASE,        "lfo3_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   8,   0, 2,  1, 1, update_lfo_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_LFO3_RATE,             "lfo3_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 2,  4, 1, update_lfo_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_LFO3_POLARITY,         "lfo3_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 2,  1, 0, update_lfo_polarity,        polarity_labels,    polarity_names);
@@ -387,7 +387,7 @@ init_params(void)
 	init_param_info(PARAM_LFO3_PITCHBEND,        "lfo3_pitchbend",      "Pitchbend",   PARAM_TYPE_REAL, -1, 127,  64, -64, 2, 12, 0, update_lfo_pitchbend,       NULL,               NULL);
 	init_param_info(PARAM_LFO3_CUTOFF,           "lfo3_cutoff",         "Cutoff",      PARAM_TYPE_REAL, -1, 127,  64, -64, 2, 12, 0, update_lfo_cutoff,          NULL,               NULL);
 	/*              index                         name                   label          type             cc  lim  ccv ofst ix leap    callback                    labels              names */
-	init_param_info(PARAM_LFO4_WAVE,             "lfo4_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  31,   0,   0, 3,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
+	init_param_info(PARAM_LFO4_WAVE,             "lfo4_wave",           "Wave",        PARAM_TYPE_DTNT, -1,  29,   0,   0, 3,  1, 0, update_lfo_wave,            wave_labels,        wave_names);
 	init_param_info(PARAM_LFO4_FREQ_BASE,        "lfo4_source",         "Source",      PARAM_TYPE_DTNT, -1,   8,   8,   0, 3,  1, 1, update_lfo_freq_base,       freq_base_labels,   freq_base_names);
 	init_param_info(PARAM_LFO4_RATE,             "lfo4_rate",           "Rate",        PARAM_TYPE_RATE, -1, 127,  64,   0, 3,  4, 1, update_lfo_rate,            rate_labels,        rate_names);
 	init_param_info(PARAM_LFO4_POLARITY,         "lfo4_polarity",       "Polarity",    PARAM_TYPE_BOOL, -1,   1,   0,   0, 3,  1, 0, update_lfo_polarity,        polarity_labels,    polarity_names);
