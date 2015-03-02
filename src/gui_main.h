@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2007-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,9 @@ extern GtkFileFilter    *file_filter_patches;
 extern GtkFileFilter    *file_filter_map;
 
 extern GtkWidget        *main_window;
+#ifdef ENABLE_SPLASH_WINDOW
 extern GtkWidget        *splash_window;
+#endif
 extern GtkWidget        *focus_widget;
 
 extern GtkObject        *cc_edit_adj;
@@ -69,7 +71,9 @@ void gui_main_loop_stopped(gpointer UNUSED(data));
 
 void handle_window_state_event(GtkWidget *widget, GdkEventWindowState *state);
 
+#ifdef ENABLE_SPLASH_WINDOW
 void create_splash_window(void);
+#endif
 void create_main_window(void);
 
 void restart_gtkui(void);

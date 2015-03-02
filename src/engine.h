@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -84,9 +84,7 @@ typedef struct global {
 	sample_t    bps;                        /* beats per second */
 	sample_t    out1;                       /* output sample 2 */
 	sample_t    out2;                       /* output sample 1 */
-#ifdef ENABLE_DC_REJECTION_FILTER
-	sample_t    dcR_const;
-#endif
+	sample_t    wdcf;
 } GLOBAL;
 
 
@@ -105,6 +103,8 @@ typedef struct voice {
 	int         portamento_sample;          /* sample number within portamento */
 	int         portamento_samples;         /* portamento time in samples */
 	int         age;                        /* voice age, in samples */
+	sample_t    dcf1;                       /* DC Filter state 1 */
+	sample_t    dcf2;                       /* DC Filter state 2 */
 	sample_t    out1;                       /* output sample 1 */
 	sample_t    out2;                       /* output sample 2 */
 	sample_t    amp_env;                    /* smoothed final output of env generator */

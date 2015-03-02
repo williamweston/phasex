@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@
 
 
 #define     LICENSE_SIZE                    40960
+#define     LINEBUF_SIZE                    256
+#define     TEXTBUF_SIZE                    32768
 
 
 PARAM_HELP  param_help[NUM_HELP_PARAMS];
@@ -62,7 +64,7 @@ about_phasex_dialog(void)
 	GtkWidget       *label;
 #else
 	const gchar     *authors[] = {
-		"* William Weston <whw@linuxmail.org>:\n"
+		"* William Weston <william.h.weston@gmail.com>:\n"
 		"    Original PHASEX code, artwork, patches, and samples.\n",
 		"* Tony Garnock-Jones:\n"
 		"    Original GTKKnob code.\n",
@@ -77,7 +79,7 @@ about_phasex_dialog(void)
 #endif
 	const gchar     *copyright =
 		"Source code, all artwork, and all audio samples:\n"
-		"Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>\n"
+		"Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>\n"
 		"With portions of the source code:\n"
 		"Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>\n"
 		"Copyright (C) 2007 Peter Shorthose <zenadsl6252@zen.co.uk>\n"
@@ -255,7 +257,7 @@ init_help(void)
 {
 	PARAM           *param;
 	FILE            *help_f;
-	char            linebuf[256];
+	char            linebuf[LINEBUF_SIZE];
 	char            *textbuf;
 	char            *name           = NULL;
 	char            *label          = NULL;
@@ -276,12 +278,12 @@ init_help(void)
 	}
 
 	/* read help entries */
-	if ((textbuf = malloc(32768)) == NULL) {
+	if ((textbuf = malloc(TEXTBUF_SIZE)) == NULL) {
 		phasex_shutdown("Out of Memory!\n");
 	}
-	memset(textbuf, '\0', sizeof(textbuf));
-	memset(linebuf, '\0', sizeof(linebuf));
-	while (fgets(linebuf, 256, help_f) != NULL) {
+	memset(textbuf, '\0', TEXTBUF_SIZE * sizeof(char));
+	memset(linebuf, '\0', LINEBUF_SIZE * sizeof(char));
+	while (fgets(linebuf, LINEBUF_SIZE, help_f) != NULL) {
 
 		/* help text can span multiple lines */
 		if (in_param_text) {
@@ -373,9 +375,9 @@ init_help(void)
 
 			/* prepare to read in multiple lines of text for this param */
 			in_param_text = 1;
-			memset(textbuf, '\0', sizeof(textbuf));
+			memset(textbuf, '\0', TEXTBUF_SIZE * sizeof(char));
 		}
-		memset(linebuf, '\0', sizeof(linebuf));
+		memset(linebuf, '\0', LINEBUF_SIZE * sizeof(char));
 	}
 
 	/* done parsing */

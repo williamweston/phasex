@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -164,6 +164,12 @@ get_wave(char *token, char *filename, int line)
 	else if (strcmp(token, "juno_poly") == 0) {
 		return WAVE_JUNO_POLY;
 	}
+	else if (strcmp(token, "analog_sine_2") == 0) {
+		return WAVE_ANALOG_SINE_2;
+	}
+	else if (strncmp(token, "analog_sine", 11) == 0) {
+		return WAVE_ANALOG_SINE_1;
+	}
 	else if (strcmp(token, "analog_square") == 0) {
 		return WAVE_ANALOG_SQUARE;
 	}
@@ -199,6 +205,12 @@ get_wave(char *token, char *filename, int line)
 	}
 	else if (strcmp(token, "poly_4") == 0) {
 		return WAVE_POLY_4;
+	}
+	else if (strcmp(token, "test_1") == 0) {
+		return WAVE_TEST_1;
+	}
+	else if (strcmp(token, "test_2") == 0) {
+		return WAVE_TEST_2;
 	}
 	else if (((wave = atoi(token)) > 0) && (wave < NUM_WAVEFORMS)) {
 		return wave;

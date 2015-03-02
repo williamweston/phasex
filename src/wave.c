@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <math.h>
 #include <samplerate.h>
@@ -38,12 +39,16 @@
 #include "settings.h"
 #include "debug.h"
 
-
 /* base tuning frequency -- can be overridden on command line */
 double      a4freq = A4FREQ;
 
-/* this is _the_ osc table */
+#ifdef MALLOC_WAVE_TABLE
+/* oscillator wave table */
+sample_t    *wave_table = NULL;
+#else
+/* this is _the_ oscillator wave table */
 sample_t    osc_table[NUM_WAVEFORMS][WAVEFORM_SIZE + 4];
+#endif
 
 /* frequency table for midi notes */
 sample_t    freq_table[128][648];
@@ -69,7 +74,7 @@ sample_t    pan_table[128];
 /* table for general purpose gain, w/ unity at cc=120 */
 sample_t    gain_table[128];
 
-/* gain table for velocity[sensitivity][velicity], w/ unity at velocity=100 */
+/* gain table for velocity[sensitivity, velicity], w/ unity at velocity=100 */
 sample_t    velocity_gain_table[128][128];
 
 /* keyfollow table for ctlr/key combo --> amplitude coefficient */
@@ -387,11 +392,6 @@ build_velocity_gain_table(void)
 			velocity_gain_table[j][k] = gain;
 		}
 	}
-
-	for (j = 1; j < 128; j += 7) {
-		for (k = 1; k < 128; k += 7) {
-		}
-	}
 }
 
 
@@ -413,131 +413,146 @@ build_waveform_tables(void)
 	sample_t        wave_l;
 	sample_t        wave_m;
 
+#ifdef MALLOC_WAVE_TABLE
+	if (wave_table == NULL) {
+		if ((wave_table = malloc(NUM_WAVEFORMS * sizeof(sample_t) * (WAVEFORM_SIZE + 4))) == NULL) {
+			phasex_shutdown("Out of Memory!");
+		}
+	}
+#endif
+
 	for (sample_num = 0; sample_num < WAVEFORM_SIZE; sample_num++) {
 
 		phase = 2 * M_PI * (sample_t) sample_num / F_WAVEFORM_SIZE;
 		opp_phase = phase + M_PI;
 
-		osc_table[WAVE_SINE][sample_num]          = (sample_t) sin(phase);
+		wave_set(WAVE_SINE, sample_num, (sample_t)MATH_SIN(phase));
 
-		osc_table[WAVE_TRIANGLE][sample_num]      = func_triangle(sample_num);
-		osc_table[WAVE_SAW][sample_num]           = func_saw(sample_num);
-		osc_table[WAVE_REVSAW][sample_num]        = func_revsaw(sample_num);
-		osc_table[WAVE_SQUARE][sample_num]        = func_square(sample_num);
-		osc_table[WAVE_STAIR][sample_num]         = func_stair(sample_num);
-		osc_table[WAVE_SAW_S][sample_num]         = func_saw(sample_num);
-		osc_table[WAVE_REVSAW_S][sample_num]      = func_revsaw(sample_num);
-		osc_table[WAVE_SQUARE_S][sample_num]      = func_square(sample_num);
-		osc_table[WAVE_STAIR_S][sample_num]       = func_stair(sample_num);
+		wave_set(WAVE_TRIANGLE, sample_num, func_triangle(sample_num));
+		wave_set(WAVE_SAW, sample_num, func_saw(sample_num));
+		wave_set(WAVE_REVSAW, sample_num, func_revsaw(sample_num));
+		wave_set(WAVE_SQUARE, sample_num, func_square(sample_num));
+		wave_set(WAVE_STAIR, sample_num, func_stair(sample_num));
+		wave_set(WAVE_SAW_S, sample_num, func_saw(sample_num));
+		wave_set(WAVE_REVSAW_S, sample_num, func_revsaw(sample_num));
+		wave_set(WAVE_SQUARE_S, sample_num, func_square(sample_num));
+		wave_set(WAVE_STAIR_S, sample_num, func_stair(sample_num));
 
-		osc_table[WAVE_IDENTITY][sample_num]      = 1.0;
-		osc_table[WAVE_NULL][sample_num]          = 0.0;
+		wave_set(WAVE_IDENTITY, sample_num, 1.0);
+		wave_set(WAVE_NULL, sample_num, 0.0);
 
-		osc_table[WAVE_POLY_SINE][sample_num]     = 0.0;
-		osc_table[WAVE_POLY_SAW][sample_num]      = 0.0;
-		osc_table[WAVE_POLY_REVSAW][sample_num]   = 0.0;
-		osc_table[WAVE_POLY_SQUARE_1][sample_num] = 0.0;
-		osc_table[WAVE_POLY_SQUARE_2][sample_num] = 0.0;
-		osc_table[WAVE_POLY_1][sample_num]        = 0.0;
-		osc_table[WAVE_POLY_2][sample_num]        = 0.0;
-		osc_table[WAVE_POLY_3][sample_num]        = 0.0;
-		osc_table[WAVE_POLY_4][sample_num]        = 0.0;
+		wave_set(WAVE_POLY_SINE, sample_num, 0.0);
+		wave_set(WAVE_POLY_SAW, sample_num, 0.0);
+		wave_set(WAVE_POLY_REVSAW, sample_num, 0.0);
+		wave_set(WAVE_POLY_SQUARE_1, sample_num, 0.0);
+		wave_set(WAVE_POLY_SQUARE_2, sample_num, 0.0);
+		wave_set(WAVE_POLY_1, sample_num, 0.0);
+		wave_set(WAVE_POLY_2, sample_num, 0.0);
+		wave_set(WAVE_POLY_3, sample_num, 0.0);
+		wave_set(WAVE_POLY_4, sample_num, 0.0);
 
 		j = 1.0;
 		wave_j = (sample_t)(MATH_SIN(phase) * 1.00000 * j);
 
-		osc_table[WAVE_POLY_REVSAW][sample_num]   += wave_j;
-		osc_table[WAVE_POLY_1][sample_num]        += wave_j;
-		osc_table[WAVE_POLY_2][sample_num]        += wave_j;
-		osc_table[WAVE_POLY_3][sample_num]        += wave_j;
+		wave_inc(WAVE_POLY_REVSAW, sample_num,      wave_j);
+		wave_inc(WAVE_POLY_1, sample_num,           wave_j);
+		wave_inc(WAVE_POLY_2, sample_num,           wave_j);
+		wave_inc(WAVE_POLY_3, sample_num,           wave_j);
 
-		osc_table[WAVE_POLY_SQUARE_1][sample_num] += wave_j;
-		osc_table[WAVE_POLY_SINE][sample_num]     += wave_j;
-		osc_table[WAVE_POLY_SQUARE_2][sample_num] += wave_j;
-		osc_table[WAVE_POLY_4][sample_num]        += wave_j;
+		wave_inc(WAVE_POLY_SQUARE_1, sample_num,    wave_j);
+		wave_inc(WAVE_POLY_SINE, sample_num,        wave_j);
+		wave_inc(WAVE_POLY_SQUARE_2, sample_num,    wave_j);
+		wave_inc(WAVE_POLY_4, sample_num,           wave_j);
 
 		wave_j = (sample_t)(MATH_SIN(opp_phase) * 1.00000 * j);
-		osc_table[WAVE_POLY_SQUARE_1][sample_num] -= wave_j;
-		osc_table[WAVE_POLY_SINE][sample_num]     -= wave_j;
-		osc_table[WAVE_POLY_SQUARE_2][sample_num] -= wave_j;
-		osc_table[WAVE_POLY_4][sample_num]        -= wave_j;
 
-		for (j = 2.0; j <= 19.0; j += 1.0) {    /* j: even/odd harmonics    */
-			k = ((j - 1.0) * 2.0);          /* k: even harmonics        */
-			l = ((j - 1.0) * 2.0) + 1.0;    /* l: odd harmonics         */
-			m = ((j - 1.0) * 3.0);          /* m: partial even/odd      */
+		wave_inc(WAVE_POLY_SQUARE_1, sample_num,   -wave_j);
+		wave_inc(WAVE_POLY_SINE, sample_num,       -wave_j);
+		wave_inc(WAVE_POLY_SQUARE_2, sample_num,   -wave_j);
+		wave_inc(WAVE_POLY_4, sample_num,          -wave_j);
+
+		for (j = 2.0; j <= 19.0; j += 1.0) {/* j: even/odd harmonics  */
+			k = ((j - 1.0) * 2.0);          /* k: even harmonics      */
+			l = ((j - 1.0) * 2.0) + 1.0;    /* l: odd harmonics       */
+			m = ((j - 1.0) * 3.0);          /* m: partial even/odd    */
 			wave_j = (sample_t)(MATH_SIN((j * phase)) * 1.00000 / j);
 			wave_k = (sample_t)(MATH_SIN((k * phase)) * 1.00000 / k);
 			wave_l = (sample_t)(MATH_SIN((l * phase)) * 1.00000 / l);
 			wave_m = (sample_t)(MATH_SIN((m * phase)) * 1.00000 / m);
 			if (j <= 11.0) {
-				osc_table[WAVE_POLY_REVSAW][sample_num] += wave_j;
-				osc_table[WAVE_POLY_1][sample_num]      += wave_k;
-				osc_table[WAVE_POLY_2][sample_num]      += wave_l;
-				osc_table[WAVE_POLY_3][sample_num]      += wave_m;
+				wave_inc(WAVE_POLY_REVSAW, sample_num, wave_j);
+				wave_inc(WAVE_POLY_1,      sample_num, wave_k);
+				wave_inc(WAVE_POLY_2,      sample_num, wave_l);
+				wave_inc(WAVE_POLY_3,      sample_num, wave_m);
 			}
-			osc_table[WAVE_POLY_SQUARE_1][sample_num] += wave_j;
-			osc_table[WAVE_POLY_SINE][sample_num]     += wave_k;
-			osc_table[WAVE_POLY_SQUARE_2][sample_num] += wave_l;
-			osc_table[WAVE_POLY_4][sample_num]        += wave_m;
+			wave_inc(WAVE_POLY_SQUARE_1, sample_num, wave_j);
+			wave_inc(WAVE_POLY_SINE,     sample_num, wave_k);
+			wave_inc(WAVE_POLY_SQUARE_2, sample_num, wave_l);
+			wave_inc(WAVE_POLY_4,        sample_num, wave_m);
 
-			osc_table[WAVE_POLY_SQUARE_1][sample_num] -=
-				(sample_t)(MATH_SIN((j * opp_phase)) * 1.00000 / j);
-			osc_table[WAVE_POLY_SINE][sample_num]     -=
-				(sample_t)(MATH_SIN((k * opp_phase)) * 1.00000 / k);
-			osc_table[WAVE_POLY_SQUARE_2][sample_num] -=
-				(sample_t)(MATH_SIN((l * opp_phase)) * 1.00000 / l);
-			osc_table[WAVE_POLY_4][sample_num]        -=
-				(sample_t)(MATH_SIN((m * opp_phase)) * 1.00000 / m);
+			wave_inc(WAVE_POLY_SQUARE_1, sample_num,
+				(sample_t)(MATH_SIN((j * opp_phase)) * -1.0 / j));
+			wave_inc(WAVE_POLY_SINE, sample_num,
+				(sample_t)(MATH_SIN((k * opp_phase)) * -1.0 / k));
+			wave_inc(WAVE_POLY_SQUARE_2, sample_num,
+				(sample_t)(MATH_SIN((l * opp_phase)) * -1.0 / l));
+			wave_inc(WAVE_POLY_4, sample_num,
+				(sample_t)(MATH_SIN((m * opp_phase)) * -1.0 / m));
 		}
 
-		osc_table[WAVE_POLY_SAW][sample_num] =
-			osc_table[WAVE_POLY_REVSAW][WAVEFORM_SIZE - sample_num];
+		wave_set(WAVE_POLY_SAW, sample_num,
+			wave_lookup(WAVE_POLY_REVSAW, (WAVEFORM_SIZE - sample_num)));
 	}
 
 	/* bandlimit the _S (or BL) and Poly waveshapes */
-	filter_osc_table_24dB(WAVE_SAW_S,         7, 8.0, 0.88);
-	filter_osc_table_24dB(WAVE_REVSAW_S,      7, 8.0, 0.88);
-	filter_osc_table_24dB(WAVE_SQUARE_S,      7, 8.0, 0.88);
-	filter_osc_table_24dB(WAVE_STAIR_S,       7, 8.0, 0.88);
-	filter_osc_table_24dB(WAVE_POLY_SINE,     7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_SAW,      7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_REVSAW,   7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_SQUARE_1, 7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_SQUARE_2, 7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_1,        7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_2,        7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_3,        7, 8.0, 0.75);
-	filter_osc_table_24dB(WAVE_POLY_4,        7, 8.0, 0.88);
+	filter_osc_table_24dB(WAVE_SAW_S,         7,  8.0, 1.00);
+	filter_osc_table_24dB(WAVE_REVSAW_S,      7,  8.0, 1.00);
+	filter_osc_table_24dB(WAVE_SQUARE_S,      7,  8.0, 1.00);
+	filter_osc_table_24dB(WAVE_STAIR_S,       7,  8.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_SINE,     7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_SAW,      7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_REVSAW,   7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_SQUARE_1, 7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_SQUARE_2, 7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_1,        7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_2,        7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_3,        7, 11.0, 1.00);
+	filter_osc_table_24dB(WAVE_POLY_4,        7, 11.0, 1.00);
 
 	/* load and bandlimit sampled waveforms */
 #ifdef ENABLE_SAMPLE_LOADING
-	load_waveform_sample(WAVE_JUNO_OSC,       7, 6.0, 0.88);
-	load_waveform_sample(WAVE_JUNO_SAW,       7, 8.0, 0.88);
-	load_waveform_sample(WAVE_JUNO_SQUARE,    7, 8.0, 0.88);
-	load_waveform_sample(WAVE_JUNO_POLY,      7, 7.0, 0.88);
-	load_waveform_sample(WAVE_ANALOG_SQUARE,  7, 8.0, 0.88);
-	load_waveform_sample(WAVE_VOX_1,          7, 6.0, 1.0);
-	load_waveform_sample(WAVE_VOX_2,          7, 6.0, 1.0);
+	load_waveform_sample(WAVE_JUNO_OSC,       7,  11.0,  1.00);
+	load_waveform_sample(WAVE_JUNO_SAW,       7,   6.0,  1.00);
+	load_waveform_sample(WAVE_JUNO_SQUARE,    7,   6.0,  1.00);
+	load_waveform_sample(WAVE_JUNO_POLY,      7,  11.0,  1.00);
+	load_waveform_sample(WAVE_ANALOG_SINE_1,  7,  11.0,  1.00);
+	load_waveform_sample(WAVE_ANALOG_SINE_2,  7,   6.0,  1.00);
+	load_waveform_sample(WAVE_ANALOG_SQUARE,  7,  11.0,  1.00);
+	load_waveform_sample(WAVE_VOX_1,          7,   6.0,  1.00);
+	load_waveform_sample(WAVE_VOX_2,          7,   6.0,  1.00);
 	load_waveform_sample(-1, -1, -1, -1);
 #else
 	for (sample_num = 0; sample_num < WAVEFORM_SIZE; sample_num++) {
-		j = osc_table[WAVE_SINE][sample_num];
+		j = wave_lookup(WAVE_SINE, sample_num);
+		wave_set(WAVE_JUNO_OSC, sample_num, j);
+		wave_set(WAVE_JUNO_POLY, sample_num, j);
+		wave_set(WAVE_ANALOG_SINE, sample_num, j);
+		wave_set(WAVE_VOX_1, sample_num, j);
+		wave_set(WAVE_VOX_2, sample_num, j);
 
-		osc_table[WAVE_JUNO_OSC][sample_num]       = j;
-		osc_table[WAVE_JUNO_SAW][sample_num]       = j;
-		osc_table[WAVE_JUNO_SQUARE][sample_num]    = j;
-		osc_table[WAVE_JUNO_POLY][sample_num]      = j;
-		osc_table[WAVE_ANALOG_SQUARE][sample_num]  = j;
-		osc_table[WAVE_VOX_1][sample_num]          = j;
-		osc_table[WAVE_VOX_2][sample_num]          = j;
+		j = wave_lookup(WAVE_SQUARE, sample_num);
+		wave_set(WAVE_JUNO_SQUARE, sample_num, j);
+		wave_set(WAVE_ANALOG_SQUARE, sample_num, j);
+
+		wave_set(WAVE_JUNO_SAW, sample_num, wave_lookup(WAVE_SAW, sample_num));
 	}
 #endif
 
 	/* wrap first four samples to end of each waveform table for hermite optimization */
 	for (wave_num = 0; wave_num < NUM_WAVEFORMS; wave_num++) {
 		for (sample_num = 0; sample_num < 4; sample_num++) {
-			osc_table[wave_num][WAVEFORM_SIZE + sample_num] = osc_table[wave_num][sample_num];
+			wave_set(wave_num, (WAVEFORM_SIZE + sample_num),
+				wave_lookup(wave_num, sample_num));
 		}
 	}
 }
@@ -558,14 +573,18 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 	char            filename[PATH_MAX];
 	struct stat     statbuf;
 	SRC_DATA        src_data;
-	FILE            *rawfile;
+	int             rawfile;
 	unsigned int    sample;
 	unsigned int    input_len;
-	float           pos_max;
-	float           neg_max;
-	float           offset;
-	float           scalar;
-	size_t          sample_t_size = sizeof(sample_t);
+	sample_t        pos_max;
+	sample_t        neg_max;
+	sample_t        offset;
+	sample_t        scalar;
+	size_t          sample_t_size       = sizeof(sample_t);
+	int             bytes_read          = 0;
+	size_t          samples_read        = 0;
+	size_t          total_read          = 0;
+	size_t          chunk_len           = 0;
 
 	if (wavenum == -1) {
 		if (in_buf != NULL) {
@@ -581,7 +600,7 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 	}
 
 	if (once) {
-		if ((in_buf = malloc(2 * WAVEFORM_SIZE * sizeof(float))) == NULL) {
+		if ((in_buf = malloc(8 * WAVEFORM_SIZE * sizeof(float))) == NULL) {
 			phasex_shutdown("Out of Memory!\n");
 		}
 		if ((out_buf = malloc(WAVEFORM_SIZE * sizeof(sample_t))) == NULL) {
@@ -596,18 +615,28 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 		PHASEX_ERROR("Unable to load raw sample file '%s'\n", filename);
 	}
 	input_len = (unsigned int)((unsigned int) statbuf.st_size / sizeof(float));
-	PHASEX_DEBUG(DEBUG_CLASS_INIT, "Loading raw waveform '%s': %d samples\n",
-	             filename, input_len);
 
 	/* open raw sample file */
-	if ((rawfile = fopen(filename, "rb")) != 0) {
+	if ((rawfile = open(filename, O_RDONLY, S_IRUSR)) > 0) {
 
 		/* read sample data */
-		if (fread(in_buf, sizeof(float), input_len, rawfile) == input_len) {
-			fclose(rawfile);
+		bytes_read = 0;
+		samples_read = 0;
+		total_read = 0;
+		chunk_len = input_len;
+		while ((bytes_read = (int)read(rawfile, &(in_buf[samples_read]), sizeof(float) * chunk_len)) > 0) {
+			samples_read = (size_t)bytes_read / sizeof(float);
+			total_read += samples_read;
+			if (samples_read < input_len) {
+				chunk_len = samples_read;
+			}
+		}
+		close(rawfile);
 
-			/* normalize sample to [-1,1] */
-			pos_max = neg_max = 0;
+		if (samples_read == input_len) {
+
+			/* obtain normalization parameters for bandlimiting filter */
+			offset = pos_max = neg_max = 0.0;
 			for (sample = 0; sample < input_len; sample++) {
 				if (in_buf[sample] > pos_max) {
 					pos_max = in_buf[sample];
@@ -615,42 +644,79 @@ load_waveform_sample(int wavenum, int num_cycles, double octaves, sample_t scale
 				if (in_buf[sample] < neg_max) {
 					neg_max = in_buf[sample];
 				}
+				offset -= in_buf[sample];
 			}
-			offset = (pos_max + neg_max) / -2.0;
-			scalar = 1.0 / (float)((pos_max - neg_max) / 2.0);
-			for (sample = 0; sample < input_len; sample++) {
-				in_buf[sample] = (in_buf[sample] + offset) * scalar;
+			offset /= (float)input_len;
+			if ((scalar = pos_max + offset) < -(offset + neg_max)) {
+				scalar = -(offset + neg_max);
 			}
+			scalar = 1.0/scalar;
+
+			PHASEX_DEBUG(DEBUG_CLASS_INIT, "Resampling raw waveform '%s' %d samples:  offset=%f, scale=%f\n",
+				wave_names[wavenum], input_len, (double)(-offset), (double)(1.0 / scalar));
 
 			/* resample to fit WAVEFORM_SIZE */
 			src_data.input_frames  = (long int) input_len;
 			src_data.output_frames = WAVEFORM_SIZE;
-			src_data.src_ratio     = F_WAVEFORM_SIZE / (double) input_len;
+			src_data.src_ratio     = ((double)F_WAVEFORM_SIZE) / (double) input_len;
 			src_data.data_in       = in_buf;
+#ifdef MALLOC_WAVE_TABLE
+			src_data.data_out      =
+				(sample_t_size == 4) ? (float *) wave_table + (wavenum * (WAVEFORM_SIZE + 4)) : & (out_buf[0]);
+#else
 			src_data.data_out      =
 				(sample_t_size == 4) ? (float *) & (osc_table[wavenum][0]) : & (out_buf[0]);
-
+#endif
 			src_simple(&src_data, SRC_SINC_BEST_QUALITY, 1);
 
 			if (sample_t_size != 4) {
-				for (sample = 0; sample < input_len; sample++) {
-					osc_table[wavenum][sample] = (sample_t)(out_buf[sample]);
+				for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
+					wave_set(wavenum, sample, (sample_t)(out_buf[sample]));
 				}
 			}
 
 			/* filter resampled data */
-			filter_osc_table_24dB(wavenum, num_cycles, octaves, scale);
+			if (octaves > -11.0) {
+				filter_osc_table_24dB(wavenum, num_cycles, octaves, scale * scalar);
+			}
+			else {
+				for (sample = 0; sample < input_len; sample++) {
+					wave_set(wavenum, sample, wave_lookup(wavenum, sample) * scale);
+				}
+			}
+
+			/* normalize sample */
+			offset = pos_max = neg_max = 0.0;
+			for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
+				if (wave_lookup(wavenum, sample) > pos_max) {
+					pos_max = wave_lookup(wavenum, sample);
+				}
+				if (wave_lookup(wavenum, sample) < neg_max) {
+					neg_max = wave_lookup(wavenum, sample);
+				}
+				offset -= in_buf[sample];
+			}
+			offset /= (float)input_len;
+			if ((scalar = pos_max + offset) < -(offset + neg_max)) {
+				scalar = -(offset + neg_max);
+			}
+			scalar = 1.0/scalar;
+			for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
+				wave_set(wavenum, sample, (wave_lookup(wavenum, sample) + offset) * scalar);
+			}
+			PHASEX_DEBUG(DEBUG_CLASS_INIT,
+			             "{2} Normalized raw waveform '%s':  offset=%f  scalar=%f\n",
+			             wave_names[wavenum], offset, scalar);
 
 			/* all done */
 			return 0;
 		}
-		fclose(rawfile);
 	}
 
 	/* copy sine data on failure */
 	PHASEX_ERROR("Error reading '%s'!\n", filename);
 	for (sample = 0; sample < WAVEFORM_SIZE; sample++) {
-		osc_table[wavenum][sample] = osc_table[WAVE_SINE][sample];
+		wave_set(wavenum, sample, wave_lookup(WAVE_SINE, sample));
 	}
 
 	return -1;
@@ -818,10 +884,10 @@ osc_table_hermite(int wave_num, sample_t sample_index)
 	/* Four adjacent samples, with higher precision index in the
 	   middle first four samples of wavetables are duplicated at
 	   the end to make this part modulus free. */
-	y0 = osc_table[wave_num][index_int];
-	y1 = osc_table[wave_num][index_int + 1];
-	y2 = osc_table[wave_num][index_int + 2];
-	y3 = osc_table[wave_num][index_int + 3];
+	y0 = wave_lookup(wave_num, index_int);
+	y1 = wave_lookup(wave_num, (index_int + 1));
+	y2 = wave_lookup(wave_num, (index_int + 2));
+	y3 = wave_lookup(wave_num, (index_int + 3));
 
 	/* slope of first and second segments */
 	m0 = ((y1 - y0 + y2 - y1) * 0.75);
@@ -854,8 +920,8 @@ osc_table_linear(int wave_num, sample_t sample_index)
 	index_floor = (sample_t) MATH_FLOOR(sample_index);
 	index_int = (((int) index_floor) + WAVEFORM_SIZE + WAVEFORM_SIZE) % WAVEFORM_SIZE;
 
-	y0 = osc_table[wave_num][index_int];
-	y1 = osc_table[wave_num][index_int + 1];
+	y0 = wave_lookup(wave_num, index_int);
+	y1 = wave_lookup(wave_num, (index_int + 1));
 
 	return (y0 + (y1 - y0) * (sample_index - index_floor));
 }

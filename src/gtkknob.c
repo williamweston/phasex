@@ -313,7 +313,7 @@ gtk_knob_set_adjustment(GtkKnob *knob, GtkAdjustment *adjustment)
 	knob->old_lower = (gfloat) adjustment->lower;
 	knob->old_upper = (gfloat) adjustment->upper;
 
-	gtk_knob_set_frame_offset(knob, adjustment->value);
+	gtk_knob_set_frame_offset(knob, (gfloat) adjustment->value);
 	gtk_knob_update(knob);
 }
 
@@ -669,17 +669,17 @@ gtk_knob_update_mouse(GtkKnob *knob, gint x, gint y, gboolean absolute)
 	old_value = (gfloat) knob->adjustment->value;
 
 	range = (gfloat)(knob->adjustment->upper - knob->adjustment->lower + 1.0);
-	scale = range * range / 16384.0;
+	scale = range * range / (gfloat)16384.0;
 
 	angle = atan2f((float)(-y + (knob->height >> 1) + 2), (float)(x - (knob->width >> 1) - 1));
 
 	if (absolute) {
 		/* map [1.25pi, -0.25pi] onto [0, 1] */
-		angle *= M_1_PI;
+		angle *= (gfloat)M_1_PI;
 		if (angle < -0.5) {
-			angle += 2.0;
+			angle += (gfloat)2.0;
 		}
-		new_value = 0.66666666666666666666 * (1.25 - angle);
+		new_value = (gfloat)0.66666666666666666666 * ((gfloat)1.25 - angle);
 		new_value *= (gfloat)(knob->adjustment->upper - knob->adjustment->lower);
 		new_value += (gfloat) knob->adjustment->lower;
 	}
@@ -696,7 +696,7 @@ gtk_knob_update_mouse(GtkKnob *knob, gint x, gint y, gboolean absolute)
 
 	knob->adjustment->value = new_value;
 
-	if (floorf((float) knob->adjustment->value + 0.5) != floorf(old_value + 0.5)) {
+	if (floorf((float) knob->adjustment->value + (gfloat)0.5) != floorf(old_value + (gfloat)0.5)) {
 		gtk_knob_update_mouse_update(knob);
 		knob->saved_x = x;
 		knob->saved_y = y;
@@ -716,7 +716,7 @@ gtk_knob_update(GtkKnob *knob)
 	g_return_if_fail(GTK_IS_KNOB(knob));
 
 	if (knob->adjustment->step_increment == 1) {
-		new_value = floorf((float) knob->adjustment->value + 0.5);
+		new_value = floorf((float) knob->adjustment->value + (gfloat)0.5);
 	}
 	else {
 		new_value = (gfloat) knob->adjustment->value;
@@ -809,7 +809,7 @@ gtk_knob_set_animation(GtkKnob *knob, GtkKnobAnim *anim)
 	knob->width  = anim->frame_width;
 	knob->height = anim->height;
 	gtk_knob_set_frame_offset(knob, (knob->adjustment == NULL) ?
-	                          0.0 : knob->adjustment->value);
+	                          (gfloat)0.0 : (gfloat) knob->adjustment->value);
 	g_object_ref(G_OBJECT(knob->anim->pixbuf));
 
 	if (GTK_WIDGET_REALIZED(knob)) {

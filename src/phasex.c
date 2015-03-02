@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,11 +170,11 @@ showusage(char *argvzero)
 	printf("  -L, --disable-lash     Disable LASH completely for the current session.\n\n");
 #endif
 	printf("[P]hase [H]armonic [A]dvanced [S]ynthesis [EX]permient ver. %s\n", PACKAGE_VERSION);
-	printf("  (C) 1999-2013 William Weston <whw@linuxmail.org>,\n");
+	printf("  (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>,\n");
 	printf("With contributions (C) 2010 Anton Kormakov <assault64@gmail.com>, and\n");
 	printf("  (C) 2007 Peter Shorthose <zenadsl6252@zen.co.uk>.\n");
 	printf("GtkKnob code (C) 1999 Tony Garnock-Jones, (C) 2004 Sean Bolton,\n");
-	printf("  (C) 2007 Peter Shorthose, and (C) 2007-2013 William Weston.\n");
+	printf("  (C) 2007 Peter Shorthose, and (C) 2007-2015 Willaim Weston.\n");
 	printf("Distributed under the terms of the GNU GENERAL Public License, Version 3.\n");
 	printf("  (See AUTHORS, LICENSE, and GPL-3.0.txt for details.)\n");
 }

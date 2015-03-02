@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1552,7 +1552,7 @@ update_param_sensitivity(unsigned int part_num, unsigned int id)
  * get_param_sensitivity()
  *****************************************************************************/
 int
-get_param_sensitivity(unsigned int part_num, unsigned int id)
+get_param_sensitivity(unsigned int UNUSED(part_num), unsigned int id)
 {
 	int     sensitive = 1;
 	PATCH   *patch    = gp;

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -606,7 +606,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 	widget_set_custom_font(label, phasex_font_desc);
 	widget_set_backing_store(label);
 	gtk_misc_set_padding(GTK_MISC(label), 0, 0);
-	gtk_misc_set_alignment(GTK_MISC(label), 0.8, 0.5);
+	gtk_misc_set_alignment(GTK_MISC(label), (gfloat)0.8, (gfloat)0.5);
 	gtk_container_add(GTK_CONTAINER(event), label);
 	gtk_box_pack_start(GTK_BOX(box), event, FALSE, FALSE, 0);
 
@@ -644,7 +644,7 @@ create_navbar(GtkWidget *UNUSED(main_window), GtkWidget *parent_vbox)
 	g_object_set(G_OBJECT(midi_channel_label), "can-focus", TRUE, NULL);
 	gtk_widget_set_name(midi_channel_label, "DetentLabel");
 	widget_set_custom_font(midi_channel_label, numeric_font_desc);
-	gtk_misc_set_alignment(GTK_MISC(midi_channel_label), 0.2, 0.5);
+	gtk_misc_set_alignment(GTK_MISC(midi_channel_label), (gfloat)0.2, (gfloat)0.5);
 	widget_set_backing_store(label);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_label_set_width_chars(GTK_LABEL(midi_channel_label), 4);

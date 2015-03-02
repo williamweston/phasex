@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -232,6 +232,8 @@ char *wave_names[] = {
 	"juno_saw",
 	"juno_square",
 	"juno_poly",
+	"analog_sine_1",
+	"analog_sine_2",
 	"analog_square",
 	"vox_1",
 	"vox_2",
@@ -456,7 +458,9 @@ const char *wave_labels[] = {
 	"Juno Saw  ",
 	"Juno Sqr  ",
 	"Juno Poly ",
-	"Analog Sqr",
+	"Anlg Sin 1",
+	"Anlg Sin 2",
+	"Anlg Squar",
 	"Vox 1     ",
 	"Vox 2     ",
 	"Poly Sine ",

@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2012-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2012-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * Shamelessly adapded from test/pcm.c in alsa-lib-1.0.24.
  *   Copyright (C) Free Software Foundation, Inc.

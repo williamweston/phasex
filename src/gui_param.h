@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ void create_param_input(GtkWidget *UNUSED(main_window), GtkWidget *table,
                         guint col, guint row, PARAM *param, gint page_num);
 void update_param_sensitivities(void);
 void update_param_sensitivity(unsigned int part_num, unsigned int id);
-int get_param_sensitivity(unsigned int part_num, unsigned int id);
+int get_param_sensitivity(unsigned int UNUSED(part_num), unsigned int id);
 void update_param_child_sensitivities(unsigned int part_num, unsigned int id);
 
 

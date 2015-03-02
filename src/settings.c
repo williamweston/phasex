@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 2007-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 2007-2015 Willaim Weston <william.h.weston@gmail.com>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -2443,7 +2443,7 @@ create_config_dialog(void)
 	int             min_prio;
 	int             max_prio;
 	gint            page_num            = 0;
-	gfloat          button_x            = 0.37;
+	gfloat          button_x            = (gfloat)0.37;
 
 	/* don't do anything if the dialog already exists */
 	if (config_dialog != NULL) {

@@ -2,7 +2,7 @@
 
 scriptsdir = $(pkgdatadir)
 
-nodist_scripts_DATA = \
+dist_scripts = \
 	compile \
 	depcomp \
 	install-sh \

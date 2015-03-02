@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  * Copyright (C) 2010 Anton Kormakov <assault64@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
@@ -102,10 +102,10 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 	/* if this is velocity 0 style note off, fall through */
 	if (event->velocity > 0) {
 
-		/* keep track of previous to last key pressed! */
+		/* keep track of previous to newest key pressed! */
 		part->prev_key = part->midi_key;
-		part->midi_key = event->note;
-		part->last_key = event->note;
+		part->midi_key = event->note & 0x7F;
+		part->last_key = event->note & 0x7F;
 
 		/* allocate voice for the different keymodes */
 		switch (state->keymode) {
@@ -236,8 +236,8 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 			old_voice = NULL;
 
 			/* put this key at the start of the list */
+			part->keylist[part->midi_key]->next = NULL;
 			part->head = & (part->keylist[part->midi_key]);
-			part->head->next = NULL;
 		}
 
 		/* legato, or previous notes still in play */
@@ -270,6 +270,8 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 				part->prev->next = part->cur;
 			}
 			part->cur->next = NULL;
+
+			/* handle mono multikey when still in release tail */
 			if ( (state->keymode == KEYMODE_MONO_MULTIKEY) &&
 			     (old_voice->allocated > 0) &&
 			     (old_voice->keypressed == -1) &&

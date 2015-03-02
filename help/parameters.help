@@ -373,6 +373,9 @@ octaves above the principal.
 Juno Osc, Juno Saw, Juno Square, and Juno Poly are sampled from a
 Juno-106 in unison mode (all 6 voices in a stacked mono mode).
 
+The Analog Sine waveform was produced with a controlled feedback loop
+between an analog compressor and mixer.
+
 The Analog Square waveform comes from an analog square wave synth hand
 built by Jared "Flak" Scott.
 
@@ -506,6 +509,9 @@ octaves above the principal.
 
 Juno Osc, Juno Saw, Juno Square, and Juno Poly are sampled from a
 Juno-106 in unison mode (all 6 voices in a stacked mono mode).
+
+The Analog Sine waveform was produced with a controlled feedback loop
+between an analog compressor and mixer.
 
 The Analog Square waveform comes from an analog square wave synth hand
 built by Jared "Flak" Scott.

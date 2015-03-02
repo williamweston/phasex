@@ -4,7 +4,7 @@
  *
  * PHASEX:  [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment
  *
- * Copyright (C) 1999-2013 William Weston <whw@linuxmail.org>
+ * Copyright (C) 1999-2015 Willaim Weston <william.h.weston@gmail.com>
  *
  * PHASEX is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,8 +81,8 @@ typedef float sample_t;
 
 /* Number of micro-tuning steps between halfsteps. */
 /* A value of 120 seems to provide good harmonics. */
-#define TUNING_RESOLUTION               120
-#define F_TUNING_RESOLUTION             120.0
+#define TUNING_RESOLUTION               1440
+#define F_TUNING_RESOLUTION             1440.0
 
 /* Default timer interval for visual parameter refresh (in msec). */
 #if (PHASEX_CPU_POWER == 1)
@@ -129,16 +129,16 @@ typedef float sample_t;
    88200 96000 97200 98304 115200 129600 132300 144000 162000
    176400 */
 #if (PHASEX_CPU_POWER == 1)
-# define WAVEFORM_SIZE                  32400
-# define F_WAVEFORM_SIZE                32400.0
+# define WAVEFORM_SIZE                  30030
+# define F_WAVEFORM_SIZE                30030.0
 #endif
 #if (PHASEX_CPU_POWER == 2)
 # define WAVEFORM_SIZE                  32400
 # define F_WAVEFORM_SIZE                32400.0
 #endif
 #if (PHASEX_CPU_POWER == 3)
-# define WAVEFORM_SIZE                  50820
-# define F_WAVEFORM_SIZE                50820.0
+# define WAVEFORM_SIZE                  43890
+# define F_WAVEFORM_SIZE                43890.0
 #endif
 #if (PHASEX_CPU_POWER == 4)
 # define WAVEFORM_SIZE                  50820
@@ -249,8 +249,9 @@ typedef float sample_t;
 /* Audio output defaults, mostly for first startup w/ no config file.
    These options now can be set in config file and/or command line. */
 //define DEFAULT_AUDIO_DRIVER            AUDIO_DRIVER_ALSA_PCM
+//define DEFAULT_MIDI_DRIVER             MIDI_DRIVER_ALSA_SEQ
 #define DEFAULT_AUDIO_DRIVER            AUDIO_DRIVER_JACK
-#define DEFAULT_MIDI_DRIVER             MIDI_DRIVER_ALSA_SEQ
+#define DEFAULT_MIDI_DRIVER             MIDI_DRIVER_JACK
 
 /* Build with audio input code enabled (ALSA and JACK). */
 #define ENABLE_INPUTS
@@ -304,6 +305,8 @@ typedef float sample_t;
    Config file and command line options are always supported! */
 #define ENABLE_CONFIG_DIALOG
 
+#define ENABLE_SPLASH_WINDOW
+//define MALLOC_WAVE_TABLE
 
 /*****************************************************************************
  *
@@ -355,7 +358,7 @@ typedef float sample_t;
 #define SAMPLE_RATE_OVERSAMPLE          2
 
 /* Update NUM_WAVEFORMS after adding new waveforms */
-#define NUM_WAVEFORMS                   28
+#define NUM_WAVEFORMS                   32
 
 /* Maximum delay times, in samples, must be powers of 2, and large
    enough to function at all sample rates. */
