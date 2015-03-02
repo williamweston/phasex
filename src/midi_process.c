@@ -236,7 +236,7 @@ process_note_on(MIDI_EVENT *event, unsigned int part_num)
 			old_voice = NULL;
 
 			/* put this key at the start of the list */
-			part->keylist[part->midi_key]->next = NULL;
+			part->keylist[part->midi_key].next = NULL;
 			part->head = & (part->keylist[part->midi_key]);
 		}
 

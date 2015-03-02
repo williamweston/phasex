@@ -206,12 +206,6 @@ get_wave(char *token, char *filename, int line)
 	else if (strcmp(token, "poly_4") == 0) {
 		return WAVE_POLY_4;
 	}
-	else if (strcmp(token, "test_1") == 0) {
-		return WAVE_TEST_1;
-	}
-	else if (strcmp(token, "test_2") == 0) {
-		return WAVE_TEST_2;
-	}
 	else if (((wave = atoi(token)) > 0) && (wave < NUM_WAVEFORMS)) {
 		return wave;
 	}
