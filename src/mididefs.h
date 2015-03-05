@@ -41,6 +41,7 @@
 #define MIDI_EVENT_BPM_CHANGE       0x02    /* resync BPM with JACK Transport */
 #define MIDI_EVENT_PARAMETER        0x03    /* internal parameter representation */
 #define MIDI_EVENT_NOTES_OFF        0x04
+#define MIDI_EVENT_RESYNC           0x05    /* resync message for buffer size, etc. */
 
 /* Types < 0xF0 have MIDI channel as 4 least significant bits. */
 #define MIDI_EVENT_NOTE_OFF         0x80    /* note         velocity    */
@@ -111,6 +112,7 @@ typedef struct midi_event {
 		unsigned char       byte3;
 	} __attribute__((__transparent_union__));
 	sample_t            float_value;
+	unsigned char           data[8];
 	union {
 		struct midi_event   *next;
 		volatile gpointer   gnext;

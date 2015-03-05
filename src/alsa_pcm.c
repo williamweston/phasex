@@ -611,7 +611,6 @@ alsa_pcm_init(void)
 	snd_pcm_sw_params_t     *playback_sw_params;
 	ALSA_PCM_INFO           *new_pcm_info;
 	static snd_output_t     *output                 = NULL;
-	unsigned int            i;
 	int                     err                     = 0;
 #if (SND_LIB_VERSION >= 65554)
 	int                     period_event            = 1;
@@ -786,15 +785,6 @@ alsa_pcm_init(void)
 	buffer_period_size  = (unsigned int) alsa_pcm_period_size;
 	buffer_period_mask  = buffer_period_size - 1;
 	buffer_latency      = setting_buffer_latency * buffer_period_size;
-
-	for (i = 2; i < 24; i++) {
-		if (buffer_size == (1U << i)) {
-			buffer_size_bits = i;
-		}
-		if (buffer_period_size == (1U << i)) {
-			buffer_period_size_bits = i;
-		}
-	}
 
 	init_buffer_indices(0);
 	g_atomic_int_set(&need_increment, 0);
@@ -1744,8 +1734,8 @@ alsa_pcm_thread(void *UNUSED(arg))
 	pthread_mutex_unlock(&audio_ready_mutex);
 
 	/* initialize buffer indices and set reference clock. */
-	init_buffer_indices(1);
-	start_midi_clock();
+	//init_buffer_indices(1);
+	//start_midi_clock();
 
 	/* MAIN LOOP: poll for audio and copy buffers */
 	if (alsa_pcm_can_mmap) {

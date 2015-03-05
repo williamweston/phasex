@@ -243,9 +243,6 @@ typedef float sample_t;
 /* Load sampled waveforms (juno*, vox*, and analog_sq) on startup. */
 #define ENABLE_SAMPLE_LOADING
 
-/* Per part DC rejection filter */
-//define ENABLE_DC_REJECTION_FILTER
-
 /* Audio output defaults, mostly for first startup w/ no config file.
    These options now can be set in config file and/or command line. */
 //define DEFAULT_AUDIO_DRIVER            AUDIO_DRIVER_ALSA_PCM
@@ -268,7 +265,7 @@ typedef float sample_t;
 #define DEFAULT_AUDIO_PHASE_LOCK        0.9375
 
 /* max number of samples to use in the 8 period ringbuffer. */
-/* must be a power of 2, and must handle at least 8 periods of >= 1024 */
+/* must be a power of 2, and must handle at least 8 periods of >= 2048 */
 #define PHASEX_MAX_BUFSIZE              16384   /* up to 8 periods of 2048 */
 #define DEFAULT_BUFFER_PERIOD_SIZE      256
 #define DEFAULT_BUFFER_PERIODS          8
@@ -358,7 +355,7 @@ typedef float sample_t;
 #define SAMPLE_RATE_OVERSAMPLE          2
 
 /* Update NUM_WAVEFORMS after adding new waveforms */
-#define NUM_WAVEFORMS                   32
+#define NUM_WAVEFORMS                   30
 
 /* Maximum delay times, in samples, must be powers of 2, and large
    enough to function at all sample rates. */

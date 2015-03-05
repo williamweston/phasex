@@ -38,12 +38,9 @@ unsigned int    buffer_periods      = DEFAULT_BUFFER_PERIODS;
 unsigned int    buffer_period_size  = DEFAULT_BUFFER_PERIOD_SIZE;
 unsigned int    buffer_period_mask  = DEFAULT_BUFFER_PERIOD_SIZE - 1;
 unsigned int    buffer_latency      = DEFAULT_BUFFER_PERIOD_SIZE;
-unsigned int    buffer_size_bits;
-unsigned int    buffer_period_size_bits;
 
 volatile gint   audio_index;
 volatile gint   midi_index;
-volatile gint   engine_index;
 
 int             need_index_resync[MAX_PARTS];
 
@@ -58,7 +55,6 @@ init_buffer_indices(int resync)
 
 	g_atomic_int_set(&need_increment, 0);
 	set_audio_index(buffer_size - buffer_latency);
-	set_engine_index(0);
 	set_midi_index(0);
 	if (resync) {
 		for (part_num = 0; part_num < MAX_PARTS; part_num++) {
@@ -91,7 +87,7 @@ test_midi_index(unsigned int val)
 /*****************************************************************************
  * get_midi_index()
  *
- * Atomically reads midi_write_index.
+ * Atomically reads midi_index.
  *****************************************************************************/
 unsigned int
 get_midi_index(void)
@@ -102,10 +98,32 @@ get_midi_index(void)
 
 
 /*****************************************************************************
- * set_midi_index()
- *  unsigned int    val
+ * test_midi_rx_index()
+ *****************************************************************************/
+unsigned int
+test_midi_rx_index(unsigned int val)
+{
+	volatile gint   *addr = &midi_index;
+	return ((((unsigned int)g_atomic_int_get(addr) + buffer_latency)
+	         & buffer_size_mask) == val);
+}
+
+/*****************************************************************************
+ * get_midi_rx_index()
  *
- * Atomically sets midi_write_index to <val>.
+ * Atomically reads midi_index, advanced by buffer_latency.
+ *****************************************************************************/
+unsigned int
+get_midi_rx_index(void)
+{
+	volatile gint   *addr = &midi_index;
+	return (unsigned int)(((unsigned int)(g_atomic_int_get(addr))
+	                       + buffer_latency) & buffer_size_mask);
+}
+
+
+/*****************************************************************************
+ * set_midi_index()
  *****************************************************************************/
 void
 set_midi_index(unsigned int val)
@@ -122,29 +140,24 @@ set_midi_index(unsigned int val)
  *****************************************************************************/
 
 /*****************************************************************************
- * get_engine_index()
- *
- * Atomically reads engine_index.
+ * test_engine_index()
  *****************************************************************************/
 unsigned int
-get_engine_index(void)
+test_engine_index(unsigned int val)
 {
-	volatile gint   *addr = &engine_index;
-	return (unsigned int) g_atomic_int_get(addr);
+	volatile gint   *addr = &midi_index;
+	return (val == (unsigned int)(g_atomic_int_get(addr)));
 }
 
 
 /*****************************************************************************
- * set_engine_index()
- *  unsigned int    val
- *
- * Atomically sets engine_index to <val>.
+ * get_engine_index()
  *****************************************************************************/
-void
-set_engine_index(unsigned int val)
+unsigned int
+get_engine_index(void)
 {
-	volatile gint   *addr = &engine_index;
-	g_atomic_int_set(addr, (gint) val);
+	volatile gint   *addr = &midi_index;
+	return (unsigned int) g_atomic_int_get(addr);
 }
 
 
@@ -153,19 +166,6 @@ set_engine_index(unsigned int val)
  * Audio Buffer Index Synchronization:
  *
  *****************************************************************************/
-
-/*****************************************************************************
- * test_audio_index()
- *
- * Atomically reads audio_index and tests against supplied
- * value for write_index.  (currently not used).
- *****************************************************************************/
-unsigned int
-test_audio_index(unsigned int val)
-{
-	volatile gint   *addr = &audio_index;
-	return ((((unsigned int) g_atomic_int_get(addr) + buffer_latency) & buffer_size_mask) == val);
-}
 
 /*****************************************************************************
  * get_audio_index()
@@ -196,7 +196,7 @@ inc_audio_index(unsigned int nframes)
 }
 
 /*****************************************************************************
- * set_engine_index()
+ * set_audio_index()
  *  unsigned int    val
  *
  * Atomically sets audio_index to <val>.

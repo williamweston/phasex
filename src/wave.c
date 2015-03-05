@@ -536,7 +536,8 @@ build_waveform_tables(void)
 		j = wave_lookup(WAVE_SINE, sample_num);
 		wave_set(WAVE_JUNO_OSC, sample_num, j);
 		wave_set(WAVE_JUNO_POLY, sample_num, j);
-		wave_set(WAVE_ANALOG_SINE, sample_num, j);
+		wave_set(WAVE_ANALOG_SINE_1, sample_num, j);
+		wave_set(WAVE_ANALOG_SINE_2, sample_num, j);
 		wave_set(WAVE_VOX_1, sample_num, j);
 		wave_set(WAVE_VOX_2, sample_num, j);
 

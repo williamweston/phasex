@@ -315,7 +315,9 @@ extern DELAY            per_part_delay[MAX_PARTS];
 extern CHORUS           per_part_chorus[MAX_PARTS];
 extern GLOBAL           global;
 
-extern volatile gint    engine_ready[MAX_PARTS];
+extern pthread_mutex_t  engine_ready_mutex[MAX_PARTS];
+extern pthread_cond_t   engine_ready_cond[MAX_PARTS];
+extern int              engine_ready[MAX_PARTS];
 
 extern int              sample_rate;
 extern sample_t         f_sample_rate;
@@ -341,6 +343,10 @@ extern sample_t         pitch_bend_smooth_factor;
 void init_engine_buffers(void);
 void init_engine_internals(void);
 void init_engine_parameters(void);
+unsigned int resync_engine(int part_num,
+                           unsigned char resync_buffer_size,
+                           unsigned char resync_sample_rate,
+                           char *debug_color);
 void *engine_thread(void *arg);
 void start_engine_threads(void);
 void stop_engine(void);

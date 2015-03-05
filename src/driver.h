@@ -91,6 +91,8 @@ void wait_audio_start(void);
 void wait_midi_start(void);
 void wait_audio_stop(void);
 void wait_midi_stop(void);
+void wait_engine_start(void);
+void wait_engine_stop(void);
 void stop_audio(void);
 void stop_midi(void);
 void restart_audio(void);

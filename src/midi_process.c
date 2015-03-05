@@ -1310,6 +1310,22 @@ process_hold_pedal(MIDI_EVENT *event, unsigned int part_num)
 
 
 /*****************************************************************************
+ * process_resync()
+ *
+ * Process a Resync internal MIDI message, updating buffer size and sample
+ * rate so that the engine stays in sync with JACK.
+ *****************************************************************************/
+void
+process_resync(MIDI_EVENT *event, unsigned int part_num)
+{
+	resync_engine(part_num, event->data[4], event->data[0], DEBUG_COLOR_RED);
+	if (event->data[4] != 0x0) {
+		need_index_resync[part_num] = 1;
+	}
+}
+
+
+/*****************************************************************************
  * process_midi_event()
  *
  * Perform complete processing for an event (straight from the queue).
@@ -1321,6 +1337,9 @@ process_midi_event(MIDI_EVENT *event, unsigned int part_num)
 	MIDI_EVENT  *next;
 
 	switch (event->type) {
+	case MIDI_EVENT_RESYNC:
+		process_resync(event, part_num);
+		break;
 	case MIDI_EVENT_NOTE_ON:
 		process_note_on(event, part_num);
 		break;

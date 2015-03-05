@@ -437,7 +437,7 @@ wait_audio_start(void)
 {
 	if (audio_thread_func != NULL) {
 		pthread_mutex_lock(&audio_ready_mutex);
-		if (!audio_ready) { // was midi_ready????
+		if (!audio_ready) {
 			pthread_cond_wait(&audio_ready_cond, &audio_ready_mutex);
 		}
 		pthread_mutex_unlock(&audio_ready_mutex);
@@ -522,9 +522,15 @@ wait_engine_start(void)
 	int     i;
 
 	for (i = 0; i < MAX_PARTS; i++) {
-		while (g_atomic_int_get(&engine_ready[i]) == 0) {
-			usleep(125000);
+		//while (g_atomic_int_get(&engine_ready[i]) == 0) {
+		//	usleep(125000);
+		//}
+		/* wait until gtkui thread is ready */
+		pthread_mutex_lock(&engine_ready_mutex[i]);
+		if (!engine_ready[i]) {
+			pthread_cond_wait(&engine_ready_cond[i], &engine_ready_mutex[i]);
 		}
+		pthread_mutex_unlock(&engine_ready_mutex[i]);
 	}
 }
 

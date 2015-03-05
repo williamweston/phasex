@@ -24,6 +24,7 @@
 #define _PHASEX_JACK_H_
 
 #include <jack/jack.h>
+#include <glib.h>
 #include "phasex.h"
 
 
@@ -40,16 +41,19 @@ typedef struct jack_port_info {
 
 extern jack_client_t        *jack_audio_client;
 
-extern pthread_mutex_t      sample_rate_mutex;
-extern pthread_cond_t       sample_rate_cond;
-
 extern jack_port_t          *midi_input_port;
-
-extern int                  jack_running;
 
 extern JACK_PORT_INFO       *jack_midi_ports;
 
+extern pthread_mutex_t      sample_rate_mutex;
+extern pthread_cond_t       sample_rate_cond;
+
+extern volatile gint        new_sample_rate;
+extern volatile gint        new_buffer_period_size;
+
+extern int                  buffer_size_changed;
 extern int                  jack_midi_ports_changed;
+extern int                  jack_running;
 
 extern char                 *jack_session_uuid;
 

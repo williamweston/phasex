@@ -56,9 +56,9 @@ DELAY           per_part_delay[MAX_PARTS];
 CHORUS          per_part_chorus[MAX_PARTS];
 GLOBAL          global;
 
-pthread_mutex_t engine_ready_mutex;
-pthread_cond_t  engine_ready_cond           = PTHREAD_COND_INITIALIZER;
-volatile gint   engine_ready[MAX_PARTS];
+pthread_mutex_t engine_ready_mutex[MAX_PARTS];
+pthread_cond_t  engine_ready_cond[MAX_PARTS];
+int             engine_ready[MAX_PARTS];
 
 int             sample_rate                 = 0;
 sample_t        f_sample_rate               = 0.0;
@@ -148,7 +148,8 @@ init_engine_internals(void)
 		delay  = get_delay(part_num);
 		chorus = get_chorus(part_num);
 
-		g_atomic_int_set(&engine_ready[part_num], 0);
+		pthread_cond_init(&(engine_ready_cond[part_num]), NULL);
+		engine_ready[part_num] = 0;
 
 		/* no midi keys in play yet */
 		part->head     = NULL;
@@ -519,6 +520,50 @@ init_engine_parameters(void)
 
 
 /*****************************************************************************
+ * resync_engine()
+ *
+ * Resyncs engine thread with new audio settings.
+ *****************************************************************************/
+unsigned int
+resync_engine(int part_num,
+              unsigned char resync_buffer_size,
+              unsigned char resync_sample_rate,
+              char *debug_color)
+{
+	PATCH       *patch;
+
+	PHASEX_DEBUG((DEBUG_CLASS_MIDI |
+	              DEBUG_CLASS_MIDI_TIMING |
+	              DEBUG_CLASS_ENGINE_TIMING),
+	             "%s<<<<<SYNC:%d>>>>> " DEBUG_COLOR_DEFAULT,
+	             debug_color, part_num);
+
+	if (resync_buffer_size) {
+		buffer_period_size = (unsigned int)(g_atomic_int_get(&new_buffer_period_size));
+		buffer_size        = buffer_period_size * buffer_periods;
+		buffer_latency     = DEFAULT_LATENCY_PERIODS * buffer_period_size;
+		buffer_size_mask   = buffer_size - 1;
+		buffer_period_mask = buffer_period_size - 1;
+		need_index_resync[part_num] = 0;
+	}
+	if (resync_sample_rate) {
+		sample_rate    = g_atomic_int_get(&new_sample_rate);
+		f_sample_rate  = (sample_t)(sample_rate);
+		nyquist_freq   = (sample_t)(sample_rate / 2);
+		wave_period    = (sample_t)(F_WAVEFORM_SIZE / f_sample_rate);
+		build_filter_tables();
+		build_env_tables();
+		init_engine_internals();
+		init_engine_parameters();
+		patch = get_active_patch(part_num);
+		init_patch_state(patch);
+	}
+
+	return get_engine_index();
+}
+
+
+/*****************************************************************************
  * engine_thread()
  *
  * Main sound synthesis thread.  (One thread per part.)
@@ -529,6 +574,7 @@ engine_thread(void *arg)
 	unsigned int        part_num        = ((unsigned int)((long int) arg % MAX_PARTS));
 	PART                *part           = get_part(part_num);
 	PATCH_STATE         *state          = get_active_state(part_num);
+	MIDI_EVENT          *event;
 	struct sched_param  schedparam;
 	pthread_t           thread_id;
 #ifdef ENABLE_INPUTS
@@ -558,13 +604,25 @@ engine_thread(void *arg)
 	schedparam.sched_priority = setting_engine_priority;
 	pthread_setschedparam(thread_id, setting_sched_policy, &schedparam);
 
-	g_atomic_int_set(&engine_ready[part_num], 1);
+	/* broadcast the engine ready condition */
+	pthread_mutex_lock(&engine_ready_mutex[part_num]);
+	engine_ready[part_num] = 1;
+	pthread_cond_broadcast(&engine_ready_cond[part_num]);
+	pthread_mutex_unlock(&engine_ready_mutex[part_num]);
 
 	/* MAIN LOOP: one time through for each sample */
 	while (!engine_stopped && !pending_shutdown) {
 
 		if (cycle_frame >= (int) buffer_period_size) {
 			cycle_frame = 0;
+
+			event = &(part->event_queue[e_index]);
+			if (event->type == MIDI_EVENT_RESYNC) {
+				e_index = resync_engine(part_num,
+				                        event->data[4],
+				                        event->data[0],
+				                        DEBUG_COLOR_PINK);
+			}
 
 			/* At period boundry, set patch state in case of program change. */
 			state = get_active_state(part_num);
@@ -574,10 +632,9 @@ engine_thread(void *arg)
 			if (delta_nsec >= 0.0) {
 				inc_midi_index();
 			}
-			while (!engine_stopped && !pending_shutdown && (test_midi_index(e_index))) {
+			while (!engine_stopped && !pending_shutdown && (test_engine_index(e_index))) {
 				if (need_index_resync[part_num]) {
-					e_index = get_engine_index();
-					need_index_resync[part_num] = 0;
+					e_index = resync_engine(part_num, 1, 0, DEBUG_COLOR_CYAN);
 					delta_nsec = get_time_delta(&now);
 					if (delta_nsec >= 0.0) {
 						inc_midi_index();
@@ -590,7 +647,7 @@ engine_thread(void *arg)
 					/* if (part_num == 0) */ {
 						PHASEX_DEBUG(DEBUG_CLASS_ENGINE_TIMING, "*");
 					}
-					sleep_time.tv_nsec = (long int)(engine_sleep_time * 1000);
+					sleep_time.tv_nsec = (long int)(engine_sleep_time) * (long int)(sample_rate);
 				}
 				/* woke up too early -- sleep for rest of midi period. */
 				else if (delta_nsec < 0.0) {
@@ -636,11 +693,11 @@ engine_thread(void *arg)
 			/* Check for forced index resync.  This happens when
 			   (re)starting audio and midi subsystems. */
 			if (need_index_resync[part_num]) {
-				e_index = get_engine_index();
-				need_index_resync[part_num] = 0;
+				e_index = resync_engine(part_num, 1, 0, DEBUG_COLOR_MAGENTA);
 			}
 
 			m_index = e_index;
+			e_index = (e_index + buffer_period_size) & buffer_size_mask;
 		}
 
 #ifdef ENABLE_INPUTS
@@ -698,24 +755,24 @@ engine_thread(void *arg)
 
 #ifdef ENABLE_INPUTS
 		/* get current input sample from buffer */
-		part->in1 = (sample_t) input_buffer1[e_index] * state->input_boost;
-		part->in2 = (sample_t) input_buffer2[e_index] * state->input_boost;
+		part->in1 = (sample_t) input_buffer1[e_index + cycle_frame] * state->input_boost;
+		part->in2 = (sample_t) input_buffer2[e_index + cycle_frame] * state->input_boost;
 #endif
 
 		/* for undersampling, use linear interpolation on
 		   input and output */
 		if (sample_rate_mode == SAMPLE_RATE_UNDERSAMPLE) {
 #ifdef ENABLE_INPUTS
-			part->in1 += ((sample_t) input_buffer1[e_index] * state->input_boost);
+			part->in1 += ((sample_t) input_buffer1[e_index + cycle_frame] * state->input_boost);
 			part->in1 *= 0.5;
 
-			part->in2 += ((sample_t) input_buffer2[e_index] * state->input_boost);
+			part->in2 += ((sample_t) input_buffer2[e_index + cycle_frame] * state->input_boost);
 			part->in2 *= 0.5;
 #endif
-			part->output_buffer1[e_index] = (sample_t)((part->out1 + last_out1) * 0.5);
-			part->output_buffer2[e_index] = (sample_t)((part->out2 + last_out2) * 0.5);
+			part->output_buffer1[e_index + cycle_frame] = (sample_t)((part->out1 + last_out1) * 0.5);
+			part->output_buffer2[e_index + cycle_frame] = (sample_t)((part->out2 + last_out2) * 0.5);
 
-			e_index = (e_index + 1) & buffer_size_mask;
+			//e_index = (e_index + 1) & buffer_size_mask;
 			cycle_frame++;
 
 			last_out1 = part->out1;
@@ -723,11 +780,11 @@ engine_thread(void *arg)
 		}
 
 		/* output this sample to the buffer */
-		part->output_buffer1[e_index] = part->out1;
-		part->output_buffer2[e_index] = part->out2;
+		part->output_buffer1[e_index + cycle_frame] = part->out1;
+		part->output_buffer2[e_index + cycle_frame] = part->out2;
 
 		/* update buffer position */
-		e_index = (e_index + 1) & buffer_size_mask;
+		//e_index = (e_index + 1) & buffer_size_mask;
 		cycle_frame++;
 	}
 

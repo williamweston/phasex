@@ -33,12 +33,10 @@ extern unsigned int     buffer_latency;
 extern unsigned int     buffer_periods;
 extern unsigned int     buffer_period_size;
 extern unsigned int     buffer_period_mask;
-extern unsigned int     buffer_size_bits;
-extern unsigned int     buffer_period_size_bits;
 
+extern volatile gint    new_buffer_period_size;
 extern volatile gint    audio_index;
 extern volatile gint    midi_index;
-extern volatile gint    engine_index;
 
 extern int              need_index_resync[MAX_PARTS];
 
@@ -49,10 +47,12 @@ unsigned int test_midi_index(unsigned int val);
 unsigned int get_midi_index(void);
 void set_midi_index(unsigned int val);
 
-void set_engine_index(unsigned int val);
+unsigned int test_engine_index(unsigned int val);
 unsigned int get_engine_index(void);
 
-unsigned int test_audio_index(unsigned int val);
+unsigned int test_midi_rx_index(unsigned int val);
+unsigned int get_midi_rx_index(void);
+
 unsigned int get_audio_index(void);
 void inc_audio_index(unsigned int nframes);
 void set_audio_index(unsigned int val);

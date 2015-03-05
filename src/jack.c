@@ -57,10 +57,8 @@
 #endif
 
 
-jack_client_t           *jack_audio_client         = NULL;
-static char             jack_audio_client_name[64] = "phasex";
-
-int                     num_output_pairs           = 0;
+jack_client_t           *jack_audio_client          = NULL;
+static char             jack_audio_client_name[64]  = "phasex";
 
 #ifdef ENABLE_INPUTS
 jack_port_t             *input_port1;
@@ -73,17 +71,19 @@ jack_port_t             *dest_port2[MAX_PARTS];
 
 jack_port_t             *midi_input_port            = NULL;
 
-pthread_mutex_t         sample_rate_mutex;
-
-pthread_cond_t          sample_rate_cond            = PTHREAD_COND_INITIALIZER;
-pthread_cond_t          jack_client_cond            = PTHREAD_COND_INITIALIZER;
-
-int                     jack_running                = 0;
-
 JACK_PORT_INFO          *jack_midi_ports            = NULL;
 
+pthread_mutex_t         sample_rate_mutex;
+pthread_cond_t          sample_rate_cond            = PTHREAD_COND_INITIALIZER;
+
+volatile gint           new_sample_rate             = 0;
+volatile gint           new_buffer_period_size      = 0;
+
+int                     buffer_size_changed         = 0;
+int                     num_output_pairs            = 0;
 int                     jack_midi_ports_changed     = 0;
 int                     jack_rebuilding_port_list   = 0;
+int                     jack_running                = 0;
 
 char                    *jack_session_uuid          = NULL;
 
@@ -118,10 +118,8 @@ jack_process_buffer_multi_out(jack_nframes_t nframes, void *UNUSED(arg))
 	}
 
 	set_midi_cycle_time();
-	if (midi_driver == MIDI_DRIVER_JACK) {
-		jack_process_midi(nframes);
-	}
-	else if (check_active_sensing_timeout() > 0) {
+	jack_process_midi(nframes);
+	if (check_active_sensing_timeout() > 0) {
 		broadcast_notes_off();
 	}
 
@@ -197,10 +195,8 @@ jack_process_buffer_stereo_out(jack_nframes_t nframes, void *UNUSED(arg))
 	}
 
 	set_midi_cycle_time();
-	if (midi_driver == MIDI_DRIVER_JACK) {
-		jack_process_midi(nframes);
-	}
-	else if (check_active_sensing_timeout() > 0) {
+	jack_process_midi(nframes);
+	if (check_active_sensing_timeout() > 0) {
 		broadcast_notes_off();
 	}
 
@@ -539,6 +535,8 @@ jack_port_rename_handler(jack_port_id_t UNUSED(port),
 int
 jack_bufsize_handler(jack_nframes_t nframes, void *UNUSED(arg))
 {
+	g_atomic_int_set(&new_buffer_period_size, (gint)(nframes));
+
 	/* Make sure buffer doesn't get overrun */
 	if (nframes > PHASEX_MAX_BUFSIZE) {
 		PHASEX_ERROR("JACK requested buffer size:  "
@@ -550,7 +548,7 @@ jack_bufsize_handler(jack_nframes_t nframes, void *UNUSED(arg))
 		phasex_shutdown("Buffer size exceeded.  Exiting...\n");
 	}
 	if ((unsigned int) buffer_period_size != nframes) {
-		sample_rate_changed = 1;
+		buffer_size_changed = 1;
 	}
 	buffer_periods     = DEFAULT_BUFFER_PERIODS;
 	buffer_period_size = nframes;
@@ -597,21 +595,17 @@ jack_samplerate_handler(jack_nframes_t nframes, void *UNUSED(arg))
 		break;
 	}
 
-	pthread_mutex_lock(&sample_rate_mutex);
 	if (nframes == (unsigned int) sample_rate) {
-		pthread_mutex_unlock(&sample_rate_mutex);
 		return 0;
 	}
 
-	/* Changing JACK sample rate midstream not tested */
-	if ((sample_rate > 0) && ((unsigned int) sample_rate != nframes)) {
-		stop_audio();
-	}
+	pthread_mutex_lock(&sample_rate_mutex);
 
-	/* First time setting sample rate */
-	if (sample_rate == 0) {
-		sample_rate    = (int) nframes;
-		f_sample_rate  = (sample_t) sample_rate;
+	/* Changing JACK sample rate midstream not tested */
+	if ((unsigned int) sample_rate != nframes) {
+		g_atomic_int_set(&new_sample_rate, (gint)(nframes));
+		sample_rate    = (int)(nframes);
+		f_sample_rate  = (sample_t)(sample_rate);
 		nyquist_freq   = (sample_t)(sample_rate / 2);
 		wave_period    = (sample_t)(F_WAVEFORM_SIZE / f_sample_rate);
 
@@ -619,6 +613,7 @@ jack_samplerate_handler(jack_nframes_t nframes, void *UNUSED(arg))
 
 		/* now that we have the sample rate, signal anyone else who
 		   needs to know */
+		sample_rate_changed = 1;
 		pthread_cond_broadcast(&sample_rate_cond);
 	}
 
@@ -654,8 +649,7 @@ jack_shutdown_handler(void *UNUSED(arg))
 int
 jack_xrun_handler(void *UNUSED(arg))
 {
-	init_buffer_indices(1);
-
+	//start_midi_clock();
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK xrun detected.\n");
 	return 0;
 }
@@ -810,7 +804,7 @@ jack_audio_init(void)
 	jack_options_t  options             = JackNoStartServer | JackUseExactName;
 	jack_status_t   client_status;
 	int             pair_num;
-	int             new_sample_rate;
+	int             init_sample_rate;
 	unsigned int    new_period_size;
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "Initializing JACK client from thread 0x%lx\n", pthread_self());
@@ -881,46 +875,41 @@ jack_audio_init(void)
 	}
 
 	/* get sample rate from jack */
-	new_sample_rate = (int) jack_get_sample_rate(jack_audio_client);
+	init_sample_rate = (int) jack_get_sample_rate(jack_audio_client);
 
-	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK sample rate:  %d\n", new_sample_rate);
+	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "JACK initial sample rate:  %d\n", init_sample_rate);
 
 	/* scale sample rate depending on mode */
 	switch (setting_sample_rate_mode) {
 	case SAMPLE_RATE_UNDERSAMPLE:
-		new_sample_rate /= 2;
+		init_sample_rate /= 2;
 		break;
 	case SAMPLE_RATE_OVERSAMPLE:
-		new_sample_rate *= 2;
+		init_sample_rate *= 2;
 		break;
 	}
 
 	/* keep track of sample rate changes */
-	if (sample_rate != new_sample_rate) {
-		sample_rate = new_sample_rate;
+	if (sample_rate != init_sample_rate) {
+		sample_rate = init_sample_rate;
 		sample_rate_changed = 1;
 	}
 
 	/* set samplerate related vars */
-	f_sample_rate = (sample_t) sample_rate;
+	f_sample_rate = (sample_t)(sample_rate);
 	nyquist_freq  = (sample_t)(sample_rate / 2);
-	wave_period   = (sample_t)(F_WAVEFORM_SIZE / (double) sample_rate);
+	wave_period   = ((sample_t)(F_WAVEFORM_SIZE) / (sample_t)(sample_rate));
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "Internal sample rate:  %d\n", sample_rate);
 
 	/* callback for setting our sample rate when jack tells us to */
 	jack_set_sample_rate_callback(jack_audio_client, jack_samplerate_handler, 0);
 
-	/* now that we have the sample rate, signal anyone else who needs to know */
-	pthread_mutex_lock(&sample_rate_mutex);
-	pthread_cond_broadcast(&sample_rate_cond);
-	pthread_mutex_unlock(&sample_rate_mutex);
-
 	/* get buffer size */
 	new_period_size = jack_get_buffer_size(jack_audio_client);
+	g_atomic_int_set(&new_buffer_period_size, (gint)(new_period_size));
 	if (buffer_period_size != new_period_size) {
 		buffer_period_size = new_period_size;
-		sample_rate_changed = 1;
 	}
 	buffer_periods     = DEFAULT_BUFFER_PERIODS;
 	buffer_size        = buffer_period_size * buffer_periods;
@@ -938,8 +927,13 @@ jack_audio_init(void)
 	}
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO,
-	             "JACK audio buffer size:  %d (%d * %d periods, mask = 0x%x)\n",
+	             "JACK initial audio buffer size:  %d (%d * %d periods, mask = 0x%x)\n",
 	             buffer_size, buffer_period_size, buffer_periods, buffer_size_mask);
+
+	/* now that we have the sample rate, signal anyone else who needs to know */
+	pthread_mutex_lock(&sample_rate_mutex);
+	pthread_cond_broadcast(&sample_rate_cond);
+	pthread_mutex_unlock(&sample_rate_mutex);
 
 	/* create ports */
 #ifdef ENABLE_INPUTS
@@ -986,11 +980,9 @@ jack_audio_init(void)
 	}
 
 	/* register midi input port */
-	if (midi_driver == MIDI_DRIVER_JACK) {
-		midi_input_port = jack_port_register(jack_audio_client, "midi_in",
-		                                     JACK_DEFAULT_MIDI_TYPE,
-		                                     JackPortIsInput, 0);
-	}
+	midi_input_port = jack_port_register(jack_audio_client, "midi_in",
+	                                     JACK_DEFAULT_MIDI_TYPE,
+	                                     JackPortIsInput, 0);
 
 	/* build list of available midi ports */
 	if (jack_midi_ports != NULL) {
@@ -1071,9 +1063,6 @@ jack_start(void)
 	char            *q;
 	int             j;
 	int             k;
-
-	init_buffer_indices(0);
-	start_midi_clock();
 
 	/* activate client (callbacks start, so everything needs to be ready) */
 	if (jack_activate(jack_audio_client)) {
@@ -1407,7 +1396,7 @@ jack_watchdog_cycle(void)
 		}
 	}
 #endif /* HAVE_JACK_SESSION_H */
-	if ((midi_driver == MIDI_DRIVER_JACK) && (jack_midi_ports != NULL)) {
+	if (jack_midi_ports != NULL) {
 		cur = jack_midi_ports;
 		while (cur != NULL) {
 			if (cur->connect_request) {
@@ -1458,7 +1447,7 @@ jack_audio_thread(void *UNUSED(arg))
 	pthread_setschedparam(thread_id, setting_sched_policy, &schedparam);
 
 	/* setup thread cleanup handler */
-	//pthread_cleanup_push (&alsa_pcm_cleanup, NULL);
+	//pthread_cleanup_push (&jack_audio_thread_cleanup, NULL);
 
 	PHASEX_DEBUG(DEBUG_CLASS_AUDIO, "Starting JACK AUDIO thread...\n");
 
@@ -1467,10 +1456,6 @@ jack_audio_thread(void *UNUSED(arg))
 	audio_ready = 1;
 	pthread_cond_broadcast(&audio_ready_cond);
 	pthread_mutex_unlock(&audio_ready_mutex);
-
-	/* initialize buffer indices and set reference clock. */
-	init_buffer_indices(1);
-	start_midi_clock();
 
 	jack_start();
 

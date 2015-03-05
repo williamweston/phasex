@@ -96,20 +96,23 @@ build_ccmatrix(void)
 void
 set_midi_channel_for_part(unsigned int part_num, int new_channel) {
 	PART        *part  = get_part(part_num);
-	PATCH       *patch = get_patch(visible_sess_num, part_num, visible_prog_num[part_num]);;
+	PATCH       *patch;
 
 	/* only deal with real changes */
-	if (part->midi_channel != new_channel) {
+	if ((part != NULL) && (part->midi_channel != new_channel)) {
+
 		/* set new channel for current part */
 		part->midi_channel = new_channel;
 
-		patch->param[PARAM_MIDI_CHANNEL].value.cc_prev =
-			patch->param[PARAM_MIDI_CHANNEL].value.cc_val;
-		patch->param[PARAM_MIDI_CHANNEL].value.cc_val  = new_channel;
-		patch->param[PARAM_MIDI_CHANNEL].value.int_val =
-			new_channel + patch->param[PARAM_MIDI_CHANNEL].info->cc_offset;
-		patch->param[PARAM_MIDI_CHANNEL].updated = 1;
-
+		patch = get_patch(visible_sess_num, part_num, visible_prog_num[part_num]);;
+		if (patch != NULL) {
+			patch->param[PARAM_MIDI_CHANNEL].value.cc_prev =
+				patch->param[PARAM_MIDI_CHANNEL].value.cc_val;
+			patch->param[PARAM_MIDI_CHANNEL].value.cc_val  = new_channel;
+			patch->param[PARAM_MIDI_CHANNEL].value.int_val =
+				new_channel + patch->param[PARAM_MIDI_CHANNEL].info->cc_offset;
+			patch->param[PARAM_MIDI_CHANNEL].updated = 1;
+		}
 		if (gtkui_ready && (gp != NULL)) {
 			gp->param[PARAM_MIDI_CHANNEL].value.cc_prev =
 				gp->param[PARAM_MIDI_CHANNEL].value.cc_val;

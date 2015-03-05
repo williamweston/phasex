@@ -417,6 +417,7 @@ phasex_shutdown(const char *msg)
 		default:
 			break;
 		}
+		setting_midi_driver = midi_driver;
 	}
 
 	/* TODO: be more thorough about gathering settings */
@@ -760,8 +761,11 @@ main(int argc, char **argv)
 	init_rt_mutex(&sample_rate_mutex, 1);
 
 	/* initialize audio system based on selected driver */
+	//init_buffer_indices(1);
+	//start_midi_clock();
 	init_audio();
 	while (sample_rate == 0) {
+		usleep(125000);
 		init_audio();
 	}
 
@@ -842,8 +846,6 @@ main(int argc, char **argv)
 	/* run the callbacks for all the parameters */
 	run_param_callbacks(1);
 
-	/* start engine threads */
-	start_engine_threads();
 
 	/* start the audio system, based on selected driver */
 	start_audio();
@@ -856,6 +858,16 @@ main(int argc, char **argv)
 
 	/* wait until midi thread is ready */
 	wait_midi_start();
+
+	/* start engine threads */
+	start_engine_threads();
+
+	/* wait until engine threads are ready */
+	wait_engine_start();
+
+	/* start midi clock now that everything is running and ready to go */
+	init_buffer_indices(1);
+	start_midi_clock();
 
 	/* Phasex watchdog handles restarting threads on config changes and
 	   runs driver supplied watchdog loop iterations. */

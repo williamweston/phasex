@@ -87,7 +87,7 @@ int                     config_changed                      = 0;
 int                     sample_rate_changed                 = 0;
 
 /* MIDI settings */
-int                     setting_midi_driver                 = MIDI_DRIVER_ALSA_SEQ;
+int                     setting_midi_driver                 = DEFAULT_MIDI_DRIVER;
 #ifdef ENABLE_RAWMIDI_OSS
 char                    *setting_oss_midi_device            = NULL;
 #endif
@@ -2514,7 +2514,7 @@ create_config_dialog(void)
 	box = gtk_vbox_new(TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), box, TRUE, TRUE, 4);
 
-	button1 = gtk_radio_button_new_with_label(NULL, "JACK MIDI  (requires JACK Audio)");
+	button1 = gtk_radio_button_new_with_label(NULL, "JACK MIDI only (requires JACK Audio)");
 	widget_set_custom_font(button1, phasex_font_desc);
 	gtk_button_set_alignment(GTK_BUTTON(button1), button_x, 0.5);
 	gtk_box_pack_start(GTK_BOX(box), button1, FALSE, FALSE, 0);

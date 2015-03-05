@@ -50,6 +50,7 @@ typedef union atomic_timestamp {
 extern volatile ATOMIC_TIMESTAMP    midi_clock_time[8];
 extern volatile ATOMIC_TIMESTAMP    active_sensing_timeout[8];
 extern volatile gint                midi_clock_time_index;
+extern volatile gint                pending_midi_clock_time_index;
 extern volatile gint                active_sensing_timeout_index;
 
 
@@ -76,6 +77,7 @@ typedef union atomic_timestamp {
 
 
 extern volatile ATOMIC_TIMESTAMP    midi_ref_marker;
+extern volatile ATOMIC_TIMESTAMP    pending_midi_timeref;
 extern volatile ATOMIC_TIMESTAMP    active_sensing_timeout;
 
 
