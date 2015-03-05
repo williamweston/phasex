@@ -67,7 +67,7 @@ static void gtk_knob_update(GtkKnob *knob);
 static void gtk_knob_adjustment_changed(GtkAdjustment *adjustment, gpointer data);
 static void gtk_knob_adjustment_value_changed(GtkAdjustment *adjustment, gpointer data);
 
-GError *gerror;
+GError *gerror = NULL;
 
 int knob_width[14]  = { 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, -1 };
 int knob_height[14] = { 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, -1 };
@@ -855,10 +855,18 @@ gtk_knob_animation_new_from_file_full(gchar *filename, gint frame_width,
 #if GTK_CHECK_VERSION(2, 10, 0)
 	if (!(anim->pixbuf = gdk_pixbuf_new_from_file_at_size(filename, width,
 	                                                      height, &gerror))) {
+		if (gerror != NULL) {
+			g_error_free(gerror);
+			gerror = NULL;
+		}
 		return NULL;
 	}
 #else
 	if (!(anim->pixbuf = gdk_pixbuf_new_from_file(filename, &gerror))) {
+		if (gerror != NULL) {
+			g_error_free(gerror);
+			gerror = NULL;
+		}
 		return NULL;
 	}
 #endif

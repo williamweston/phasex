@@ -461,7 +461,7 @@ run_session_load_dialog(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 	char            *directory;
 	GSList          *file_list;
 	GSList          *cur;
-	GError          *error;
+	GError          *error      = NULL;
 	unsigned int    sess_num    = session_io_start;
 	unsigned int    part_num;
 
@@ -645,7 +645,7 @@ run_session_save_as_dialog(GtkWidget *UNUSED(widget), gpointer data)
 	char            *directory      = (char *) data;
 	char            *session_dir;
 	DIR_LIST        *pdir           = session_dir_list;
-	GError          *error;
+	GError          *error          = NULL;
 
 	/* create dialog if needed */
 	if (session_save_dialog == NULL) {

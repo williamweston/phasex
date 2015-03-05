@@ -735,7 +735,7 @@ run_patch_load_dialog(GtkWidget *UNUSED(widget), gpointer UNUSED(data))
 	char            *filename;
 	GSList          *file_list;
 	GSList          *cur;
-	GError          *error;
+	GError          *error      = NULL;
 	unsigned int    prog        = patch_io_start;
 
 	/* create dialog if needed */
@@ -919,7 +919,7 @@ run_patch_save_as_dialog(GtkWidget *UNUSED(widget), gpointer data)
 	PATCH           *patch    = get_visible_patch();
 	char            *filename = (char *) data;
 	DIR_LIST        *pdir     = patch_dir_list;
-	GError          *error;
+	GError          *error    = NULL;
 	char            patchfile[PATH_MAX];
 
 	/* create dialog if needed */

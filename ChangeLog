@@ -1,11 +1,12 @@
 [P]hase [H]armonic [A]dvanced [S]ynthesis [EX]permient
 
 Changelog:
-2015-03-01 William <william.h.weston@gmail.com> - 0.14.97-dev
+2015-03-04 William <william.h.weston@gmail.com> - 0.14.98-dev
 	* Updated email address.
 	* Included Fons Adriaensen's DC filter patch.
 	* Fixed memory clobbering bug in sample resampling code.
 	* Applied Ralf's DC offset fix for sample normalization.
+	* Added analog sine oscillator w/ 2 bandlimiting levels.
 	* Fixed improper install of autoconf scripts.
 	* Removed -fsingle-precision-constant from OPT_CFLAGS.
 	* Created macros for wavetable lookup funtions.
@@ -13,6 +14,13 @@ Changelog:
 	* Fixed portamento overshoot bug.
 	* Increased internal tuning resolution to 1440.
 	* Fixed gtkknob compilation warnings.
+	* Enabled JACK MIDI with JACK audio, regardless of midi_driver.
+	* Added MIDI_EVENT_RESYNC internal MIDI event type.
+	* Added new rt-safe thread resync via internal MIDI transport.
+	* Reworked startup and sync for threads, buffer indexes, and clock.
+	* Fixed startup segfault in set_midi_channel_for_part();
+	* Fixed improper GError (non)initilization in multiple places.
+
 
 2013-01-11 William Weston <william.h.weston@gmail.com> - 0.14.97
 	* Cleaned up pointer sign warning in queue_midi_event().
