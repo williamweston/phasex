@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=PHASEX
 Comment=Phase Harmonic Advanced Synthesis EXperiment
+Comment[fr]=Expérimentation de synthèse avancée par phase d'harmonique
 Icon=@ac_datadir@/phasex/pixmaps/phasex-icon.png
 Exec=phasex
 Terminal=false
