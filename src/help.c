@@ -95,7 +95,7 @@ about_phasex_dialog(void)
 		"[P]hase [H]armonic [A]dvanced [S]ynthesis [EX]periment\n"
 		"A MIDI software synthesizer for Linux, ALSA, & JACK.";
 	const gchar     *website =
-		"https://github.com/downloads/williamweston/phasex/";
+		"https://github.com/williamweston/phasex/";
 	size_t          j = 0;
 
 	/* build new dialog window if needed */
